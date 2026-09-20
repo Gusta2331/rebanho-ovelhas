@@ -4,6 +4,8 @@ import '../../core/theme/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
 import 'services/auth_service.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -13,7 +15,6 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -47,7 +48,6 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const DashboardPage()),
       );
-
       return;
     }
 
@@ -69,15 +69,65 @@ class _LoginPageState extends State<LoginPage> {
       _loading = true;
     });
 
-    await _authService.saveLogin(_emailController.text.trim());
+    try {
+      await _authService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
-    if (!mounted) {
-      return;
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const DashboardPage()),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _loading = false;
+      });
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_getAuthErrorMessage(e))));
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _loading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível entrar. Verifique sua conexão e tente novamente.',
+          ),
+        ),
+      );
+    }
+  }
+
+  String _getAuthErrorMessage(AuthException error) {
+    final message = error.message.toLowerCase();
+
+    if (message.contains('invalid login credentials')) {
+      return 'E-mail ou senha incorretos.';
     }
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const DashboardPage()),
-    );
+    if (message.contains('email not confirmed')) {
+      return 'Confirme seu e-mail antes de entrar.';
+    }
+
+    if (message.contains('user not found')) {
+      return 'Usuário não encontrado.';
+    }
+
+    return 'Não foi possível entrar. Verifique seus dados.';
   }
 
   void _forgotPassword() {

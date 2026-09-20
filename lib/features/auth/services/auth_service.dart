@@ -1,31 +1,30 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../core/services/supabase_service.dart';
 
 class AuthService {
-  static const String _loggedInKey = 'is_logged_in';
-  static const String _emailKey = 'saved_email';
+  SupabaseClient get _client => SupabaseService.client;
 
-  Future<void> saveLogin(String email) async {
-    final preferences = await SharedPreferences.getInstance();
-
-    await preferences.setString(_emailKey, email);
-    await preferences.setBool(_loggedInKey, true);
+  Future<void> login({required String email, required String password}) async {
+    await _client.auth.signInWithPassword(
+      email: email.trim(),
+      password: password,
+    );
   }
 
   Future<bool> isLoggedIn() async {
-    final preferences = await SharedPreferences.getInstance();
-
-    return preferences.getBool(_loggedInKey) ?? false;
+    return _client.auth.currentSession != null;
   }
 
   Future<String?> getSavedEmail() async {
-    final preferences = await SharedPreferences.getInstance();
-
-    return preferences.getString(_emailKey);
+    return _client.auth.currentUser?.email;
   }
 
   Future<void> logout() async {
-    final preferences = await SharedPreferences.getInstance();
+    await _client.auth.signOut();
+  }
 
-    await preferences.setBool(_loggedInKey, false);
+  User? get currentUser {
+    return _client.auth.currentUser;
   }
 }
