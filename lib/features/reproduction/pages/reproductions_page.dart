@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../models/reproducao.dart';
 import '../services/reproducao_service.dart';
 import 'reproduction_details_page.dart';
+import 'reproduction_help_page.dart';
 import 'reproduction_form_page.dart';
 
 class ReproductionsPage extends StatefulWidget {
@@ -156,6 +157,14 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
     }
   }
 
+  void _abrirAjuda() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const ReproductionHelpPage(),
+      ),
+    );
+  }
+
   Future<void> _atualizar() async {
     await _carregarReproducoes();
   }
@@ -166,6 +175,11 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
       appBar: AppBar(
         title: const Text('Reprodução'),
         actions: [
+          IconButton(
+            onPressed: _abrirAjuda,
+            tooltip: 'Ajuda',
+            icon: const Icon(Icons.help_outline),
+          ),
           IconButton(
             onPressed: _carregando ? null : _atualizar,
             tooltip: 'Atualizar',
