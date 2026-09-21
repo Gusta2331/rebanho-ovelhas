@@ -61,7 +61,22 @@ class ReproductionHelpPage extends StatelessWidget {
           _section(context, 'Nascimentos', Icons.child_friendly_outlined, [
             _item(
               'Nascimento',
-              'Registra um cordeiro relacionado à reprodução. O animal precisa existir no cadastro para ser vinculado ao nascimento.',
+              'Registra o nascimento de um cordeiro relacionado à reprodução. O sistema pode criar o novo animal automaticamente, mantendo mãe, pai, rebanho, brinco e data de nascimento vinculados.'
+            ),
+          ]),
+          const SizedBox(height: 16),
+          _section(context, 'Acompanhamento', Icons.track_changes_outlined, [
+            _item(
+              'Monta',
+              'Ao registrar a primeira monta de uma reprodução planejada, ela passa a ser marcada como coberta e a previsão de parto é calculada automaticamente.',
+            ),
+            _item(
+              'Histórico',
+              'Os animais relacionados continuam no histórico da fazenda mesmo quando deixam de estar ativos.',
+            ),
+            _item(
+              'Brinco',
+              'O brinco identifica o animal no sistema e não deve ser reutilizado para outro animal depois de utilizado.',
             ),
           ]),
           const SizedBox(height: 16),
