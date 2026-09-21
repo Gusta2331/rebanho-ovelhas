@@ -93,10 +93,6 @@ class ManejoService {
       throw Exception('Os dados da vacina só podem ser usados em uma vacinação.');
     }
 
-    if (tipo == TipoManejo.vacinacao && (vacinaId == null && (vacinaNome == null || vacinaNome.trim().isEmpty))) {
-      throw Exception('Informe qual vacina foi aplicada.');
-    }
-
     if (tipo != TipoManejo.famacha && famachaEscore != null) {
       throw Exception('A classificação FAMACHA só pode ser usada em uma avaliação FAMACHA.');
     }
@@ -173,10 +169,15 @@ class ManejoService {
           return escore == null || escore < 1 || escore > 5;
         })) {
       throw Exception('Informe o FAMACHA de todos os animais selecionados.');
-    ) }
+    ) {
 
     if (tipo == TipoManejo.vacinacao && (vacinaId == null && (vacinaNome == null || vacinaNome.trim().isEmpty))) {
       throw Exception('Informe qual vacina foi aplicada.');
+    }
+
+    if (tipo != TipoManejo.vacinacao &&
+        (vacinaId != null || vacinaNome != null || vacinaFabricante != null || vacinaLote != null)) {
+      throw Exception('Os dados da vacina só podem ser usados em uma vacinação.');
     }
 
     final animais = await _client
