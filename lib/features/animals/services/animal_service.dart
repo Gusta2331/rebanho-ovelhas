@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/services/supabase_service.dart';
 
@@ -190,6 +193,7 @@ class AnimalService {
     DateTime? dataEntrada,
     String? observacoes,
     String? fotoUrl,
+    String? fotoPath,
     String? maeId,
     String? paiId,
   }) async {
@@ -218,7 +222,17 @@ class AnimalService {
 
     final racaId = await _buscarRacaId(nome: raca, fazendaId: fazendaId);
 
+    final animalId = const Uuid().v4();
+
+    final fotoUrlFinal = await _resolverFotoParaSalvar(
+      fotoUrl: fotoUrl,
+      fotoPath: fotoPath,
+      fazendaId: fazendaId,
+      animalId: animalId,
+    );
+
     final dados = <String, dynamic>{
+      'id': animalId,
       'fazenda_id': fazendaId,
       'rebanho_id': rebanhoId,
       'brinco': brinco,
@@ -258,6 +272,7 @@ class AnimalService {
     DateTime? dataSaida,
     String? observacoes,
     String? fotoUrl,
+    String? fotoPath,
     String? maeId,
     String? paiId,
   }) async {
@@ -289,6 +304,13 @@ class AnimalService {
 
     final racaId = await _buscarRacaId(nome: raca, fazendaId: fazendaId);
 
+    final fotoUrlFinal = await _resolverFotoParaSalvar(
+      fotoUrl: fotoUrl,
+      fotoPath: fotoPath,
+      fazendaId: fazendaId,
+      animalId: id,
+    );
+
     final dados = <String, dynamic>{
       'rebanho_id': rebanhoId,
       'brinco': brinco,
@@ -318,4 +340,89 @@ class AnimalService {
 
     return Map<String, dynamic>.from(resultado);
   }
+
+  Future<String?> _resolverFotoParaSalvar({
+    required String fazendaId,
+    required String animalId,
+    String? fotoUrl,
+    String? fotoPath,
+  }) async {
+    final caminho = fotoPath?.trim();
+
+    if (caminho != null && caminho.isNotEmpty) {
+      if (caminho.startsWith('http://') ||
+          caminho.startsWith('https://')) {
+        return caminho;
+      }
+
+      final arquivo = File(caminho);
+
+      if (!await arquivo.exists()) {
+        throw Exception('A foto selecionada não está mais disponível no celular.');
+      }
+
+      final extensao = _extensaoFoto(caminho);
+      final caminhoStorage = '$fazendaId/$animalId.$extensao';
+
+      await _client.storage.from('animal-fotos').upload(
+        caminhoStorage,
+        arquivo,
+        fileOptions: FileOptions(
+          contentType: _contentTypeFoto(extensao),
+          upsert: true,
+        ),
+      );
+
+      return _client.storage
+          .from('animal-fotos')
+          .getPublicUrl(caminhoStorage);
+    }
+
+    final url = fotoUrl?.trim();
+
+    if (url == null || url.isEmpty) {
+      return null;
+    }
+
+    return url;
+  }
+
+  String _extensaoFoto(String caminho) {
+    final nome = caminho.split('/').last;
+    final partes = nome.split('.');
+
+    if (partes.length < 2) {
+      return 'jpg';
+    }
+
+    final extensao = partes.last.toLowerCase();
+
+    switch (extensao) {
+      case 'png':
+        return 'png';
+      case 'webp':
+        return 'webp';
+      case 'heic':
+        return 'heic';
+      case 'jpg':
+      case 'jpeg':
+      default:
+        return 'jpg';
+    }
+  }
+
+  String _contentTypeFoto(String extensao) {
+    switch (extensao) {
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'heic':
+        return 'image/heic';
+      case 'jpg':
+      default:
+        return 'image/jpeg';
+    }
+  }
+
 }
