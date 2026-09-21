@@ -28,7 +28,8 @@ class ManejoProgramadoService {
   }
 
   Future<void> criar({required TipoManejo tipo, required DateTime dataProgramada,
-      required List<String> animalIds, String? observacoes}) async {
+      required List<String> animalIds, String? observacoes,
+      String? vacinaId, String? vacinaNome, String? vacinaFabricante}) async {
     final fazendaId = await _getMinhaFazendaId();
     if (animalIds.isEmpty) throw Exception('Selecione pelo menos um animal.');
     final animais = await _client.from('animais').select('id')
@@ -44,6 +45,9 @@ class ManejoProgramadoService {
       'id': id, 'fazenda_id': fazendaId, 'tipo': Manejo.tipoToString(tipo),
       'data_programada': dataProgramada.toIso8601String(),
       'observacoes': observacoes?.trim().isEmpty == true ? null : observacoes?.trim(),
+      'vacina_id': tipo == TipoManejo.vacinacao ? vacinaId : null,
+      'vacina_nome': tipo == TipoManejo.vacinacao ? vacinaNome?.trim() : null,
+      'vacina_fabricante': tipo == TipoManejo.vacinacao ? vacinaFabricante?.trim() : null,
     });
     await _client.from('manejos_programados_animais').insert(
       animalIds.map((animalId) => {
