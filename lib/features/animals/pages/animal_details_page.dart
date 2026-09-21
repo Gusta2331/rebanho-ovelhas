@@ -535,14 +535,6 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
 
           const SizedBox(height: 16),
 
-          AnimalReproduction(
-            animalId: _animal.id,
-            brinco: _animal.brinco,
-            ehFemea: _animal.sexo == SexoAnimal.femea,
-          ),
-
-          const SizedBox(height: 16),
-
           AnimalFamilyTree(animal: _animal, animais: widget.animais),
 
           const SizedBox(height: 16),
