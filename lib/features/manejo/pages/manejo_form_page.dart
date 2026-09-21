@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
+import '../../flock/services/rebanho_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
 import '../widgets/famacha_reference_widget.dart';
+import '../widgets/manejo_animal_selector.dart';
 
 class ManejoFormPage extends StatefulWidget {
   final Manejo? manejo;
@@ -21,9 +23,16 @@ class ManejoFormPage extends StatefulWidget {
 class _ManejoFormPageState extends State<ManejoFormPage> {
   final ManejoService _service = ManejoService();
   final AnimalService _animalService = AnimalService();
-  final TextEditingController _observacoes = TextEditingController();
+  final RebanhoService _rebanhoService = RebanhoService();
 
+  final TextEditingController _observacoes = TextEditingController();
+  final TextEditingController _vacinaLote = TextEditingController();
+
+  List<Map<String, dynamic>> _rebanhos = [];
   List<Map<String, dynamic>> _animais = [];
+  List<Map<String, dynamic>> _vacinas = [];
+
+  String? _rebanhoId;
   String? _animalId;
   final Set<String> _animaisSelecionados = {};
   final Map<String, int> _famachaPorAnimal = {};
@@ -31,11 +40,14 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   TipoManejo _tipo = TipoManejo.vacinacao;
   DateTime _data = DateTime.now();
   int? _famacha;
+
+  Map<String, dynamic>? _vacinaSelecionada;
   bool _carregando = true;
+  bool _carregandoAnimais = false;
   bool _salvando = false;
 
   bool get _editando => widget.manejo != null;
-  bool get _avaliacaoEmLote => !_editando && _tipo == TipoManejo.famacha;
+  bool get _emLote => !_editando;
 
   @override
   void initState() {
@@ -48,32 +60,157 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       _data = manejo.data;
       _famacha = manejo.famachaEscore;
       _observacoes.text = manejo.observacoes ?? '';
+      _vacinaLote.text = manejo.vacinaLote ?? '';
     }
 
-    _carregarAnimais();
+    _carregarDados();
   }
 
   @override
   void dispose() {
     _observacoes.dispose();
+    _vacinaLote.dispose();
     super.dispose();
   }
 
-  Future<void> _carregarAnimais() async {
+  Future<void> _carregarDados() async {
     try {
-      final animais = await _animalService.getAnimaisAtivos();
+      final resultados = await Future.wait([
+        _rebanhoService.getRebanhos(somenteAtivos: true),
+        _service.getVacinas(),
+      ]);
+
+      if (!mounted) return;
+
+      setState(() {
+        _rebanhos = List<Map<String, dynamic>>.from(resultados[0] as List);
+        _vacinas = List<Map<String, dynamic>>.from(resultados[1] as List);
+        _carregando = false;
+      });
+
+      if (_editando) {
+        final animais = await _animalService.getAnimaisAtivos();
+        if (!mounted) return;
+        setState(() {
+          _animais = animais;
+          _animaisSelecionados.add(_animalId!);
+        });
+      } else {
+        await _carregarAnimais();
+      }
+
+      if (widget.manejo?.vacinaId != null) {
+        for (final vacina in _vacinas) {
+          if (vacina['id']?.toString() == widget.manejo!.vacinaId) {
+            if (mounted) setState(() => _vacinaSelecionada = vacina);
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _carregando = false);
+      _mensagem(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _carregarAnimais() async {
+    setState(() => _carregandoAnimais = true);
+
+    try {
+      final animais = await _animalService.getAnimaisAtivos(
+        rebanhoId: _rebanhoId,
+      );
 
       if (!mounted) return;
 
       setState(() {
         _animais = animais;
-        _carregando = false;
+        _carregandoAnimais = false;
+
+        final ids = animais.map((a) => a['id']?.toString()).whereType<String>().toSet();
+        _animaisSelecionados.removeWhere((id) => !ids.contains(id));
+        _famachaPorAnimal.removeWhere((id, _) => !ids.contains(id));
+
+        if (_animalId != null && !ids.contains(_animalId)) {
+          _animalId = null;
+        }
       });
     } catch (e) {
       if (!mounted) return;
+      setState(() => _carregandoAnimais = false);
+      _mensagem(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
 
-      setState(() => _carregando = false);
-      _mensagem(e.toString());
+  Future<void> _adicionarVacina() async {
+    final nome = TextEditingController();
+    final fabricante = TextEditingController();
+
+    final dados = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Nova vacina'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nome,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Nome da vacina',
+                  hintText: 'Ex.: Vacina contra clostridioses',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: fabricante,
+                decoration: const InputDecoration(
+                  labelText: 'Fabricante',
+                  hintText: 'Opcional',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (nome.text.trim().isEmpty) return;
+                Navigator.of(dialogContext).pop({
+                  'nome': nome.text.trim(),
+                  'fabricante': fabricante.text.trim(),
+                });
+              },
+              child: const Text('Cadastrar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    nome.dispose();
+    fabricante.dispose();
+
+    if (dados == null || !mounted) return;
+
+    try {
+      final vacina = await _service.criarVacina(
+        nome: dados['nome']!,
+        fabricante: dados['fabricante'],
+      );
+
+      setState(() {
+        _vacinas = [..._vacinas, vacina]
+          ..sort((a, b) => (a['nome'] ?? '').toString().compareTo((b['nome'] ?? '').toString()));
+        _vacinaSelecionada = vacina;
+      });
+    } catch (e) {
+      _mensagem(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -96,13 +233,20 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     });
   }
 
-  void _alternarAnimal(String id, bool selecionado) {
+  void _alternarAnimal(String id) {
     setState(() {
-      if (selecionado) {
-        _animaisSelecionados.add(id);
+      if (_tipo == TipoManejo.famacha) {
+        if (_animaisSelecionados.contains(id)) {
+          _animaisSelecionados.remove(id);
+          _famachaPorAnimal.remove(id);
+        } else {
+          _animaisSelecionados.add(id);
+        }
       } else {
-        _animaisSelecionados.remove(id);
-        _famachaPorAnimal.remove(id);
+        _animaisSelecionados
+          ..clear()
+          ..add(id);
+        _animalId = id;
       }
     });
   }
@@ -112,11 +256,63 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   }
 
   Future<void> _salvar() async {
-    if (_avaliacaoEmLote) {
-      await _salvarFamachaEmLote();
+    if (_editando) {
+      await _salvarEdicao();
       return;
     }
 
+    if (_animaisSelecionados.isEmpty) {
+      _mensagem('Selecione pelo menos um animal.');
+      return;
+    }
+
+    if (_tipo == TipoManejo.famacha) {
+      final faltando = _animaisSelecionados.where(
+        (id) => _famachaPorAnimal[id] == null,
+      );
+      if (faltando.isNotEmpty) {
+        _mensagem('Informe o FAMACHA de todos os animais selecionados.');
+        return;
+      }
+    }
+
+    if (_tipo == TipoManejo.vacinacao && _vacinaSelecionada == null) {
+      _mensagem('Selecione a vacina aplicada.');
+      return;
+    }
+
+    setState(() => _salvando = true);
+
+    try {
+      await _service.criarManejosEmLote(
+        animalIds: _animaisSelecionados.toList(),
+        data: _data,
+        tipo: _tipo,
+        famachaPorAnimal: _famachaPorAnimal,
+        observacoes: _observacoes.text,
+        vacinaId: _tipo == TipoManejo.vacinacao
+            ? _vacinaSelecionada?['id']?.toString()
+            : null,
+        vacinaNome: _tipo == TipoManejo.vacinacao
+            ? _vacinaSelecionada?['nome']?.toString()
+            : null,
+        vacinaFabricante: _tipo == TipoManejo.vacinacao
+            ? _vacinaSelecionada?['fabricante']?.toString()
+            : null,
+        vacinaLote: _tipo == TipoManejo.vacinacao
+            ? _vacinaLote.text
+            : null,
+      );
+
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _salvando = false);
+      _mensagem(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _salvarEdicao() async {
     if (_animalId == null) {
       _mensagem('Selecione o animal.');
       return;
@@ -127,66 +323,36 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       return;
     }
 
-    setState(() => _salvando = true);
-
-    try {
-      if (!_editando) {
-        await _service.criarManejo(
-          animalId: _animalId!,
-          tipo: _tipo,
-          data: _data,
-          famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
-          observacoes: _observacoes.text,
-        );
-      } else {
-        await _service.atualizarManejo(
-          id: widget.manejo!.id,
-          animalId: _animalId!,
-          tipo: _tipo,
-          data: _data,
-          famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
-          observacoes: _observacoes.text,
-        );
-      }
-
-      if (mounted) Navigator.of(context).pop(true);
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() => _salvando = false);
-      _mensagem(e.toString().replaceFirst('Exception: ', ''));
-    }
-  }
-
-  Future<void> _salvarFamachaEmLote() async {
-    if (_animaisSelecionados.isEmpty) {
-      _mensagem('Selecione pelo menos uma ovelha.');
-      return;
-    }
-
-    final faltando = _animaisSelecionados.where(
-      (id) => _famachaPorAnimal[id] == null,
-    );
-
-    if (faltando.isNotEmpty) {
-      _mensagem('Informe o FAMACHA de todas as ovelhas selecionadas.');
+    if (_tipo == TipoManejo.vacinacao && _vacinaSelecionada == null) {
+      _mensagem('Selecione a vacina aplicada.');
       return;
     }
 
     setState(() => _salvando = true);
 
     try {
-      await _service.criarManejosEmLote(
-        animalIds: _animaisSelecionados.toList(),
+      await _service.atualizarManejo(
+        id: widget.manejo!.id,
+        animalId: _animalId!,
+        tipo: _tipo,
         data: _data,
-        famachaPorAnimal: _famachaPorAnimal,
+        famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
         observacoes: _observacoes.text,
+        vacinaId: _tipo == TipoManejo.vacinacao
+            ? _vacinaSelecionada?['id']?.toString()
+            : null,
+        vacinaNome: _tipo == TipoManejo.vacinacao
+            ? _vacinaSelecionada?['nome']?.toString()
+            : null,
+        vacinaFabricante: _tipo == TipoManejo.vacinacao
+            ? _vacinaSelecionada?['fabricante']?.toString()
+            : null,
+        vacinaLote: _tipo == TipoManejo.vacinacao ? _vacinaLote.text : null,
       );
 
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-
       setState(() => _salvando = false);
       _mensagem(e.toString().replaceFirst('Exception: ', ''));
     }
@@ -212,7 +378,6 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         ? (animal['brinco']?.toString() ?? '')
         : numero.toString().padLeft(3, '0');
     final nome = animal['nome']?.toString().trim();
-
     return nome != null && nome.isNotEmpty
         ? '$brinco • $nome'
         : 'Brinco $brinco';
@@ -280,7 +445,6 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
 
   void _mensagem(String texto) {
     if (!mounted) return;
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(texto.replaceFirst('Exception: ', ''))),
     );
@@ -300,10 +464,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
               children: [
                 const Text(
                   'Informativo FAMACHA',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -311,31 +472,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                   style: TextStyle(height: 1.45),
                 ),
                 const SizedBox(height: 16),
-                _infoLinha(
-                  '1',
-                  'Vermelho',
-                  'Sem sinal visual de anemia importante.',
-                ),
-                _infoLinha(
-                  '2',
-                  'Vermelho/rosado',
-                  'Faixa geralmente aceitável.',
-                ),
-                _infoLinha(
-                  '3',
-                  'Rosa',
-                  'Faixa intermediária, merece acompanhamento.',
-                ),
-                _infoLinha(
-                  '4',
-                  'Rosa muito claro',
-                  'Anemia importante, requer atenção.',
-                ),
-                _infoLinha(
-                  '5',
-                  'Muito pálido',
-                  'Anemia grave, requer atenção imediata.',
-                ),
+                _infoLinha('1', 'Vermelho', 'Sem sinal visual de anemia importante.'),
+                _infoLinha('2', 'Vermelho/rosado', 'Faixa geralmente aceitável.'),
+                _infoLinha('3', 'Rosa', 'Faixa intermediária, merece acompanhamento.'),
+                _infoLinha('4', 'Rosa muito claro', 'Anemia importante, requer atenção.'),
+                _infoLinha('5', 'Muito pálido', 'Anemia grave, requer atenção imediata.'),
                 const SizedBox(height: 14),
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -351,11 +492,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                 const SizedBox(height: 14),
                 const Text(
                   'Para uma avaliação correta, observe a mucosa diretamente, em boa iluminação, e compare com um cartão FAMACHA apropriado. O aplicativo serve como apoio de registro.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
-                    height: 1.45,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.black54, height: 1.45),
                 ),
               ],
             ),
@@ -380,20 +517,14 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
               shape: BoxShape.circle,
               border: Border.all(color: Colors.black12),
             ),
-            child: Text(
-              escore,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+            child: Text(escore, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  titulo,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
+                Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
                 Text(descricao, style: const TextStyle(color: Colors.black54)),
               ],
@@ -407,23 +538,14 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_editando ? 'Editar manejo' : 'Novo manejo'),
-      ),
+      appBar: AppBar(title: Text(_editando ? 'Editar manejo' : 'Novo manejo')),
       body: _carregando
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.primaryColor),
-            )
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
           : ListView(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
               children: [
                 _intro(),
                 const SizedBox(height: 20),
-                if (_avaliacaoEmLote)
-                  _selecaoEmLote()
-                else
-                  _animalUnico(),
-                const SizedBox(height: 16),
                 DropdownButtonFormField<TipoManejo>(
                   value: _tipo,
                   decoration: const InputDecoration(
@@ -441,24 +563,55 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                       ? null
                       : (value) {
                           if (value == null) return;
-
                           setState(() {
                             _tipo = value;
-
-                            if (value != TipoManejo.famacha) {
-                              _famacha = null;
-                              _animaisSelecionados.clear();
-                              _famachaPorAnimal.clear();
+                            _animaisSelecionados.clear();
+                            _famachaPorAnimal.clear();
+                            _famacha = null;
+                            if (value != TipoManejo.vacinacao) {
+                              _vacinaSelecionada = null;
+                              _vacinaLote.clear();
                             }
                           });
                         },
                 ),
-                if (_avaliacaoEmLote) ...[
+                const SizedBox(height: 16),
+                if (_editando)
+                  _animalEdicao()
+                else
+                  ManejoAnimalSelector(
+                    rebanhos: _rebanhos,
+                    rebanhoId: _rebanhoId,
+                    animais: _animais,
+                    selecionados: _animaisSelecionados,
+                    carregando: _carregandoAnimais,
+                    enabled: !_salvando,
+                    multiSelecao: true,
+                    titulo: _tipo == TipoManejo.famacha
+                        ? 'Ovelhas avaliadas'
+                        : 'Animais do manejo',
+                    onRebanhoChanged: (id) {
+                      setState(() {
+                        _rebanhoId = id;
+                        _animaisSelecionados.clear();
+                        _famachaPorAnimal.clear();
+                      });
+                      _carregarAnimais();
+                    },
+                    onToggleAnimal: _alternarAnimal,
+                    onSelecionarTodos: _selecionarTodos,
+                    onLimpar: _limparSelecao,
+                  ),
+                if (_tipo == TipoManejo.vacinacao) ...[
                   const SizedBox(height: 16),
-                  _avaliacaoLote(),
-                ] else if (_tipo == TipoManejo.famacha) ...[
+                  _vacinaField(),
+                ],
+                if (_tipo == TipoManejo.famacha) ...[
                   const SizedBox(height: 16),
-                  _famachaField(),
+                  if (_editando)
+                    _famachaField()
+                  else
+                    _avaliacaoLote(),
                 ],
                 const SizedBox(height: 16),
                 InkWell(
@@ -508,11 +661,9 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                     label: Text(
                       _salvando
                           ? 'Salvando...'
-                          : _avaliacaoEmLote
-                              ? 'Salvar avaliações'
-                              : _editando
-                                  ? 'Salvar alterações'
-                                  : 'Salvar manejo',
+                          : _editando
+                              ? 'Salvar alterações'
+                              : 'Salvar manejo',
                     ),
                   ),
                 ),
@@ -531,25 +682,18 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.assignment_outlined,
-            color: AppTheme.primaryColor,
-            size: 28,
-          ),
+          const Icon(Icons.assignment_outlined, color: AppTheme.primaryColor, size: 28),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Registro de manejo',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+                const Text('Registro de manejo', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 Text(
-                  _avaliacaoEmLote
-                      ? 'Você pode avaliar várias ovelhas na mesma visita.'
-                      : 'Registre cuidados realizados no animal.',
+                  _editando
+                      ? 'Edite o registro deste animal sem alterar seu histórico.'
+                      : 'Selecione um rebanho e registre o mesmo manejo para vários animais de uma vez.',
                   style: const TextStyle(height: 1.4),
                 ),
                 if (_tipo == TipoManejo.famacha) ...[
@@ -572,7 +716,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     );
   }
 
-  Widget _animalUnico() {
+  Widget _animalEdicao() {
     return DropdownButtonFormField<String>(
       value: _animalId,
       decoration: const InputDecoration(
@@ -580,97 +724,79 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         prefixIcon: Icon(Icons.pets_outlined),
         border: OutlineInputBorder(),
       ),
-      hint: const Text('Selecione o animal'),
       items: _animais.map((animal) {
         final id = animal['id']?.toString();
-
         if (id == null) return null;
-
         return DropdownMenuItem<String>(
           value: id,
-          child: Text(
-            _animalTexto(animal),
-            overflow: TextOverflow.ellipsis,
-          ),
+          child: Text(_animalTexto(animal), overflow: TextOverflow.ellipsis),
         );
       }).whereType<DropdownMenuItem<String>>().toList(),
-      onChanged: _salvando
-          ? null
-          : (value) => setState(() => _animalId = value),
+      onChanged: _salvando ? null : (value) => setState(() => _animalId = value),
     );
   }
 
-  Widget _selecaoEmLote() {
-    final todosSelecionados = _animais.isNotEmpty &&
-        _animais.every(
-          (animal) => _animaisSelecionados.contains(animal['id']?.toString()),
-        );
-
+  Widget _vacinaField() {
     return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.primaryColor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.18)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 10, 8),
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Ovelhas avaliadas',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: _salvando
-                      ? null
-                      : todosSelecionados
-                          ? _limparSelecao
-                          : _selecionarTodos,
-                  child: Text(
-                    todosSelecionados ? 'Limpar' : 'Selecionar todas',
-                  ),
-                ),
-              ],
+          const Text('Vacina aplicada', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(
+            value: _vacinaSelecionada?['id']?.toString(),
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Nome da vacina',
+              prefixIcon: Icon(Icons.vaccines_outlined),
+              border: OutlineInputBorder(),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-            child: Text(
-              _animaisSelecionados.length.toString() +
-                  ' ovelha(s) selecionada(s)',
-              style: const TextStyle(color: Colors.black54),
-            ),
-          ),
-          const Divider(height: 1),
-          if (_animais.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(20),
-              child: Text('Nenhuma ovelha ativa encontrada.'),
-            )
-          else
-            ..._animais.map((animal) {
-              final id = animal['id']?.toString();
-              if (id == null) return const SizedBox.shrink();
-
-              final selecionado = _animaisSelecionados.contains(id);
-
-              return CheckboxListTile(
-                value: selecionado,
-                onChanged: _salvando
-                    ? null
-                    : (value) => _alternarAnimal(id, value == true),
-                title: Text(_animalTexto(animal)),
-                secondary: const Icon(Icons.pets_outlined),
-                controlAffinity: ListTileControlAffinity.leading,
+            hint: const Text('Selecione a vacina'),
+            items: _vacinas.map((vacina) {
+              final id = vacina['id']?.toString();
+              if (id == null) return null;
+              final fabricante = vacina['fabricante']?.toString().trim();
+              return DropdownMenuItem<String>(
+                value: id,
+                child: Text(
+                  fabricante == null || fabricante.isEmpty
+                      ? vacina['nome'].toString()
+                      : vacina['nome'].toString() + ' • ' + fabricante,
+                  overflow: TextOverflow.ellipsis,
+                ),
               );
-            }),
+            }).whereType<DropdownMenuItem<String>>().toList(),
+            onChanged: _salvando
+                ? null
+                : (id) {
+                    if (id == null) return;
+                    final vacina = _vacinas.firstWhere(
+                      (item) => item['id']?.toString() == id,
+                    );
+                    setState(() => _vacinaSelecionada = vacina);
+                  },
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: _salvando ? null : _adicionarVacina,
+            icon: const Icon(Icons.add),
+            label: const Text('Cadastrar nova vacina'),
+          ),
+          TextField(
+            controller: _vacinaLote,
+            enabled: !_salvando,
+            decoration: const InputDecoration(
+              labelText: 'Lote',
+              prefixIcon: Icon(Icons.qr_code_2_outlined),
+              border: OutlineInputBorder(),
+            ),
+          ),
         ],
       ),
     );
@@ -683,15 +809,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         .toList();
 
     if (selecionados.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.blue.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: const Text(
-          'Selecione as ovelhas acima. Depois, o aplicativo mostrará uma avaliação para cada uma.',
-          style: TextStyle(height: 1.4),
+      return const Padding(
+        padding: EdgeInsets.all(8),
+        child: Text(
+          'Selecione as ovelhas acima. Depois, informe o FAMACHA de cada uma.',
+          style: TextStyle(color: Colors.black54),
         ),
       );
     }
@@ -701,39 +823,19 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       decoration: BoxDecoration(
         color: AppTheme.primaryColor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.primaryColor.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.fact_check_outlined,
-                color: AppTheme.primaryColor,
-              ),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Informe o FAMACHA de cada ovelha',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
+          const Text(
+            'FAMACHA de cada animal',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           const Text(
-            'Cada animal recebe seu próprio escore. Não é necessário dar o mesmo valor para todos.',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.black54,
-              height: 1.4,
-            ),
+            'Cada animal recebe seu próprio escore.',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
           ),
           const SizedBox(height: 14),
           ...selecionados.map(_itemAvaliacaoAnimal),
@@ -761,10 +863,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _animalTexto(animal),
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
+          Text(_animalTexto(animal), style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Row(
             children: List.generate(5, (index) {
@@ -775,18 +874,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                 child: Padding(
                   padding: EdgeInsets.only(right: valor == 5 ? 0 : 5),
                   child: OutlinedButton(
-                    onPressed: _salvando
-                        ? null
-                        : () => _definirFamacha(id, valor),
+                    onPressed: _salvando ? null : () => _definirFamacha(id, valor),
                     style: OutlinedButton.styleFrom(
-                      backgroundColor:
-                          ativo ? AppTheme.primaryColor : Colors.white,
-                      foregroundColor:
-                          ativo ? Colors.white : AppTheme.textColor,
+                      backgroundColor: ativo ? AppTheme.primaryColor : Colors.white,
+                      foregroundColor: ativo ? Colors.white : AppTheme.textColor,
                       side: BorderSide(
-                        color: ativo
-                            ? AppTheme.primaryColor
-                            : Colors.black12,
+                        color: ativo ? AppTheme.primaryColor : Colors.black12,
                         width: ativo ? 2 : 1,
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 9),
@@ -803,12 +896,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          valor.toString(),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Text(valor.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -827,34 +915,15 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       decoration: BoxDecoration(
         color: AppTheme.primaryColor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.primaryColor.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Classificação FAMACHA',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Compare a mucosa da pálpebra inferior com uma referência apropriada antes de escolher o escore.',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.black54,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 16),
-          FamachaReferenceWidget(selecionado: _famacha),
-          const SizedBox(height: 16),
-          const Text(
-            'Escore observado',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-          ),
+          const Text('Classificação FAMACHA', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
+          FamachaReferenceWidget(selecionado: _famacha),
+          const SizedBox(height: 14),
           Row(
             children: List.generate(5, (index) {
               final escore = index + 1;
@@ -864,40 +933,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                 child: Padding(
                   padding: EdgeInsets.only(right: escore == 5 ? 0 : 6),
                   child: OutlinedButton(
-                    onPressed: _salvando
-                        ? null
-                        : () => setState(() => _famacha = escore),
+                    onPressed: _salvando ? null : () => setState(() => _famacha = escore),
                     style: OutlinedButton.styleFrom(
-                      backgroundColor:
-                          selecionado ? AppTheme.primaryColor : Colors.white,
-                      foregroundColor:
-                          selecionado ? Colors.white : AppTheme.textColor,
-                      side: BorderSide(
-                        color: selecionado
-                            ? AppTheme.primaryColor
-                            : Colors.black12,
-                        width: selecionado ? 2 : 1,
-                      ),
+                      backgroundColor: selecionado ? AppTheme.primaryColor : Colors.white,
+                      foregroundColor: selecionado ? Colors.white : AppTheme.textColor,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 22,
-                          height: 22,
-                          decoration: BoxDecoration(
-                            color: _corFamacha(escore),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black26),
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          escore.toString(),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
+                    child: Text(escore.toString()),
                   ),
                 ),
               );
@@ -905,31 +947,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
           ),
           if (_famacha != null) ...[
             const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: _corFamacha(_famacha!).withValues(alpha: 0.22),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Selecionado: FAMACHA ' +
-                    _famacha.toString() +
-                    ' • ' +
-                    _descricaoFamacha(_famacha!),
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
+            Text(
+              'Selecionado: FAMACHA ' + _famacha.toString() + ' • ' + _descricaoFamacha(_famacha!),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ],
-          const SizedBox(height: 12),
-          const Text(
-            'A escala é uma referência visual. A avaliação deve ser feita observando diretamente a mucosa do animal, em boa iluminação.',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.black54,
-              height: 1.4,
-            ),
-          ),
         ],
       ),
     );
