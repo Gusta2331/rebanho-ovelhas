@@ -13,6 +13,7 @@ import '../flock/pages/rebanhos_page.dart';
 import '../flock/services/rebanho_selection_service.dart';
 import '../flock/services/rebanho_service.dart';
 import '../manejo/pages/manejos_page.dart';
+import '../manejo/pages/manejo_agenda_page.dart';
 import '../reproduction/pages/reproductions_page.dart';
 import 'widgets/animal_card.dart';
 import 'widgets/management_item.dart';
@@ -338,6 +339,12 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Future<void> _openManejoAgenda() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const ManejoAgendaPage()),
+    );
+  }
+
   Future<void> _openReproductions() async {
     await Navigator.of(
       context,
@@ -571,6 +578,11 @@ class _DashboardPageState extends State<DashboardPage> {
         icon: Icons.assignment_outlined,
         title: 'Manejo',
         onTap: _openManejos,
+      ),
+      QuickAction(
+        icon: Icons.event_note_outlined,
+        title: 'Agenda de manejo',
+        onTap: _openManejoAgenda,
       ),
       QuickAction(
         icon: Icons.medical_services_outlined,
