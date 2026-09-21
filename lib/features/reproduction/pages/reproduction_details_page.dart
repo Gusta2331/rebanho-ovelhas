@@ -24,8 +24,8 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
   final _animalService = AnimalService();
 
   late Reproducao _reproducao;
-  List<Monta> _montas = [];
-  List<ReproducaoNascimento> _nascimentos = [];
+  List<Monta> _montasLista = [];
+  List<ReproducaoNascimento> _nascimentosLista = [];
   Map<String, Map<String, dynamic>> _animais = {};
   bool _carregando = true;
   String? _erro;
@@ -60,8 +60,8 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
 
       setState(() {
         _reproducao = r;
-        _montas = dados[1] as List<Monta>;
-        _nascimentos = dados[2] as List<ReproducaoNascimento>;
+        _montasLista = dados[1] as List<Monta>;
+        _nascimentosLista = dados[2] as List<ReproducaoNascimento>;
         _animais = {
           for (final a in animais) a['id'].toString(): a,
         };
@@ -477,10 +477,10 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
               ],
             ),
             const SizedBox(height: 8),
-            if (_montas.isEmpty)
+            if (_montasLista.isEmpty)
               _vazio('Nenhuma monta registrada.')
             else
-              ..._montas.map(
+              ..._montasLista.map(
                 (m) => ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.male, color: AppTheme.primaryColor),
@@ -533,10 +533,10 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
               ],
             ),
             const SizedBox(height: 8),
-            if (_nascimentos.isEmpty)
+            if (_nascimentosLista.isEmpty)
               _vazio('Nenhum nascimento registrado.')
             else
-              ..._nascimentos.map(
+              ..._nascimentosLista.map(
                 (n) => ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(
