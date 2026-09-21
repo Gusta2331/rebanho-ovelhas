@@ -245,7 +245,7 @@ class AnimalService {
       'observacoes': observacoes?.trim().isEmpty == true
           ? null
           : observacoes?.trim(),
-      'foto_url': fotoUrl?.trim().isEmpty == true ? null : fotoUrl?.trim(),
+      'foto_url': fotoUrlFinal,
       'mae_id': maeId,
       'pai_id': paiId,
     };
