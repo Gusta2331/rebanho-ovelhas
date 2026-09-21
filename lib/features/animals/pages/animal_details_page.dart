@@ -1,25 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
-
 import '../../flock/pages/animal_transfer_page.dart';
 import '../../flock/pages/animal_transfer_history_page.dart';
-
 import '../../flock/services/rebanho_selection_service.dart';
-
 import '../models/animal.dart';
-
 import '../widgets/animal_photo.dart';
-
 import '../widgets/animal_descendants.dart';
-
 import '../widgets/animal_family_tree.dart';
-
+import '../widgets/animal_reproduction.dart';
 import 'animal_form_page.dart';
 
 class AnimalDetailsPage extends StatefulWidget {
   final Animal animal;
-
   final List<Animal> animais;
 
   const AnimalDetailsPage({
@@ -44,9 +37,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
   @override
   void initState() {
     super.initState();
-
     _animal = widget.animal;
-
     _carregarRebanhoAtual();
   }
 
@@ -469,7 +460,6 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
           _buildHeader(nome),
-
           const SizedBox(height: 20),
 
           _buildSection(
@@ -546,26 +536,10 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
 
           const SizedBox(height: 16),
 
-          _buildSection(
-            title: 'Observações',
-            icon: Icons.notes_outlined,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  _animal.observacoes?.trim().isNotEmpty == true
-                      ? _animal.observacoes!.trim()
-                      : 'Nenhuma observação cadastrada.',
-                  style: TextStyle(
-                    fontSize: 15,
-                    height: 1.5,
-                    color: _animal.observacoes?.trim().isNotEmpty == true
-                        ? AppTheme.textColor
-                        : Colors.black54,
-                  ),
-                ),
-              ),
-            ],
+          AnimalReproduction(
+            animalId: _animal.id,
+            brinco: _animal.brinco,
+            ehFemea: _animal.sexo == SexoAnimal.femea,
           ),
 
           const SizedBox(height: 16),
