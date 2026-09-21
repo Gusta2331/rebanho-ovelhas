@@ -1050,7 +1050,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
       return null;
     }
 
-    for (final animal in widget.animais) {
+    for (final animal in _animaisContexto) {
       if (animal.id == id) {
         return animal;
       }
