@@ -72,6 +72,28 @@ class AnimalService {
     return List<Map<String, dynamic>>.from(animais);
   }
 
+  Future<List<Map<String, dynamic>>> getAnimaisPorIds(
+    List<String> ids,
+  ) async {
+    if (ids.isEmpty) {
+      return [];
+    }
+
+    final fazendaId = await _getMinhaFazendaId();
+
+    if (fazendaId == null) {
+      return [];
+    }
+
+    final animais = await _client
+        .from('animais')
+        .select('*, racas(nome)')
+        .eq('fazenda_id', fazendaId)
+        .inFilter('id', ids);
+
+    return List<Map<String, dynamic>>.from(animais);
+  }
+
   Future<int> getTotalAnimaisAtivos({String? rebanhoId}) async {
     final animais = await getAnimaisAtivos(rebanhoId: rebanhoId);
 
