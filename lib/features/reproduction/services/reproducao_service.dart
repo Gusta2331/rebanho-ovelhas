@@ -4,6 +4,7 @@ import '../../../core/services/supabase_service.dart';
 import '../models/monta.dart';
 import '../models/reproducao.dart';
 import '../models/reproducao_nascimento.dart';
+import '../../animals/services/animal_service.dart';
 
 class ReproducaoService {
   SupabaseClient get _client => SupabaseService.client;
@@ -581,6 +582,110 @@ class ReproducaoService {
         .single();
 
     return ReproducaoNascimento.fromMap(Map<String, dynamic>.from(resultado));
+  }
+
+  Future<ReproducaoNascimento> registrarNascimentoNovoAnimal({
+    required String reproducaoId,
+    required String sexo,
+    required DateTime dataNascimento,
+    String? nome,
+    String? observacoes,
+  }) async {
+    final fazendaId = await _getMinhaFazendaId();
+
+    if (fazendaId == null) {
+      throw Exception('Nenhuma fazenda ativa foi encontrada.');
+    }
+
+    if (sexo != 'femea' && sexo != 'macho') {
+      throw Exception('Sexo do nascimento inválido.');
+    }
+
+    final reproducao = await _client
+        .from('reproducoes')
+        .select('id, fazenda_id, mae_id, pai_id')
+        .eq('id', reproducaoId)
+        .eq('fazenda_id', fazendaId)
+        .maybeSingle();
+
+    if (reproducao == null) {
+      throw Exception('Reprodução não encontrada.');
+    }
+
+    final mae = await _client
+        .from('animais')
+        .select('id, rebanho_id, raca_id, racas(nome)')
+        .eq('id', reproducao['mae_id'])
+        .eq('fazenda_id', fazendaId)
+        .maybeSingle();
+
+    if (mae == null) {
+      throw Exception('A ovelha mãe não foi encontrada.');
+    }
+
+    final rebanhoId = mae['rebanho_id']?.toString();
+
+    if (rebanhoId == null || rebanhoId.isEmpty) {
+      throw Exception('A ovelha mãe não possui um rebanho válido.');
+    }
+
+    final racaDados = mae['racas'];
+    final racaNome = racaDados is Map
+        ? (racaDados['nome']?.toString() ?? '')
+        : '';
+
+    final animalService = AnimalService();
+    final brinco = await animalService.getMenorBrincoDisponivel();
+
+    Map<String, dynamic>? animalCriado;
+
+    try {
+      animalCriado = await animalService.criarAnimal(
+        brinco: brinco,
+        rebanhoId: rebanhoId,
+        nome: nome,
+        sexo: sexo,
+        raca: racaNome,
+        dataNascimento: dataNascimento,
+        status: 'ativo',
+        dataEntrada: dataNascimento,
+        observacoes: observacoes,
+        maeId: reproducao['mae_id']?.toString(),
+        paiId: reproducao['pai_id']?.toString(),
+      );
+
+      final nascimento = await registrarNascimento(
+        reproducaoId: reproducaoId,
+        animalId: animalCriado['id'].toString(),
+        sexo: sexo,
+        dataNascimento: dataNascimento,
+        observacoes: observacoes,
+      );
+
+      await _client
+          .from('reproducoes')
+          .update({
+            'data_parto': _dateOnly(dataNascimento),
+            'status': 'parto_realizado',
+            'atualizado_em': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', reproducaoId)
+          .eq('fazenda_id', fazendaId);
+
+      return nascimento;
+    } catch (e) {
+      if (animalCriado != null) {
+        try {
+          await _client
+              .from('animais')
+              .delete()
+              .eq('id', animalCriado['id'].toString())
+              .eq('fazenda_id', fazendaId);
+        } catch (_) {}
+      }
+
+      rethrow;
+    }
   }
 
   Future<void> excluirNascimento({
