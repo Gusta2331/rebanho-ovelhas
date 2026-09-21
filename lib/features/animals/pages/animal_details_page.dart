@@ -8,7 +8,6 @@ import '../models/animal.dart';
 import '../widgets/animal_photo.dart';
 import '../widgets/animal_descendants.dart';
 import '../widgets/animal_family_tree.dart';
-import '../widgets/animal_reproduction.dart';
 import 'animal_form_page.dart';
 
 class AnimalDetailsPage extends StatefulWidget {
