@@ -435,6 +435,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
           dataEntrada: DateTime.now(),
           observacoes: _observacoesController.text,
           fotoUrl: null,
+          fotoPath: _fotoPath,
 
           // A filiação é salva no Supabase.
           maeId: _maeSelecionada?.id,
@@ -462,6 +463,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
 
           observacoes: _observacoesController.text,
           fotoUrl: null,
+          fotoPath: _fotoPath,
 
           // Mantém a filiação durante a edição.
           maeId: _maeSelecionada?.id,
