@@ -165,6 +165,24 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
             manejo.famachaEscore.toString(),
             Icons.visibility_outlined,
           ),
+        if (manejo.tipo == TipoManejo.vacinacao &&
+            manejo.vacinaNome != null)
+          _item(
+            'Vacina',
+            manejo.vacinaFabricante == null ||
+                    manejo.vacinaFabricante!.trim().isEmpty
+                ? manejo.vacinaNome!
+                : manejo.vacinaNome! + ' • ' + manejo.vacinaFabricante!,
+            Icons.vaccines_outlined,
+          ),
+        if (manejo.tipo == TipoManejo.vacinacao &&
+            manejo.vacinaLote != null &&
+            manejo.vacinaLote!.trim().isNotEmpty)
+          _item(
+            'Lote',
+            manejo.vacinaLote!,
+            Icons.qr_code_2_outlined,
+          ),
         if (manejo.observacoes != null)
           _item(
             'Observações',
