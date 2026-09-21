@@ -13,7 +13,7 @@ class _MontaFormPageState extends State<MontaFormPage>{
  List<Map<String,dynamic>> _machos=[]; String? _carneiroId; DateTime? _data; bool _loading=true,_saving=false;
  @override void initState(){super.initState();_carneiroId=widget.monta?.carneiroId;_data=widget.monta?.dataMonta;_obs.text=widget.monta?.observacoes??'';_load();}
  @override void dispose(){_obs.dispose();super.dispose();}
- Future<void> _load()async{try{final a=await _animals.getAnimaisAtivos();if(!mounted)return;setState(()=>_machos=a.where((x)=>x['sexo']=='macho').toList());setState(()=>_loading=false);}catch(e){if(mounted){setState(()=>_loading=false);_snack(_msg(e),true);}}}
+ Future<void> _load()async{try{final a=await _animals.getTodosAnimais();if(!mounted)return;setState(()=>_machos=a.where((x)=>x['sexo']=='macho').toList());setState(()=>_loading=false);}catch(e){if(mounted){setState(()=>_loading=false);_snack(_msg(e),true);}}}
  String _msg(Object e){final s=e.toString();return s.startsWith('Exception: ')?s.substring(11):s;}
  String _animal(Map<String,dynamic>a){final b=a['brinco'];final id=b is num?b.toInt().toString().padLeft(3,'0'):(b?.toString()??'Sem brinco');final n=a['nome']?.toString().trim();return n==null||n.isEmpty?'Brinco '+id:id+' • '+n;}
  void _snack(String s,bool err){ScaffoldMessenger.of(context)..hideCurrentSnackBar()..showSnackBar(SnackBar(content:Text(s),backgroundColor:err?Colors.red:null));}
