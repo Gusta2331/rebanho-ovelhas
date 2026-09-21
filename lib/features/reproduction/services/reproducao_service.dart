@@ -320,7 +320,7 @@ class ReproducaoService {
 
     final reproducao = await _client
         .from('reproducoes')
-        .select('id, fazenda_id')
+        .select('id, fazenda_id, status, data_cobertura')
         .eq('id', reproducaoId)
         .eq('fazenda_id', fazendaId)
         .maybeSingle();
@@ -367,6 +367,23 @@ class ReproducaoService {
           criado_em
         ''')
         .single();
+
+    if (reproducao['status'] == 'planejada') {
+      final atualizacao = <String, dynamic>{
+        'status': 'coberta',
+        'atualizado_em': DateTime.now().toUtc().toIso8601String(),
+      };
+
+      if (reproducao['data_cobertura'] == null) {
+        atualizacao['data_cobertura'] = _dateOnly(dataMonta);
+      }
+
+      await _client
+          .from('reproducoes')
+          .update(atualizacao)
+          .eq('id', reproducaoId)
+          .eq('fazenda_id', fazendaId);
+    }
 
     return Monta.fromMap(Map<String, dynamic>.from(resultado));
   }
