@@ -9,6 +9,10 @@ class Manejo {
   final DateTime data;
   final int? famachaEscore;
   final String? observacoes;
+  final String? vacinaId;
+  final String? vacinaNome;
+  final String? vacinaFabricante;
+  final String? vacinaLote;
 
   Manejo({
     String? id,
@@ -17,6 +21,10 @@ class Manejo {
     required this.data,
     this.famachaEscore,
     this.observacoes,
+    this.vacinaId,
+    this.vacinaNome,
+    this.vacinaFabricante,
+    this.vacinaLote,
   }) : id = id ?? const Uuid().v4();
 
   factory Manejo.fromMap(Map<String, dynamic> map) {
@@ -29,6 +37,10 @@ class Manejo {
           ? (map['famacha_escore'] as num).toInt()
           : int.tryParse(map['famacha_escore']?.toString() ?? ''),
       observacoes: _stringOrNull(map['observacoes']),
+      vacinaId: _stringOrNull(map['vacina_id']),
+      vacinaNome: _stringOrNull(map['vacina_nome']),
+      vacinaFabricante: _stringOrNull(map['vacina_fabricante']),
+      vacinaLote: _stringOrNull(map['vacina_lote']),
     );
   }
 
