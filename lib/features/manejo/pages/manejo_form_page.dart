@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
+import '../widgets/famacha_reference_widget.dart';
 
 class ManejoFormPage extends StatefulWidget {
   final Manejo? manejo;
@@ -421,79 +422,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   }
 
   Widget _famachaReferencia() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.visibility_outlined,
-                size: 19,
-                color: AppTheme.primaryColor,
-              ),
-              SizedBox(width: 7),
-              Expanded(
-                child: Text(
-                  'Escala de referência',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: List.generate(5, (index) {
-              final escore = index + 1;
-              final cor = _corFamacha(escore);
-
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: escore == 5 ? 0 : 6),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: cor,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.black26),
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        escore.toString(),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 8),
-          const Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Mais vermelho',
-                  style: TextStyle(fontSize: 11, color: Colors.black54),
-                ),
-              ),
-              Text(
-                'Mais pálido',
-                style: TextStyle(fontSize: 11, color: Colors.black54),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return FamachaReferenceWidget(
+      selecionado: _famacha,
     );
   }
 }
