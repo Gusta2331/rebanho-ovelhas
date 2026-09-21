@@ -47,7 +47,6 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   bool _salvando = false;
 
   bool get _editando => widget.manejo != null;
-  bool get _emLote => !_editando;
 
   @override
   void initState() {
@@ -144,8 +143,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   }
 
   Future<void> _adicionarVacina() async {
-    final nome = TextEditingController();
-    final fabricante = TextEditingController();
+    String nome = '';
+    String fabricante = '';
 
     final dados = await showDialog<Map<String, String>>(
       context: context,
@@ -156,8 +155,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: nome,
                 autofocus: true,
+                onChanged: (value) => nome = value,
                 decoration: const InputDecoration(
                   labelText: 'Nome da vacina',
                   hintText: 'Ex.: Vacina contra clostridioses',
@@ -165,7 +164,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
               ),
               const SizedBox(height: 12),
               TextField(
-                controller: fabricante,
+                onChanged: (value) => fabricante = value,
                 decoration: const InputDecoration(
                   labelText: 'Fabricante',
                   hintText: 'Opcional',
@@ -180,10 +179,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             ),
             FilledButton(
               onPressed: () {
-                if (nome.text.trim().isEmpty) return;
+                if (nome.trim().isEmpty) return;
                 Navigator.of(dialogContext).pop({
-                  'nome': nome.text.trim(),
-                  'fabricante': fabricante.text.trim(),
+                  'nome': nome.trim(),
+                  'fabricante': fabricante.trim(),
                 });
               },
               child: const Text('Cadastrar'),
@@ -192,9 +191,6 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         );
       },
     );
-
-    nome.dispose();
-    fabricante.dispose();
 
     if (dados == null || !mounted) return;
 
@@ -235,18 +231,15 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
 
   void _alternarAnimal(String id) {
     setState(() {
-      if (_tipo == TipoManejo.famacha) {
-        if (_animaisSelecionados.contains(id)) {
-          _animaisSelecionados.remove(id);
-          _famachaPorAnimal.remove(id);
-        } else {
-          _animaisSelecionados.add(id);
-        }
+      if (_animaisSelecionados.contains(id)) {
+        _animaisSelecionados.remove(id);
+        _famachaPorAnimal.remove(id);
       } else {
-        _animaisSelecionados
-          ..clear()
-          ..add(id);
-        _animalId = id;
+        _animaisSelecionados.add(id);
+      }
+
+      if (_tipo != TipoManejo.famacha && _animaisSelecionados.isEmpty) {
+        _animalId = null;
       }
     });
   }
