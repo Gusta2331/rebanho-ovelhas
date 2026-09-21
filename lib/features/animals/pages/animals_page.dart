@@ -11,6 +11,7 @@ import '../widgets/animal_list_item.dart';
 import '../widgets/animal_photo.dart';
 import 'animal_details_page.dart';
 import 'animal_form_page.dart';
+import 'animal_help_page.dart';
 import 'racas_page.dart';
 
 class AnimalsPage extends StatefulWidget {
@@ -445,6 +446,17 @@ class _AnimalsPageState extends State<AnimalsPage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const AnimalHelpPage(),
+                ),
+              );
+            },
+            tooltip: 'Ajuda',
+            icon: const Icon(Icons.help_outline),
+          ),
           PopupMenuButton<String>(
             tooltip: 'Mais opções',
             onSelected: (value) {
