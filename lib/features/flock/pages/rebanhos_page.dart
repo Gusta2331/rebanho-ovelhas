@@ -5,6 +5,7 @@ import '../models/rebanho.dart';
 import '../services/rebanho_service.dart';
 import '../widgets/rebanho_card.dart';
 import 'rebanho_form_page.dart';
+import 'rebanho_help_page.dart';
 
 class RebanhosPage extends StatefulWidget {
   const RebanhosPage({super.key});
@@ -174,6 +175,19 @@ class _RebanhosPageState extends State<RebanhosPage> {
           'Rebanhos',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const RebanhoHelpPage(),
+                ),
+              );
+            },
+            tooltip: 'Ajuda',
+            icon: const Icon(Icons.help_outline),
+          ),
+        ],
       ),
       body: RefreshIndicator(onRefresh: _atualizar, child: _buildBody()),
       floatingActionButton: FloatingActionButton.extended(
