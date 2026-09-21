@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_theme.dart';
-import '../dashboard/dashboard_page.dart';
+import '../farm/pages/farm_check_page.dart';
 import 'services/auth_service.dart';
-
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,6 +14,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -33,6 +33,7 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+
     super.dispose();
   }
 
@@ -46,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
 
     if (isLoggedIn) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const DashboardPage()),
+        MaterialPageRoute(builder: (context) => const FarmCheckPage()),
       );
       return;
     }
@@ -80,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const DashboardPage()),
+        MaterialPageRoute(builder: (context) => const FarmCheckPage()),
       );
     } on AuthException catch (e) {
       if (!mounted) {
@@ -163,7 +164,6 @@ class _LoginPageState extends State<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 24),
-
                     Center(
                       child: Container(
                         width: 88,
@@ -179,9 +179,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
                     const Text(
                       'Fazenda Baixinha',
                       textAlign: TextAlign.center,
@@ -191,17 +189,13 @@ class _LoginPageState extends State<LoginPage> {
                         color: AppTheme.textColor,
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     const Text(
                       'Gestão inteligente do seu rebanho',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 15, color: Colors.black54),
                     ),
-
                     const SizedBox(height: 40),
-
                     const Text(
                       'Bem-vindo de volta!',
                       style: TextStyle(
@@ -210,16 +204,12 @@ class _LoginPageState extends State<LoginPage> {
                         color: AppTheme.textColor,
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     const Text(
                       'Entre com sua conta para continuar.',
                       style: TextStyle(fontSize: 14, color: Colors.black54),
                     ),
-
                     const SizedBox(height: 28),
-
                     const Text(
                       'E-mail',
                       style: TextStyle(
@@ -227,9 +217,7 @@ class _LoginPageState extends State<LoginPage> {
                         fontSize: 14,
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -250,9 +238,7 @@ class _LoginPageState extends State<LoginPage> {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 20),
-
                     const Text(
                       'Senha',
                       style: TextStyle(
@@ -260,9 +246,7 @@ class _LoginPageState extends State<LoginPage> {
                         fontSize: 14,
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _hidePassword,
@@ -296,9 +280,7 @@ class _LoginPageState extends State<LoginPage> {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 8),
-
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -312,9 +294,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     SizedBox(
                       height: 56,
                       child: ElevatedButton(
@@ -336,15 +316,12 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 32),
-
                     const Text(
                       'Fazenda Baixinha • Gestão do rebanho',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 12, color: Colors.black45),
                     ),
-
                     const SizedBox(height: 16),
                   ],
                 ),

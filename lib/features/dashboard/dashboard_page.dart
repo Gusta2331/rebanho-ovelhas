@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../animals/pages/animals_page.dart';
+import '../animals/services/animal_service.dart';
 import '../auth/login_page.dart';
 import '../auth/services/auth_service.dart';
+import '../farm/models/farm.dart';
+import '../farm/services/farm_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -14,6 +17,130 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final AuthService _authService = AuthService();
+  final FarmService _farmService = FarmService();
+  final AnimalService _animalService = AnimalService();
+
+  Farm? _farm;
+
+  bool _loadingFarm = true;
+  bool _loadingAnimals = true;
+
+  int _totalAnimais = 0;
+  int _totalFemeas = 0;
+  int _totalMachos = 0;
+  int _totalFemeasNaIdadeReproducao = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFarm();
+    _loadAnimals();
+  }
+
+  Future<void> _loadFarm() async {
+    try {
+      final farm = await _farmService.getMinhaFazenda();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _farm = farm;
+        _loadingFarm = false;
+      });
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _loadingFarm = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível carregar os dados da fazenda.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _loadAnimals() async {
+    try {
+      final animais = await _animalService.getAnimaisAtivos();
+
+      final totalFemeas = animais
+          .where((animal) => animal['sexo'] == 'femea')
+          .length;
+
+      final totalMachos = animais
+          .where((animal) => animal['sexo'] == 'macho')
+          .length;
+
+      final dataLimite = _dataLimiteReproducao();
+
+      final totalFemeasNaIdadeReproducao = animais.where((animal) {
+        if (animal['sexo'] != 'femea') {
+          return false;
+        }
+
+        final dataNascimento = _parseDate(animal['data_nascimento']);
+
+        if (dataNascimento == null) {
+          return false;
+        }
+
+        return !dataNascimento.isAfter(dataLimite);
+      }).length;
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _totalAnimais = animais.length;
+        _totalFemeas = totalFemeas;
+        _totalMachos = totalMachos;
+        _totalFemeasNaIdadeReproducao = totalFemeasNaIdadeReproducao;
+        _loadingAnimals = false;
+      });
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _loadingAnimals = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível carregar os animais.')),
+      );
+    }
+  }
+
+  DateTime _dataLimiteReproducao() {
+    final hoje = DateTime.now();
+
+    return DateTime(hoje.year, hoje.month - 8, hoje.day);
+  }
+
+  DateTime? _parseDate(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is DateTime) {
+      return value;
+    }
+
+    if (value is String) {
+      return DateTime.tryParse(value);
+    }
+
+    return null;
+  }
 
   Future<void> _logout() async {
     await _authService.logout();
@@ -68,11 +195,21 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loadingFarm || _loadingAnimals) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: AppTheme.primaryColor),
+        ),
+      );
+    }
+
+    final nomeFazenda = _farm?.nome ?? 'OviGestão';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Fazenda Baixinha',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          nomeFazenda,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
@@ -123,7 +260,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: AppTheme.textColor,
                 ),
               ),
-
               const SizedBox(height: 24),
 
               // Resumo principal
@@ -134,25 +270,25 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: AppTheme.primaryColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Total de animais',
                       style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Text(
-                      '68',
-                      style: TextStyle(
+                      '$_totalAnimais',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Animais cadastrados no rebanho',
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Animais ativos no rebanho',
                       style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
@@ -168,7 +304,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: _AnimalCard(
                       icon: Icons.pets_rounded,
                       title: 'Ovelhas',
-                      value: '52',
+                      value: '$_totalFemeas',
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -176,15 +312,15 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: _AnimalCard(
                       icon: Icons.male_rounded,
                       title: 'Carneiros',
-                      value: '8',
+                      value: '$_totalMachos',
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _AnimalCard(
-                      icon: Icons.child_friendly_rounded,
-                      title: 'Cordeiros',
-                      value: '8',
+                      icon: Icons.favorite_rounded,
+                      title: 'Matrizes',
+                      value: '$_totalFemeasNaIdadeReproducao',
                     ),
                   ),
                 ],
@@ -200,7 +336,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: AppTheme.textColor,
                 ),
               ),
-
               const SizedBox(height: 14),
 
               Row(
@@ -277,7 +412,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: AppTheme.textColor,
                 ),
               ),
-
               const SizedBox(height: 14),
 
               _ManagementItem(
