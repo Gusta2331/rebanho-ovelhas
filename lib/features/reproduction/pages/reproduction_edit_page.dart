@@ -18,7 +18,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
   List<Map<String,dynamic>> _machos = [];
   String? _maeId, _paiId;
   DateTime? _cobertura, _previsao, _parto;
-  late StatusReproducao _status;
+  late StatusReproducao _statusSelecionado;
   bool _carregando = true, _salvando = false;
   String? _erro;
 
