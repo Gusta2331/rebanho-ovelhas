@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+
+import '../../flock/pages/animal_transfer_page.dart';
+import '../../flock/pages/animal_transfer_history_page.dart';
+
+import '../../flock/services/rebanho_selection_service.dart';
+
 import '../models/animal.dart';
+
 import '../widgets/animal_photo.dart';
+
 import '../widgets/animal_descendants.dart';
+
 import '../widgets/animal_family_tree.dart';
+
 import 'animal_form_page.dart';
 
 class AnimalDetailsPage extends StatefulWidget {
   final Animal animal;
+
   final List<Animal> animais;
 
   const AnimalDetailsPage({
@@ -24,10 +35,30 @@ class AnimalDetailsPage extends StatefulWidget {
 class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
   late Animal _animal;
 
+  final RebanhoSelectionService _rebanhoSelectionService =
+      RebanhoSelectionService.instance;
+
+  String? _rebanhoAtualId;
+  String? _rebanhoAtualNome;
+
   @override
   void initState() {
     super.initState();
+
     _animal = widget.animal;
+
+    _carregarRebanhoAtual();
+  }
+
+  void _carregarRebanhoAtual() {
+    final rebanho = _rebanhoSelectionService.rebanhoSelecionado;
+
+    if (rebanho == null) {
+      return;
+    }
+
+    _rebanhoAtualId = rebanho.id;
+    _rebanhoAtualNome = rebanho.nome;
   }
 
   Set<String> _obterBrincosExistentes() {
@@ -59,6 +90,64 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
     });
 
     _retornarAnimalAtualizado();
+  }
+
+  Future<void> _transferirAnimal() async {
+    final rebanhoId = _rebanhoAtualId;
+    final rebanhoNome = _rebanhoAtualNome;
+
+    if (rebanhoId == null || rebanhoNome == null) {
+      _mostrarMensagem(
+        'Não foi possível identificar o rebanho atual do animal.',
+      );
+      return;
+    }
+
+    final resultado = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => AnimalTransferPage(
+          animalId: _animal.id,
+          brinco: _animal.brinco,
+          rebanhoAtualId: rebanhoId,
+          rebanhoAtualNome: rebanhoNome,
+        ),
+      ),
+    );
+
+    if (resultado != true || !mounted) {
+      return;
+    }
+
+    final rebanhoSelecionado = _rebanhoSelectionService.rebanhoSelecionado;
+
+    if (rebanhoSelecionado != null && rebanhoSelecionado.id != rebanhoId) {
+      setState(() {
+        _rebanhoAtualId = rebanhoSelecionado.id;
+        _rebanhoAtualNome = rebanhoSelecionado.nome;
+      });
+    }
+
+    _mostrarMensagem('Animal transferido com sucesso.');
+  }
+
+  Future<void> _abrirHistoricoTransferencias() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => AnimalTransferHistoryPage(
+          animalId: _animal.id,
+          brinco: _animal.brinco,
+        ),
+      ),
+    );
+  }
+
+  void _mostrarMensagem(String mensagem) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   Future<void> _alterarStatus() async {
@@ -179,28 +268,28 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
       case StatusAnimal.ativo:
         mensagem =
             'O animal voltará para a lista de animais ativos.\n\n'
-            'O brinco poderá continuar sendo usado normalmente enquanto '
-            'este animal estiver ativo.';
+            'O brinco continuará registrado permanentemente '
+            'e não poderá ser reutilizado por outro animal.';
         break;
 
       case StatusAnimal.vendido:
         mensagem =
-            'O animal será marcado como vendido e sairá da lista de '
-            'animais ativos.\n\n'
+            'O animal será marcado como vendido e sairá da lista '
+            'de animais ativos.\n\n'
             'O registro continuará salvo no histórico de vendidos.';
         break;
 
       case StatusAnimal.morto:
         mensagem =
-            'O animal será marcado como morto e sairá da lista de '
-            'animais ativos.\n\n'
+            'O animal será marcado como morto e sairá da lista '
+            'de animais ativos.\n\n'
             'O registro continuará salvo no histórico de mortos.';
         break;
 
       case StatusAnimal.descartado:
         mensagem =
-            'O animal será marcado como descartado e sairá da lista de '
-            'animais ativos.\n\n'
+            'O animal será marcado como descartado e sairá da lista '
+            'de animais ativos.\n\n'
             'O registro continuará salvo no histórico de descartados.';
         break;
     }
@@ -415,6 +504,11 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
                 value: _idadeTexto(),
               ),
               _buildInfoRow(
+                icon: Icons.groups_outlined,
+                label: 'Rebanho atual',
+                value: _rebanhoAtualNome ?? 'Não identificado',
+              ),
+              _buildInfoRow(
                 icon: Icons.flag_outlined,
                 label: 'Status',
                 value: _statusTexto(),
@@ -422,6 +516,14 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
               ),
             ],
           ),
+
+          const SizedBox(height: 16),
+
+          _buildTransferCard(),
+
+          const SizedBox(height: 16),
+
+          _buildTransferHistoryCard(),
 
           const SizedBox(height: 16),
 
@@ -468,12 +570,10 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
 
           const SizedBox(height: 16),
 
-          // NOVO: Árvore familiar
           AnimalFamilyTree(animal: _animal, animais: widget.animais),
 
           const SizedBox(height: 16),
 
-          // Reprodução já existente
           AnimalDescendants(animal: _animal, animais: widget.animais),
 
           const SizedBox(height: 12),
@@ -526,6 +626,148 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransferCard() {
+    final temRebanho = _rebanhoAtualId != null && _rebanhoAtualNome != null;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE0E5DC)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.swap_horiz_rounded,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Transferência',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textColor,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Mova este animal para outro rebanho.',
+                      style: TextStyle(fontSize: 13, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: temRebanho ? _transferirAnimal : null,
+              icon: const Icon(Icons.swap_horiz_rounded),
+              label: const Text('Transferir para outro rebanho'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primaryColor,
+                side: const BorderSide(color: AppTheme.primaryColor),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransferHistoryCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE0E5DC)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.history_rounded,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Histórico de transferências',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textColor,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Veja todas as movimentações deste animal.',
+                      style: TextStyle(fontSize: 13, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _abrirHistoricoTransferencias,
+              icon: const Icon(Icons.history_rounded),
+              label: const Text('Ver histórico'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primaryColor,
+                side: const BorderSide(color: AppTheme.primaryColor),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),

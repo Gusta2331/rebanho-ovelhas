@@ -5,10 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../flock/services/rebanho_selection_service.dart';
 import '../models/animal.dart';
 import '../services/animal_service.dart';
-import '../widgets/animal_photo.dart';
 import '../widgets/animal_parent_selector.dart';
+import '../widgets/animal_photo.dart';
 import 'racas_page.dart';
 
 class AnimalFormPage extends StatefulWidget {
@@ -31,7 +32,6 @@ class AnimalFormPage extends StatefulWidget {
 
 class _AnimalFormPageState extends State<AnimalFormPage> {
   final _formKey = GlobalKey<FormState>();
-
   final _brincoController = TextEditingController();
   final _nomeController = TextEditingController();
   final _racaController = TextEditingController();
@@ -40,6 +40,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
   final ImagePicker _imagePicker = ImagePicker();
   final ImageCropper _imageCropper = ImageCropper();
   final AnimalService _animalService = AnimalService();
+
+  final RebanhoSelectionService _rebanhoSelectionService =
+      RebanhoSelectionService.instance;
 
   SexoAnimal _sexoSelecionado = SexoAnimal.femea;
   StatusAnimal _statusSelecionado = StatusAnimal.ativo;
@@ -109,6 +112,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     final brincoNormalizado = _normalizarBrinco(brinco);
 
     for (final animal in widget.animais) {
+      // Durante a edição, o animal pode continuar com o próprio brinco.
       if (animal.id == widget.animalParaEditar?.id) {
         continue;
       }
@@ -361,6 +365,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     switch (sexo) {
       case SexoAnimal.femea:
         return 'femea';
+
       case SexoAnimal.macho:
         return 'macho';
     }
@@ -370,10 +375,13 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     switch (status) {
       case StatusAnimal.ativo:
         return 'ativo';
+
       case StatusAnimal.vendido:
         return 'vendido';
+
       case StatusAnimal.morto:
         return 'morto';
+
       case StatusAnimal.descartado:
         return 'descartado';
     }
@@ -394,6 +402,18 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       return;
     }
 
+    final rebanhoSelecionado = _rebanhoSelectionService.rebanhoSelecionado;
+
+    if (rebanhoSelecionado == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selecione um rebanho antes de cadastrar o animal.'),
+        ),
+      );
+
+      return;
+    }
+
     setState(() {
       _salvando = true;
     });
@@ -401,9 +421,12 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     try {
       final animalAnterior = widget.animalParaEditar;
 
+      Map<String, dynamic> dadosSalvos;
+
       if (animalAnterior == null) {
-        await _animalService.criarAnimal(
+        dadosSalvos = await _animalService.criarAnimal(
           brinco: brinco,
+          rebanhoId: rebanhoSelecionado.id,
           nome: _nomeController.text,
           sexo: _sexoParaBanco(_sexoSelecionado),
           raca: _racaController.text,
@@ -412,28 +435,41 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
           dataEntrada: DateTime.now(),
           observacoes: _observacoesController.text,
           fotoUrl: null,
-          maeId: null,
-          paiId: null,
+
+          // A filiação é salva no Supabase.
+          maeId: _maeSelecionada?.id,
+          paiId: _paiSelecionado?.id,
         );
       } else {
-        await _animalService.atualizarAnimal(
+        dadosSalvos = await _animalService.atualizarAnimal(
           id: animalAnterior.id,
           brinco: brinco,
+          rebanhoId: rebanhoSelecionado.id,
           nome: _nomeController.text,
           sexo: _sexoParaBanco(_sexoSelecionado),
           raca: _racaController.text,
           dataNascimento: _dataNascimento,
           status: _statusParaBanco(_statusSelecionado),
+
+          // Null aqui não deve apagar a data de entrada
+          // já existente. O service preserva a informação
+          // atual no banco quando necessário.
           dataEntrada: null,
+
           dataSaida: _statusSelecionado == StatusAnimal.ativo
               ? null
               : DateTime.now(),
+
           observacoes: _observacoesController.text,
           fotoUrl: null,
-          maeId: null,
-          paiId: null,
+
+          // Mantém a filiação durante a edição.
+          maeId: _maeSelecionada?.id,
+          paiId: _paiSelecionado?.id,
         );
       }
+
+      final animalSalvo = Animal.fromMap(dadosSalvos);
 
       if (!mounted) {
         return;
@@ -449,7 +485,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
         ),
       );
 
-      Navigator.of(context).pop(true);
+      // A tela anterior recebe o animal realmente salvo
+      // no Supabase.
+      Navigator.of(context).pop(animalSalvo);
     } catch (error) {
       if (!mounted) {
         return;
@@ -492,10 +530,13 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     switch (status) {
       case StatusAnimal.ativo:
         return 'Ativo';
+
       case StatusAnimal.vendido:
         return 'Vendido';
+
       case StatusAnimal.morto:
         return 'Morto';
+
       case StatusAnimal.descartado:
         return 'Descartado';
     }
@@ -505,10 +546,13 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     switch (status) {
       case StatusAnimal.ativo:
         return Icons.check_circle_outline_rounded;
+
       case StatusAnimal.vendido:
         return Icons.sell_outlined;
+
       case StatusAnimal.morto:
         return Icons.cancel_outlined;
+
       case StatusAnimal.descartado:
         return Icons.remove_circle_outline_rounded;
     }
@@ -612,7 +656,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
-
               TextFormField(
                 controller: _brincoController,
                 readOnly: _salvando,
@@ -637,24 +680,22 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                   if (_brincoExiste(value)) {
                     return 'O brinco '
                         '${numero.toString().padLeft(3, '0')} '
-                        'já está cadastrado.';
+                        'já foi utilizado.';
                   }
 
                   return null;
                 },
               ),
-
               const Padding(
                 padding: EdgeInsets.only(top: 6, left: 12),
                 child: Text(
-                  'O número do brinco pode ser alterado, '
-                  'mas nunca pode ser igual ao de outro animal.',
+                  'O número do brinco é permanente e nunca pode '
+                  'ser reutilizado por outro animal, mesmo após '
+                  'venda, morte ou descarte.',
                   style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
               ),
-
               const SizedBox(height: 10),
-
               SizedBox(
                 height: 46,
                 child: OutlinedButton.icon(
@@ -679,7 +720,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
-
               TextFormField(
                 controller: _nomeController,
                 readOnly: _salvando,
@@ -698,7 +738,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
-
               SegmentedButton<SexoAnimal>(
                 segments: const [
                   ButtonSegment<SexoAnimal>(
@@ -746,7 +785,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
-
               InkWell(
                 onTap: _salvando ? null : _selecionarRaca,
                 borderRadius: BorderRadius.circular(14),
@@ -767,7 +805,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                   ),
                 ),
               ),
-
               if (_racaController.text.isEmpty)
                 const Padding(
                   padding: EdgeInsets.only(top: 6, left: 12),
@@ -785,7 +822,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
-
               InkWell(
                 onTap: _salvando ? null : _selecionarDataNascimento,
                 borderRadius: BorderRadius.circular(14),
@@ -872,7 +908,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
-
               DropdownButtonFormField<StatusAnimal>(
                 initialValue: _statusSelecionado,
                 decoration: const InputDecoration(
@@ -911,7 +946,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
-
               TextFormField(
                 controller: _observacoesController,
                 readOnly: _salvando,

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'supabase_service.dart';
 
 class SupabaseConnectionTest {
@@ -7,7 +9,7 @@ class SupabaseConnectionTest {
 
       return true;
     } catch (e) {
-      print('Erro ao conectar com o Supabase: $e');
+      debugPrint('Erro ao conectar com o Supabase: $e');
       return false;
     }
   }

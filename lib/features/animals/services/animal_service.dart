@@ -22,53 +22,67 @@ class AnimalService {
     return fazenda?['id'] as String?;
   }
 
-  Future<List<Map<String, dynamic>>> getAnimaisAtivos() async {
+  Future<List<Map<String, dynamic>>> getAnimaisAtivos({
+    String? rebanhoId,
+  }) async {
     final fazendaId = await _getMinhaFazendaId();
 
     if (fazendaId == null) {
       return [];
     }
 
-    final animais = await _client
+    var consulta = _client
         .from('animais')
-        .select()
+        .select('*, racas(nome)')
         .eq('fazenda_id', fazendaId)
-        .eq('status', 'ativo')
-        .order('brinco');
+        .eq('status', 'ativo');
+
+    if (rebanhoId != null) {
+      consulta = consulta.eq('rebanho_id', rebanhoId);
+    }
+
+    final animais = await consulta.order('brinco');
 
     return List<Map<String, dynamic>>.from(animais);
   }
 
-  Future<List<Map<String, dynamic>>> getTodosAnimais() async {
+  Future<List<Map<String, dynamic>>> getTodosAnimais({
+    String? rebanhoId,
+  }) async {
     final fazendaId = await _getMinhaFazendaId();
 
     if (fazendaId == null) {
       return [];
     }
 
-    final animais = await _client
+    var consulta = _client
         .from('animais')
-        .select()
-        .eq('fazenda_id', fazendaId)
-        .order('brinco');
+        .select('*, racas(nome)')
+        .eq('fazenda_id', fazendaId);
+
+    if (rebanhoId != null) {
+      consulta = consulta.eq('rebanho_id', rebanhoId);
+    }
+
+    final animais = await consulta.order('brinco');
 
     return List<Map<String, dynamic>>.from(animais);
   }
 
-  Future<int> getTotalAnimaisAtivos() async {
-    final animais = await getAnimaisAtivos();
+  Future<int> getTotalAnimaisAtivos({String? rebanhoId}) async {
+    final animais = await getAnimaisAtivos(rebanhoId: rebanhoId);
 
     return animais.length;
   }
 
-  Future<int> getTotalFemeasAtivas() async {
-    final animais = await getAnimaisAtivos();
+  Future<int> getTotalFemeasAtivas({String? rebanhoId}) async {
+    final animais = await getAnimaisAtivos(rebanhoId: rebanhoId);
 
     return animais.where((animal) => animal['sexo'] == 'femea').length;
   }
 
-  Future<int> getTotalMachosAtivos() async {
-    final animais = await getAnimaisAtivos();
+  Future<int> getTotalMachosAtivos({String? rebanhoId}) async {
+    final animais = await getAnimaisAtivos(rebanhoId: rebanhoId);
 
     return animais.where((animal) => animal['sexo'] == 'macho').length;
   }
@@ -150,8 +164,24 @@ class AnimalService {
     return raca?['id'] as String?;
   }
 
+  Future<bool> _rebanhoPertenceAFazenda({
+    required String rebanhoId,
+    required String fazendaId,
+  }) async {
+    final rebanho = await _client
+        .from('rebanhos')
+        .select('id')
+        .eq('id', rebanhoId)
+        .eq('fazenda_id', fazendaId)
+        .eq('ativo', true)
+        .maybeSingle();
+
+    return rebanho != null;
+  }
+
   Future<Map<String, dynamic>> criarAnimal({
     required int brinco,
+    required String rebanhoId,
     String? nome,
     required String sexo,
     required String raca,
@@ -169,6 +199,17 @@ class AnimalService {
       throw Exception('Nenhuma fazenda ativa foi encontrada.');
     }
 
+    final rebanhoValido = await _rebanhoPertenceAFazenda(
+      rebanhoId: rebanhoId,
+      fazendaId: fazendaId,
+    );
+
+    if (!rebanhoValido) {
+      throw Exception(
+        'O rebanho selecionado não pertence à fazenda atual ou está inativo.',
+      );
+    }
+
     final disponivel = await brincoDisponivel(brinco: brinco);
 
     if (!disponivel) {
@@ -179,6 +220,7 @@ class AnimalService {
 
     final dados = <String, dynamic>{
       'fazenda_id': fazendaId,
+      'rebanho_id': rebanhoId,
       'brinco': brinco,
       'nome': nome?.trim().isEmpty == true ? null : nome?.trim(),
       'sexo': sexo,
@@ -197,7 +239,7 @@ class AnimalService {
     final resultado = await _client
         .from('animais')
         .insert(dados)
-        .select()
+        .select('*, racas(nome)')
         .single();
 
     return Map<String, dynamic>.from(resultado);
@@ -206,6 +248,7 @@ class AnimalService {
   Future<Map<String, dynamic>> atualizarAnimal({
     required String id,
     required int brinco,
+    required String rebanhoId,
     String? nome,
     required String sexo,
     required String raca,
@@ -224,6 +267,17 @@ class AnimalService {
       throw Exception('Nenhuma fazenda ativa foi encontrada.');
     }
 
+    final rebanhoValido = await _rebanhoPertenceAFazenda(
+      rebanhoId: rebanhoId,
+      fazendaId: fazendaId,
+    );
+
+    if (!rebanhoValido) {
+      throw Exception(
+        'O rebanho selecionado não pertence à fazenda atual ou está inativo.',
+      );
+    }
+
     final disponivel = await brincoDisponivel(
       brinco: brinco,
       animalIdAtual: id,
@@ -236,6 +290,7 @@ class AnimalService {
     final racaId = await _buscarRacaId(nome: raca, fazendaId: fazendaId);
 
     final dados = <String, dynamic>{
+      'rebanho_id': rebanhoId,
       'brinco': brinco,
       'nome': nome?.trim().isEmpty == true ? null : nome?.trim(),
       'sexo': sexo,
@@ -258,7 +313,7 @@ class AnimalService {
         .update(dados)
         .eq('id', id)
         .eq('fazenda_id', fazendaId)
-        .select()
+        .select('*, racas(nome)')
         .single();
 
     return Map<String, dynamic>.from(resultado);

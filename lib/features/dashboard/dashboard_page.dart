@@ -7,6 +7,15 @@ import '../auth/login_page.dart';
 import '../auth/services/auth_service.dart';
 import '../farm/models/farm.dart';
 import '../farm/services/farm_service.dart';
+import '../flock/models/rebanho.dart';
+import '../flock/pages/rebanho_form_page.dart';
+import '../flock/pages/rebanhos_page.dart';
+import '../flock/services/rebanho_selection_service.dart';
+import '../flock/services/rebanho_service.dart';
+import 'widgets/animal_card.dart';
+import 'widgets/management_item.dart';
+import 'widgets/quick_action.dart';
+import 'widgets/rebanho_selector.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -19,11 +28,19 @@ class _DashboardPageState extends State<DashboardPage> {
   final AuthService _authService = AuthService();
   final FarmService _farmService = FarmService();
   final AnimalService _animalService = AnimalService();
+  final RebanhoService _rebanhoService = RebanhoService();
+
+  final RebanhoSelectionService _rebanhoSelectionService =
+      RebanhoSelectionService.instance;
 
   Farm? _farm;
 
+  List<Rebanho> _rebanhos = [];
+  Rebanho? _rebanhoSelecionado;
+
   bool _loadingFarm = true;
   bool _loadingAnimals = true;
+  bool _loadingRebanhos = true;
 
   int _totalAnimais = 0;
   int _totalFemeas = 0;
@@ -33,8 +50,9 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+
     _loadFarm();
-    _loadAnimals();
+    _loadRebanhos();
   }
 
   Future<void> _loadFarm() async {
@@ -49,7 +67,7 @@ class _DashboardPageState extends State<DashboardPage> {
         _farm = farm;
         _loadingFarm = false;
       });
-    } catch (e) {
+    } catch (error) {
       if (!mounted) {
         return;
       }
@@ -58,54 +76,128 @@ class _DashboardPageState extends State<DashboardPage> {
         _loadingFarm = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Não foi possível carregar os dados da fazenda.'),
-        ),
-      );
+      _mostrarErro(error);
+    }
+  }
+
+  Future<void> _loadRebanhos() async {
+    try {
+      final dados = await _rebanhoService.getRebanhos(somenteAtivos: true);
+
+      final rebanhos = dados.map((mapa) => Rebanho.fromMap(mapa)).toList();
+
+      Rebanho? rebanhoSelecionado;
+
+      final idSelecionado = _rebanhoSelectionService.rebanhoSelecionadoId;
+
+      if (idSelecionado != null) {
+        for (final rebanho in rebanhos) {
+          if (rebanho.id == idSelecionado) {
+            rebanhoSelecionado = rebanho;
+            break;
+          }
+        }
+      }
+
+      rebanhoSelecionado ??= rebanhos.isNotEmpty ? rebanhos.first : null;
+
+      if (rebanhoSelecionado != null) {
+        _rebanhoSelectionService.selecionar(rebanhoSelecionado);
+      } else {
+        _rebanhoSelectionService.limpar();
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _rebanhos = rebanhos;
+        _rebanhoSelecionado = rebanhoSelecionado;
+        _loadingRebanhos = false;
+      });
+
+      await _loadAnimals();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _loadingRebanhos = false;
+        _loadingAnimals = false;
+      });
+
+      _mostrarErro(error);
     }
   }
 
   Future<void> _loadAnimals() async {
+    if (_rebanhoSelecionado == null) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _totalAnimais = 0;
+        _totalFemeas = 0;
+        _totalMachos = 0;
+        _totalFemeasNaIdadeReproducao = 0;
+        _loadingAnimals = false;
+      });
+
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _loadingAnimals = true;
+      });
+    }
+
     try {
       final animais = await _animalService.getAnimaisAtivos();
 
-      final totalFemeas = animais
-          .where((animal) => animal['sexo'] == 'femea')
-          .length;
+      final animaisDoRebanho = animais.where((animal) {
+        return animal['rebanho_id']?.toString() == _rebanhoSelecionado!.id;
+      }).toList();
 
-      final totalMachos = animais
-          .where((animal) => animal['sexo'] == 'macho')
-          .length;
+      int femeas = 0;
+      int machos = 0;
+      int femeasNaIdadeReproducao = 0;
 
-      final dataLimite = _dataLimiteReproducao();
+      for (final animal in animaisDoRebanho) {
+        final sexo = animal['sexo']?.toString().toLowerCase();
 
-      final totalFemeasNaIdadeReproducao = animais.where((animal) {
-        if (animal['sexo'] != 'femea') {
-          return false;
+        if (sexo == 'femea') {
+          femeas++;
+
+          final dataNascimento = _parseDate(animal['data_nascimento']);
+
+          if (dataNascimento != null) {
+            final limite = _dataLimiteReproducao();
+
+            if (!dataNascimento.isAfter(limite)) {
+              femeasNaIdadeReproducao++;
+            }
+          }
+        } else if (sexo == 'macho') {
+          machos++;
         }
-
-        final dataNascimento = _parseDate(animal['data_nascimento']);
-
-        if (dataNascimento == null) {
-          return false;
-        }
-
-        return !dataNascimento.isAfter(dataLimite);
-      }).length;
+      }
 
       if (!mounted) {
         return;
       }
 
       setState(() {
-        _totalAnimais = animais.length;
-        _totalFemeas = totalFemeas;
-        _totalMachos = totalMachos;
-        _totalFemeasNaIdadeReproducao = totalFemeasNaIdadeReproducao;
+        _totalAnimais = animaisDoRebanho.length;
+        _totalFemeas = femeas;
+        _totalMachos = machos;
+        _totalFemeasNaIdadeReproducao = femeasNaIdadeReproducao;
         _loadingAnimals = false;
       });
-    } catch (e) {
+    } catch (error) {
       if (!mounted) {
         return;
       }
@@ -114,16 +206,14 @@ class _DashboardPageState extends State<DashboardPage> {
         _loadingAnimals = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível carregar os animais.')),
-      );
+      _mostrarErro(error);
     }
   }
 
   DateTime _dataLimiteReproducao() {
     final hoje = DateTime.now();
 
-    return DateTime(hoje.year, hoje.month - 8, hoje.day);
+    return DateTime(hoje.year - 1, hoje.month, hoje.day);
   }
 
   DateTime? _parseDate(dynamic value) {
@@ -135,11 +225,66 @@ class _DashboardPageState extends State<DashboardPage> {
       return value;
     }
 
-    if (value is String) {
-      return DateTime.tryParse(value);
+    return DateTime.tryParse(value.toString());
+  }
+
+  Future<void> _selecionarRebanho(Rebanho rebanho) async {
+    _rebanhoSelectionService.selecionar(rebanho);
+
+    if (!mounted) {
+      return;
     }
 
-    return null;
+    setState(() {
+      _rebanhoSelecionado = rebanho;
+    });
+
+    await _loadAnimals();
+  }
+
+  Future<void> _abrirGerenciamentoRebanhos() async {
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => const RebanhosPage()));
+
+    if (!mounted) {
+      return;
+    }
+
+    await _loadRebanhos();
+  }
+
+  Future<void> _criarRebanho() async {
+    final rebanhoCriado = await Navigator.of(context).push<Rebanho>(
+      MaterialPageRoute(builder: (context) => const RebanhoFormPage()),
+    );
+
+    if (rebanhoCriado == null || !mounted) {
+      return;
+    }
+
+    await _loadRebanhos();
+
+    if (!mounted) {
+      return;
+    }
+
+    final novoRebanho = _rebanhos.where(
+      (rebanho) => rebanho.id == rebanhoCriado.id,
+    );
+
+    if (novoRebanho.isNotEmpty) {
+      await _selecionarRebanho(novoRebanho.first);
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Rebanho "${rebanhoCriado.nome}" criado com sucesso.'),
+      ),
+    );
   }
 
   Future<void> _logout() async {
@@ -156,26 +301,23 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _showLogoutConfirmation() async {
-    final shouldLogout = await showDialog<bool>(
+    final confirmar = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Sair da conta'),
           content: const Text('Tem certeza que deseja sair da sua conta?'),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(false);
+                Navigator.of(dialogContext).pop(false);
               },
               child: const Text('Cancelar'),
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(context).pop(true);
+                Navigator.of(dialogContext).pop(true);
               },
-              style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-              ),
               child: const Text('Sair'),
             ),
           ],
@@ -183,463 +325,320 @@ class _DashboardPageState extends State<DashboardPage> {
       },
     );
 
-    if (shouldLogout == true) {
+    if (confirmar == true && mounted) {
       await _logout();
     }
   }
 
-  void _openAnimals() {
-    Navigator.of(context)
+  Future<void> _openAnimals() async {
+    await Navigator.of(context)
         .push(MaterialPageRoute(builder: (context) => const AnimalsPage()));
+
+    if (!mounted) {
+      return;
+    }
+
+    await _loadRebanhos();
+  }
+
+  void _mostrarErro(Object error) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(_mensagemErro(error))));
+  }
+
+  String _mensagemErro(Object error) {
+    final mensagem = error.toString();
+
+    if (mensagem.startsWith('Exception: ')) {
+      return mensagem.substring(11);
+    }
+
+    return mensagem;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loadingFarm || _loadingAnimals) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(color: AppTheme.primaryColor),
-        ),
-      );
-    }
-
-    final nomeFazenda = _farm?.nome ?? 'OviGestão';
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          nomeFazenda,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none_rounded),
-            tooltip: 'Notificações',
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'logout') {
-                _showLogoutConfirmation();
-              }
-            },
-            itemBuilder: (context) {
-              return const [
-                PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout_rounded),
-                      SizedBox(width: 12),
-                      Text('Sair da conta'),
-                    ],
-                  ),
-                ),
-              ];
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+      backgroundColor: const Color(0xFFF7F9F5),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        child: RefreshIndicator(
+          color: AppTheme.primaryColor,
+          onRefresh: () async {
+            await _loadFarm();
+            await _loadRebanhos();
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 20),
+              RebanhoSelector(
+                loading: _loadingRebanhos,
+                rebanhos: _rebanhos,
+                rebanhoSelecionado: _rebanhoSelecionado,
+                onChanged: _selecionarRebanho,
+                onGerenciar: _abrirGerenciamentoRebanhos,
+                onCriar: _criarRebanho,
+              ),
+              const SizedBox(height: 20),
+              _buildTotalCard(),
+              const SizedBox(height: 16),
+              _buildAnimalCards(),
+              const SizedBox(height: 24),
+              _buildSectionTitle('Ações rápidas'),
+              const SizedBox(height: 12),
+              _buildQuickActions(),
+              const SizedBox(height: 24),
+              _buildSectionTitle('Próximos manejos'),
+              const SizedBox(height: 12),
+              _buildManagementItems(),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: _buildBottomNavigationBar(),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Bom dia! 👋',
-                style: TextStyle(fontSize: 16, color: Colors.black54),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Resumo do rebanho',
-                style: TextStyle(
+              Text(
+                _farm?.nome ?? 'Fazenda Baixinha',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textColor,
                 ),
               ),
-              const SizedBox(height: 24),
-
-              // Resumo principal
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Total de animais',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$_totalAnimais',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Animais ativos no rebanho',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Categorias do rebanho
-              Row(
-                children: [
-                  Expanded(
-                    child: _AnimalCard(
-                      icon: Icons.pets_rounded,
-                      title: 'Ovelhas',
-                      value: '$_totalFemeas',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _AnimalCard(
-                      icon: Icons.male_rounded,
-                      title: 'Carneiros',
-                      value: '$_totalMachos',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _AnimalCard(
-                      icon: Icons.favorite_rounded,
-                      title: 'Matrizes',
-                      value: '$_totalFemeasNaIdadeReproducao',
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 28),
-
-              const Text(
-                'Acesso rápido',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textColor,
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _QuickAction(
-                      icon: Icons.pets_rounded,
-                      title: 'Animais',
-                      onTap: _openAnimals,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _QuickAction(
-                      icon: Icons.favorite_border_rounded,
-                      title: 'Reprodução',
-                      onTap: () {},
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _QuickAction(
-                      icon: Icons.medical_services_outlined,
-                      title: 'Saúde',
-                      onTap: () {},
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _QuickAction(
-                      icon: Icons.agriculture_outlined,
-                      title: 'Manejo',
-                      onTap: () {},
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _QuickAction(
-                      icon: Icons.attach_money_rounded,
-                      title: 'Financeiro',
-                      onTap: () {},
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _QuickAction(
-                      icon: Icons.bar_chart_rounded,
-                      title: 'Relatórios',
-                      onTap: () {},
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 28),
-
-              const Text(
-                'Próximos manejos',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textColor,
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              _ManagementItem(
-                icon: Icons.medical_services_outlined,
-                title: 'Vacinação',
-                description: '12 animais precisam ser vacinados',
-                date: 'Hoje',
-              ),
-
-              const SizedBox(height: 10),
-
-              _ManagementItem(
-                icon: Icons.monitor_weight_outlined,
-                title: 'Pesagem',
-                description: 'Pesagem dos cordeiros',
-                date: 'Amanhã',
-              ),
-
-              const SizedBox(height: 10),
-
-              _ManagementItem(
-                icon: Icons.pets_rounded,
-                title: 'Acompanhamento',
-                description: '3 ovelhas próximas do parto',
-                date: 'Esta semana',
+              const SizedBox(height: 4),
+              Text(
+                _loadingFarm ? 'Carregando fazenda...' : 'Gestão do rebanho',
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
               ),
             ],
           ),
         ),
-      ),
-
-      // Menu inferior
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        onDestinationSelected: (index) {
-          if (index == 1) {
-            _openAnimals();
-          }
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard_rounded),
-            label: 'Início',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.pets_outlined),
-            selectedIcon: Icon(Icons.pets_rounded),
-            label: 'Animais',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month_rounded),
-            label: 'Manejo',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.more_horiz_rounded),
-            selectedIcon: Icon(Icons.more_horiz_rounded),
-            label: 'Mais',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AnimalCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-
-  const _AnimalCard({
-    required this.icon,
-    required this.title,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E9E1)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppTheme.primaryColor, size: 25),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textColor,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickAction extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-
-  const _QuickAction({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE5E9E1)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: AppTheme.primaryColor),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        const SizedBox(width: 12),
+        IconButton(
+          onPressed: _showLogoutConfirmation,
+          tooltip: 'Sair',
+          icon: const Icon(Icons.logout_rounded, color: AppTheme.primaryColor),
         ),
-      ),
+      ],
     );
   }
-}
 
-class _ManagementItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-  final String date;
-
-  const _ManagementItem({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.date,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTotalCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E9E1)),
+        color: AppTheme.primaryColor,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(14),
+              color: Colors.white.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: AppTheme.primaryColor),
+            child: const Icon(
+              Icons.groups_rounded,
+              color: Colors.white,
+              size: 30,
+            ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const Text(
+                  'Animais ativos',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+                const SizedBox(height: 2),
                 Text(
-                  title,
+                  _loadingAnimals ? '...' : _totalAnimais.toString(),
                   style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textColor,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: const TextStyle(fontSize: 13, color: Colors.black54),
-                ),
+                if (_rebanhoSelecionado != null)
+                  Text(
+                    _rebanhoSelecionado!.nome,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
               ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            date,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.primaryColor,
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAnimalCards() {
+    return Row(
+      children: [
+        Expanded(
+          child: AnimalCard(
+            icon: Icons.female_rounded,
+            title: 'Fêmeas',
+            value: _loadingAnimals ? '...' : _totalFemeas.toString(),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: AnimalCard(
+            icon: Icons.male_rounded,
+            title: 'Machos',
+            value: _loadingAnimals ? '...' : _totalMachos.toString(),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: AnimalCard(
+            icon: Icons.favorite_rounded,
+            title: 'Fêmeas reprodutoras',
+            value: _loadingAnimals
+                ? '...'
+                : _totalFemeasNaIdadeReproducao.toString(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 19,
+        fontWeight: FontWeight.bold,
+        color: AppTheme.textColor,
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: QuickAction(
+                icon: Icons.add_circle_outline_rounded,
+                title: 'Adicionar animal',
+                onTap: _openAnimals,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: QuickAction(
+                icon: Icons.groups_rounded,
+                title: 'Rebanhos',
+                onTap: _abrirGerenciamentoRebanhos,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: QuickAction(
+                icon: Icons.medical_services_outlined,
+                title: 'Farmácia',
+                onTap: () {},
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: QuickAction(
+                icon: Icons.attach_money_rounded,
+                title: 'Despesas e lucro',
+                onTap: () {},
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildManagementItems() {
+    return Column(
+      children: [
+        ManagementItem(
+          icon: Icons.vaccines_outlined,
+          title: 'Vacinação',
+          description: 'Próxima vacinação do rebanho',
+          date: 'Em breve',
+        ),
+        const SizedBox(height: 12),
+        ManagementItem(
+          icon: Icons.monitor_weight_outlined,
+          title: 'Pesagem',
+          description: 'Acompanhe o peso dos animais',
+          date: 'Em breve',
+        ),
+        const SizedBox(height: 12),
+        ManagementItem(
+          icon: Icons.favorite_border_rounded,
+          title: 'Acompanhamento',
+          description: 'Controle reprodutivo do rebanho',
+          date: 'Em breve',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return NavigationBar(
+      selectedIndex: 0,
+      onDestinationSelected: (index) {
+        if (index == 1) {
+          _openAnimals();
+        }
+      },
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(Icons.home_outlined),
+          selectedIcon: Icon(Icons.home_rounded),
+          label: 'Início',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.pets_outlined),
+          selectedIcon: Icon(Icons.pets_rounded),
+          label: 'Animais',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.assignment_outlined),
+          selectedIcon: Icon(Icons.assignment_rounded),
+          label: 'Manejo',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.more_horiz_rounded),
+          selectedIcon: Icon(Icons.more_horiz_rounded),
+          label: 'Mais',
+        ),
+      ],
     );
   }
 }
