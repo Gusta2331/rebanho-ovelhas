@@ -29,8 +29,7 @@ class ManejoService {
     final resultado = await _client.from('manejos')
         .select('*, animais(brinco, nome)')
         .eq('fazenda_id', fazendaId)
-        .order('data', ascending: false)
-        .order('created_at', ascending: false);
+        .order('data', ascending: false);
     return List<Map<String, dynamic>>.from(resultado);
   }
 
