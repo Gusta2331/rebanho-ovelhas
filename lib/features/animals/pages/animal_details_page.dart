@@ -5,6 +5,7 @@ import '../../flock/pages/animal_transfer_page.dart';
 import '../../flock/pages/animal_transfer_history_page.dart';
 import '../../flock/services/rebanho_selection_service.dart';
 import '../models/animal.dart';
+import '../services/animal_service.dart';
 import '../widgets/animal_photo.dart';
 import '../widgets/animal_descendants.dart';
 import '../widgets/animal_family_tree.dart';
@@ -26,6 +27,9 @@ class AnimalDetailsPage extends StatefulWidget {
 
 class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
   late Animal _animal;
+  late List<Animal> _animaisContexto;
+
+  final AnimalService _animalService = AnimalService();
 
   final RebanhoSelectionService _rebanhoSelectionService =
       RebanhoSelectionService.instance;
@@ -37,7 +41,44 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
   void initState() {
     super.initState();
     _animal = widget.animal;
+    _animaisContexto = List<Animal>.from(widget.animais);
     _carregarRebanhoAtual();
+    _carregarAnimaisRelacionados();
+  }
+
+  Future<void> _carregarAnimaisRelacionados() async {
+    final ids = <String>{
+      if (_animal.idMae != null && _animal.idMae!.isNotEmpty) _animal.idMae!,
+      if (_animal.idPai != null && _animal.idPai!.isNotEmpty) _animal.idPai!,
+    };
+
+    if (ids.isEmpty) {
+      return;
+    }
+
+    try {
+      final registros = await _animalService.getAnimaisPorIds(ids.toList());
+      final relacionados = registros.map(Animal.fromMap).toList();
+
+      if (!mounted || relacionados.isEmpty) {
+        return;
+      }
+
+      setState(() {
+        final porId = <String, Animal>{
+          for (final animal in _animaisContexto) animal.id: animal,
+        };
+
+        for (final animal in relacionados) {
+          porId[animal.id] = animal;
+        }
+
+        _animaisContexto = porId.values.toList();
+      });
+    } catch (_) {
+      // Mantém os dados já carregados na tela caso a atualização dos
+      // animais relacionados não esteja disponível momentaneamente.
+    }
   }
 
   void _carregarRebanhoAtual() {
@@ -65,7 +106,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
       MaterialPageRoute(
         builder: (context) => AnimalFormPage(
           brincosExistentes: _obterBrincosExistentes(),
-          animais: widget.animais,
+          animais: _animaisContexto,
           animalParaEditar: _animal,
         ),
       ),
