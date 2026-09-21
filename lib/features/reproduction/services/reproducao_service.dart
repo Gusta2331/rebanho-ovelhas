@@ -320,7 +320,7 @@ class ReproducaoService {
 
     final reproducao = await _client
         .from('reproducoes')
-        .select('id, fazenda_id, status, data_cobertura')
+        .select('id, fazenda_id, status, data_cobertura, data_previsao_parto')
         .eq('id', reproducaoId)
         .eq('fazenda_id', fazendaId)
         .maybeSingle();
@@ -376,6 +376,11 @@ class ReproducaoService {
 
       if (reproducao['data_cobertura'] == null) {
         atualizacao['data_cobertura'] = _dateOnly(dataMonta);
+      }
+
+      if (reproducao['data_previsao_parto'] == null) {
+        atualizacao['data_previsao_parto'] =
+            _dateOnly(dataMonta.add(const Duration(days: 150)));
       }
 
       await _client
