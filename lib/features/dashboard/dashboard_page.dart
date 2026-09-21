@@ -546,56 +546,47 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildQuickActions() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: QuickAction(
-                icon: Icons.add_circle_outline_rounded,
-                title: 'Adicionar animal',
-                onTap: _openAnimals,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: QuickAction(
-                icon: Icons.groups_rounded,
-                title: 'Rebanhos',
-                onTap: _abrirGerenciamentoRebanhos,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: QuickAction(
-                icon: Icons.favorite_outline_rounded,
-                title: 'Reprodução',
-                onTap: _openReproductions,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: QuickAction(
-                icon: Icons.medical_services_outlined,
-                title: 'Farmácia',
-                onTap: () {},
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: QuickAction(
-                icon: Icons.attach_money_rounded,
-                title: 'Despesas e lucro',
-                onTap: () {},
-              ),
-            ),
-          ],
-        ),
-      ],
+    final acoes = [
+      QuickAction(
+        icon: Icons.add_circle_outline_rounded,
+        title: 'Adicionar animal',
+        onTap: _openAnimals,
+      ),
+      QuickAction(
+        icon: Icons.groups_rounded,
+        title: 'Rebanhos',
+        onTap: _abrirGerenciamentoRebanhos,
+      ),
+      QuickAction(
+        icon: Icons.favorite_outline_rounded,
+        title: 'Reprodução',
+        onTap: _openReproductions,
+      ),
+      QuickAction(
+        icon: Icons.medical_services_outlined,
+        title: 'Farmácia',
+        onTap: () {},
+      ),
+      QuickAction(
+        icon: Icons.attach_money_rounded,
+        title: 'Despesas e lucro',
+        onTap: () {},
+      ),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: acoes.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.65,
+      ),
+      itemBuilder: (context, index) {
+        return acoes[index];
+      },
     );
   }
 
