@@ -27,6 +27,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
 
   final TextEditingController _observacoes = TextEditingController();
   final TextEditingController _vacinaLote = TextEditingController();
+  final TextEditingController _outroNome = TextEditingController();
 
   List<Map<String, dynamic>> _rebanhos = [];
   List<Map<String, dynamic>> _animais = [];
@@ -60,6 +61,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       _famacha = manejo.famachaEscore;
       _observacoes.text = manejo.observacoes ?? '';
       _vacinaLote.text = manejo.vacinaLote ?? '';
+      _outroNome.text = manejo.outroNome ?? '';
     }
 
     _carregarDados();
@@ -69,6 +71,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   void dispose() {
     _observacoes.dispose();
     _vacinaLote.dispose();
+    _outroNome.dispose();
     super.dispose();
   }
 
@@ -295,6 +298,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         vacinaLote: _tipo == TipoManejo.vacinacao
             ? _vacinaLote.text
             : null,
+        outroNome: _tipo == TipoManejo.outro ? _outroNome.text : null,
       );
 
       if (mounted) Navigator.of(context).pop(true);
@@ -341,6 +345,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['fabricante']?.toString()
             : null,
         vacinaLote: _tipo == TipoManejo.vacinacao ? _vacinaLote.text : null,
+        outroNome: _tipo == TipoManejo.outro ? _outroNome.text : null,
       );
 
       if (mounted) Navigator.of(context).pop(true);
@@ -564,6 +569,9 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                             if (value != TipoManejo.vacinacao) {
                               _vacinaSelecionada = null;
                               _vacinaLote.clear();
+                            }
+                            if (value != TipoManejo.outro) {
+                              _outroNome.clear();
                             }
                           });
                         },
