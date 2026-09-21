@@ -470,8 +470,8 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
   }
 
   Future<void> _adicionarVacina() async {
-    final nome = TextEditingController();
-    final fabricante = TextEditingController();
+    String nome = '';
+    String fabricante = '';
 
     final dados = await showDialog<Map<String, String>>(
       context: context,
@@ -481,8 +481,8 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: nome,
               autofocus: true,
+              onChanged: (value) => nome = value,
               decoration: const InputDecoration(
                 labelText: 'Nome da vacina',
                 hintText: 'Ex.: Vacina contra clostridioses',
@@ -490,7 +490,7 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
             ),
             const SizedBox(height: 12),
             TextField(
-              controller: fabricante,
+              onChanged: (value) => fabricante = value,
               decoration: const InputDecoration(
                 labelText: 'Fabricante',
                 hintText: 'Opcional',
@@ -505,10 +505,10 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
           ),
           FilledButton(
             onPressed: () {
-              if (nome.text.trim().isEmpty) return;
+              if (nome.trim().isEmpty) return;
               Navigator.of(dialogContext).pop({
-                'nome': nome.text.trim(),
-                'fabricante': fabricante.text.trim(),
+                'nome': nome.trim(),
+                'fabricante': fabricante.trim(),
               });
             },
             child: const Text('Cadastrar'),
@@ -516,9 +516,6 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
         ],
       ),
     );
-
-    nome.dispose();
-    fabricante.dispose();
 
     if (dados == null || !mounted) return;
 
