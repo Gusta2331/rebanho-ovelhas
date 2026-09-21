@@ -291,13 +291,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         famachaPorAnimal: _famachaPorAnimal,
         observacoes: _observacoes.text,
         vacinaId: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada?['id']?.toString()
+            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString()
             : null,
         vacinaNome: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada?['nome']?.toString()
+            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['nome']?.toString()
             : null,
         vacinaFabricante: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada?['fabricante']?.toString()
+            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['fabricante']?.toString()
             : null,
         vacinaLote: _tipo == TipoManejo.vacinacao
             ? _vacinaLote.text
@@ -339,13 +339,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
         observacoes: _observacoes.text,
         vacinaId: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada?['id']?.toString()
+            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString()
             : null,
         vacinaNome: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada?['nome']?.toString()
+            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['nome']?.toString()
             : null,
         vacinaFabricante: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada?['fabricante']?.toString()
+            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['fabricante']?.toString()
             : null,
         vacinaLote: _tipo == TipoManejo.vacinacao ? _vacinaLote.text : null,
       );
@@ -750,7 +750,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
           const Text('Vacina aplicada', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
-            value: _vacinaSelecionada?['id']?.toString(),
+            value: _vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString(),
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Nome da vacina',
