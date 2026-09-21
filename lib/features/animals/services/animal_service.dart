@@ -350,32 +350,33 @@ class AnimalService {
     final caminho = fotoPath?.trim();
 
     if (caminho != null && caminho.isNotEmpty) {
-      if (caminho.startsWith('http://') ||
-          caminho.startsWith('https://')) {
+      if (caminho.startsWith('http://') || caminho.startsWith('https://')) {
         return caminho;
       }
 
       final arquivo = File(caminho);
 
       if (!await arquivo.exists()) {
-        throw Exception('A foto selecionada não está mais disponível no celular.');
+        throw Exception(
+          'A foto selecionada não está mais disponível no celular.',
+        );
       }
 
       final extensao = _extensaoFoto(caminho);
       final caminhoStorage = '$fazendaId/$animalId.$extensao';
 
-      await _client.storage.from('animal-fotos').upload(
-        caminhoStorage,
-        arquivo,
-        fileOptions: FileOptions(
-          contentType: _contentTypeFoto(extensao),
-          upsert: true,
-        ),
-      );
-
-      return _client.storage
+      await _client.storage
           .from('animal-fotos')
-          .getPublicUrl(caminhoStorage);
+          .upload(
+            caminhoStorage,
+            arquivo,
+            fileOptions: FileOptions(
+              contentType: _contentTypeFoto(extensao),
+              upsert: true,
+            ),
+          );
+
+      return _client.storage.from('animal-fotos').getPublicUrl(caminhoStorage);
     }
 
     final url = fotoUrl?.trim();
@@ -424,5 +425,4 @@ class AnimalService {
         return 'image/jpeg';
     }
   }
-
 }

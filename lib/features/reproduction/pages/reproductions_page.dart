@@ -146,9 +146,7 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
   Future<void> _abrirDetalhes(Reproducao reproducao) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ReproductionDetailsPage(
-          reproducao: reproducao,
-        ),
+        builder: (_) => ReproductionDetailsPage(reproducao: reproducao),
       ),
     );
 
@@ -158,11 +156,8 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
   }
 
   void _abrirAjuda() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const ReproductionHelpPage(),
-      ),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const ReproductionHelpPage()));
   }
 
   Future<void> _atualizar() async {

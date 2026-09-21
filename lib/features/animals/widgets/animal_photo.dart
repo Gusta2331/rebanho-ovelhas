@@ -52,10 +52,7 @@ class AnimalPhoto extends StatelessWidget {
                   fotoPath!,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.broken_image_outlined,
-                      size: 72,
-                    );
+                    return const Icon(Icons.broken_image_outlined, size: 72);
                   },
                 ),
               ),

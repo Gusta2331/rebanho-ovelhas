@@ -448,11 +448,9 @@ class _AnimalsPageState extends State<AnimalsPage> {
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const AnimalHelpPage(),
-                ),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const AnimalHelpPage()));
             },
             tooltip: 'Ajuda',
             icon: const Icon(Icons.help_outline),

@@ -179,9 +179,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const RebanhoHelpPage(),
-                ),
+                MaterialPageRoute(builder: (_) => const RebanhoHelpPage()),
               );
             },
             tooltip: 'Ajuda',

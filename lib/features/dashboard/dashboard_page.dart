@@ -332,11 +332,9 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _openReproductions() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const ReproductionsPage(),
-      ),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const ReproductionsPage()));
   }
 
   Future<void> _openAnimals() async {

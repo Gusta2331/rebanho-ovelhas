@@ -379,8 +379,9 @@ class ReproducaoService {
       }
 
       if (reproducao['data_previsao_parto'] == null) {
-        atualizacao['data_previsao_parto'] =
-            _dateOnly(dataMonta.add(const Duration(days: 150)));
+        atualizacao['data_previsao_parto'] = _dateOnly(
+          dataMonta.add(const Duration(days: 150)),
+        );
       }
 
       await _client

@@ -8,33 +8,26 @@ class RebanhoHelpPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ajuda sobre rebanhos'),
-      ),
+      appBar: AppBar(title: const Text('Ajuda sobre rebanhos')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           _intro(context),
           const SizedBox(height: 16),
-          _section(
-            context,
-            'O que é um rebanho?',
-            Icons.groups_outlined,
-            [
-              _item(
-                'Rebanho',
-                'É um grupo de animais organizado dentro da fazenda. Uma fazenda pode ter vários rebanhos.',
-              ),
-              _item(
-                'Quantidade de animais',
-                'Mostra quantos animais ativos estão atualmente naquele rebanho.',
-              ),
-              _item(
-                'Nome',
-                'É a identificação usada para diferenciar um rebanho dos outros, como Rebanho 01 ou Rebanho 02.',
-              ),
-            ],
-          ),
+          _section(context, 'O que é um rebanho?', Icons.groups_outlined, [
+            _item(
+              'Rebanho',
+              'É um grupo de animais organizado dentro da fazenda. Uma fazenda pode ter vários rebanhos.',
+            ),
+            _item(
+              'Quantidade de animais',
+              'Mostra quantos animais ativos estão atualmente naquele rebanho.',
+            ),
+            _item(
+              'Nome',
+              'É a identificação usada para diferenciar um rebanho dos outros, como Rebanho 01 ou Rebanho 02.',
+            ),
+          ]),
           const SizedBox(height: 16),
           _section(
             context,
@@ -56,21 +49,16 @@ class RebanhoHelpPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _section(
-            context,
-            'Ativo e inativo',
-            Icons.toggle_on_outlined,
-            [
-              _item(
-                'Rebanho ativo',
-                'Pode ser utilizado normalmente e pode receber animais.',
-              ),
-              _item(
-                'Rebanho inativo',
-                'Deixa de ser usado como rebanho ativo, mas seus registros são preservados.',
-              ),
-            ],
-          ),
+          _section(context, 'Ativo e inativo', Icons.toggle_on_outlined, [
+            _item(
+              'Rebanho ativo',
+              'Pode ser utilizado normalmente e pode receber animais.',
+            ),
+            _item(
+              'Rebanho inativo',
+              'Deixa de ser usado como rebanho ativo, mas seus registros são preservados.',
+            ),
+          ]),
           const SizedBox(height: 16),
           _section(
             context,
@@ -114,9 +102,8 @@ class RebanhoHelpPage extends StatelessWidget {
             Expanded(
               child: Text(
                 'Os rebanhos servem para organizar os animais da fazenda em grupos. Eles não representam categorias como “matrizes” ou “cordeiros”.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      height: 1.5,
-                    ),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(height: 1.5),
               ),
             ),
           ],
@@ -143,9 +130,8 @@ class RebanhoHelpPage extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   titulo,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -163,17 +149,11 @@ class RebanhoHelpPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            titulo,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
+          Text(titulo, style: const TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
           Text(
             descricao,
-            style: TextStyle(
-              color: Colors.grey.shade700,
-              height: 1.4,
-            ),
+            style: TextStyle(color: Colors.grey.shade700, height: 1.4),
           ),
         ],
       ),
@@ -190,10 +170,7 @@ class RebanhoHelpPage extends StatelessWidget {
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.lightbulb_outline_rounded,
-            color: AppTheme.primaryColor,
-          ),
+          Icon(Icons.lightbulb_outline_rounded, color: AppTheme.primaryColor),
           SizedBox(width: 10),
           Expanded(
             child: Text(

@@ -16,7 +16,8 @@ class ReproductionDetailsPage extends StatefulWidget {
   const ReproductionDetailsPage({super.key, required this.reproducao});
 
   @override
-  State<ReproductionDetailsPage> createState() => _ReproductionDetailsPageState();
+  State<ReproductionDetailsPage> createState() =>
+      _ReproductionDetailsPageState();
 }
 
 class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
@@ -38,10 +39,12 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
   }
 
   Future<void> _carregar() async {
-    if (mounted) setState(() {
-      _carregando = true;
-      _erro = null;
-    });
+    if (mounted) {
+      setState(() {
+        _carregando = true;
+        _erro = null;
+      });
+    }
 
     try {
       final dados = await Future.wait([
@@ -62,9 +65,7 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
         _reproducao = r;
         _montasLista = dados[1] as List<Monta>;
         _nascimentosLista = dados[2] as List<ReproducaoNascimento>;
-        _animais = {
-          for (final a in animais) a['id'].toString(): a,
-        };
+        _animais = {for (final a in animais) a['id'].toString(): a};
         _carregando = false;
       });
     } catch (e) {
@@ -83,11 +84,7 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
 
   String _data(DateTime? d) {
     if (d == null) return 'Não informada';
-    return d.day.toString().padLeft(2, '0') +
-        '/' +
-        d.month.toString().padLeft(2, '0') +
-        '/' +
-        d.year.toString();
+    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
   }
 
   String _animal(String id) {
@@ -173,10 +170,8 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
   Future<void> _editarMonta(Monta monta) async {
     final resultado = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => MontaFormPage(
-          reproducaoId: _reproducao.id,
-          monta: monta,
-        ),
+        builder: (_) =>
+            MontaFormPage(reproducaoId: _reproducao.id, monta: monta),
       ),
     );
 
@@ -224,8 +219,7 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
   Future<void> _excluirNascimento(ReproducaoNascimento nascimento) async {
     final confirmar = await _confirmar(
       titulo: 'Desvincular nascimento?',
-      mensagem:
-          'O nascimento será removido da reprodução, mas o animal não será apagado do rebanho.',
+      mensagem: 'O nascimento será removido da reprodução, mas o animal não será apagado do rebanho.',
       textoBotao: 'Desvincular',
     );
 
@@ -248,8 +242,7 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
   Future<void> _excluirReproducao() async {
     final confirmar = await _confirmar(
       titulo: 'Excluir reprodução?',
-      mensagem:
-          'A reprodução só poderá ser excluída se não possuir montas ou nascimentos.',
+      mensagem: 'A reprodução só poderá ser excluída se não possuir montas ou nascimentos.',
       textoBotao: 'Excluir',
     );
 
@@ -380,7 +373,10 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: AppTheme.primaryColor.withValues(alpha: .10),
-          child: const Icon(Icons.favorite_outline, color: AppTheme.primaryColor),
+          child: const Icon(
+            Icons.favorite_outline,
+            color: AppTheme.primaryColor,
+          ),
         ),
         title: const Text(
           'Reprodução',
@@ -438,10 +434,7 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
         children: [
           SizedBox(
             width: 130,
-            child: Text(
-              titulo,
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
+            child: Text(titulo, style: TextStyle(color: Colors.grey.shade600)),
           ),
           Expanded(
             child: Text(
@@ -486,10 +479,7 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
                   leading: const Icon(Icons.male, color: AppTheme.primaryColor),
                   title: Text(_animal(m.carneiroId)),
                   subtitle: Text(
-                    'Data: ' + _data(m.dataMonta) +
-                        (m.observacoes?.trim().isNotEmpty == true
-                            ? '\n' + m.observacoes!.trim()
-                            : ''),
+                    'Data: ${_data(m.dataMonta)}${m.observacoes?.trim().isNotEmpty == true ? '\n${m.observacoes!.trim()}' : ''}',
                   ),
                   isThreeLine: m.observacoes?.trim().isNotEmpty == true,
                   trailing: PopupMenuButton<String>(
@@ -545,9 +535,7 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
                   ),
                   title: Text(_animal(n.animalId)),
                   subtitle: Text(
-                    (n.sexo == SexoNascimento.femea ? 'Fêmea' : 'Macho') +
-                        ' • ' +
-                        _data(n.dataNascimento),
+                    '${n.sexo == SexoNascimento.femea ? 'Fêmea' : 'Macho'} • ${_data(n.dataNascimento)}',
                   ),
                   trailing: PopupMenuButton<String>(
                     onSelected: (v) {
@@ -588,9 +576,6 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
   }
 
   Widget _vazio(String texto) {
-    return Text(
-      texto,
-      style: TextStyle(color: Colors.grey.shade600),
-    );
+    return Text(texto, style: TextStyle(color: Colors.grey.shade600));
   }
 }
