@@ -142,7 +142,9 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
               ),
               const SizedBox(height: 10),
               Text(
-                _tipo(manejo.tipo),
+                manejo.tipo == TipoManejo.outro && manejo.outroNome != null
+                    ? manejo.outroNome!
+                    : _tipo(manejo.tipo),
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -164,6 +166,12 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
             'Escore FAMACHA',
             manejo.famachaEscore.toString(),
             Icons.visibility_outlined,
+          ),
+        if (manejo.tipo == TipoManejo.outro && manejo.outroNome != null)
+          _item(
+            'Tipo de manejo',
+            manejo.outroNome!,
+            Icons.edit_note_outlined,
           ),
         if (manejo.tipo == TipoManejo.vacinacao &&
             manejo.vacinaNome != null)
