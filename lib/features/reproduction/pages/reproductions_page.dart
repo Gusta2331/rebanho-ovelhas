@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/reproducao.dart';
 import '../services/reproducao_service.dart';
+import 'reproduction_details_page.dart';
 import 'reproduction_form_page.dart';
 
 class ReproductionsPage extends StatefulWidget {
@@ -141,12 +142,18 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
     }
   }
 
-  void _abrirDetalhes(Reproducao reproducao) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('A tela de detalhes será adicionada na próxima etapa.'),
+  Future<void> _abrirDetalhes(Reproducao reproducao) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ReproductionDetailsPage(
+          reproducao: reproducao,
+        ),
       ),
     );
+
+    if (mounted) {
+      await _carregarReproducoes();
+    }
   }
 
   Future<void> _atualizar() async {
