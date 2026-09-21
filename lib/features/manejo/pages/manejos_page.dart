@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
 import 'manejo_form_page.dart';
+import 'manejo_details_page.dart';
 
 class ManejosPage extends StatefulWidget {
   const ManejosPage({super.key});
@@ -44,6 +45,13 @@ class _ManejosPageState extends State<ManejosPage> {
         _erro = e.toString().replaceFirst('Exception: ', '');
       });
     }
+  }
+
+  void _mensagem(String texto) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(texto)),
+    );
   }
 
   Future<void> _novo() async {
@@ -199,6 +207,77 @@ class _ManejosPageState extends State<ManejosPage> {
                     ),
                     child: Text('F' + manejo.famachaEscore.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
+                PopupMenuButton<String>(
+                  onSelected: (acao) async {
+                    if (acao == 'detalhes') {
+                      if (!mounted) return;
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ManejoDetailsPage(manejoId: manejo.id),
+                        ),
+                      );
+                    }
+
+                    if (acao == 'editar') {
+                      final resultado = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute(
+                          builder: (_) => ManejoFormPage(manejo: manejo),
+                        ),
+                      );
+                      if (resultado == true && mounted) await _carregar();
+                    }
+
+                    if (acao == 'excluir') {
+                      final confirmar = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Excluir manejo?'),
+                          content: const Text(
+                            'Este registro será removido do histórico. Essa ação não pode ser desfeita.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancelar'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Excluir'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirmar != true || !mounted) return;
+
+                      try {
+                        await _service.excluirManejo(manejo.id);
+                        if (!mounted) return;
+                        _mensagem('Manejo excluído.');
+                        await _carregar();
+                      } catch (e) {
+                        if (!mounted) return;
+                        _mensagem(
+                          e.toString().replaceFirst('Exception: ', ''),
+                        );
+                      }
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(
+                      value: 'detalhes',
+                      child: Text('Ver detalhes'),
+                    ),
+                    PopupMenuItem(
+                      value: 'editar',
+                      child: Text('Editar'),
+                    ),
+                    PopupMenuItem(
+                      value: 'excluir',
+                      child: Text('Excluir'),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
