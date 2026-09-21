@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../animals/services/animal_service.dart';
 import '../models/reproducao.dart';
 import '../services/reproducao_service.dart';
 import 'reproduction_details_page.dart';
@@ -16,6 +17,9 @@ class ReproductionsPage extends StatefulWidget {
 
 class _ReproductionsPageState extends State<ReproductionsPage> {
   final ReproducaoService _service = ReproducaoService();
+  final AnimalService _animalService = AnimalService();
+
+  Map<String, Map<String, dynamic>> _animais = {};
 
   List<Reproducao> _reproducoes = [];
 
@@ -40,6 +44,13 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
 
     try {
       final reproducoes = await _service.getReproducoes();
+      final ids = <String>{
+        for (final reproducao in reproducoes) ...[
+          reproducao.maeId,
+          if (reproducao.paiId != null) reproducao.paiId!,
+        ],
+      };
+      final animais = await _animalService.getAnimaisPorIds(ids.toList());
 
       if (!mounted) {
         return;
@@ -47,6 +58,7 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
 
       setState(() {
         _reproducoes = reproducoes;
+        _animais = {for (final animal in animais) animal['id'].toString(): animal};
         _carregando = false;
       });
     } catch (e) {
@@ -501,10 +513,22 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
   }
 
   String _identificador(String id) {
-    if (id.length <= 8) {
-      return id;
+    final animal = _animais[id];
+
+    if (animal == null) {
+      return 'Animal não encontrado';
     }
 
-    return '${id.substring(0, 8)}...';
+    final brinco = animal['brinco'];
+    final identificacao = brinco is num
+        ? brinco.toInt().toString().padLeft(3, '0')
+        : (brinco?.toString() ?? 'Sem brinco');
+    final nome = animal['nome']?.toString().trim();
+
+    if (nome != null && nome.isNotEmpty) {
+      return '$identificacao • $nome';
+    }
+
+    return 'Brinco $identificacao';
   }
 }
