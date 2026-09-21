@@ -19,6 +19,11 @@ class _ManejosPageState extends State<ManejosPage> {
   bool _carregando = true;
   String? _erro;
 
+  String _busca = '';
+  TipoManejo? _tipoFiltro;
+  String? _animalFiltro;
+  DateTimeRange? _periodoFiltro;
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +50,188 @@ class _ManejosPageState extends State<ManejosPage> {
         _erro = e.toString().replaceFirst('Exception: ', '');
       });
     }
+  }
+
+
+  List<Map<String, dynamic>> get _manejosFiltrados {
+    return _manejos.where((registro) {
+      final manejo = Manejo.fromMap(registro);
+      final animal = registro['animais'];
+      final textoAnimal = animal is Map
+          ? (animal['brinco']?.toString() ?? '') + ' ' +
+              (animal['nome']?.toString() ?? '').toLowerCase()
+          : '';
+      final busca = _busca.trim().toLowerCase();
+
+      if (busca.isNotEmpty &&
+          !textoAnimal.toLowerCase().contains(busca) &&
+          !_tipo(manejo.tipo).toLowerCase().contains(busca) &&
+          !(manejo.observacoes ?? '').toLowerCase().contains(busca)) {
+        return false;
+      }
+
+      if (_tipoFiltro != null && manejo.tipo != _tipoFiltro) return false;
+      if (_animalFiltro != null && manejo.animalId != _animalFiltro) return false;
+
+      if (_periodoFiltro != null) {
+        final data = DateTime(manejo.data.year, manejo.data.month, manejo.data.day);
+        final inicio = DateTime(
+          _periodoFiltro!.start.year,
+          _periodoFiltro!.start.month,
+          _periodoFiltro!.start.day,
+        );
+        final fim = DateTime(
+          _periodoFiltro!.end.year,
+          _periodoFiltro!.end.month,
+          _periodoFiltro!.end.day,
+          23,
+          59,
+          59,
+        );
+        if (data.isBefore(inicio) || data.isAfter(fim)) return false;
+      }
+
+      return true;
+    }).toList();
+  }
+
+  Future<void> _escolherPeriodo() async {
+    final periodo = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      initialDateRange: _periodoFiltro,
+      locale: const Locale('pt', 'BR'),
+      helpText: 'Selecione o período',
+      saveText: 'Aplicar',
+    );
+
+    if (periodo != null && mounted) {
+      setState(() => _periodoFiltro = periodo);
+    }
+  }
+
+  void _limparFiltros() {
+    setState(() {
+      _busca = '';
+      _tipoFiltro = null;
+      _animalFiltro = null;
+      _periodoFiltro = null;
+    });
+  }
+
+  Widget _filtros() {
+    final animais = <String, String>{};
+
+    for (final registro in _manejos) {
+      final id = registro['animal_id']?.toString();
+      if (id != null && registro['animais'] is Map) {
+        animais[id] = _animal(registro);
+      }
+    }
+
+    return Column(
+      children: [
+        TextField(
+          onChanged: (value) => setState(() => _busca = value),
+          decoration: InputDecoration(
+            hintText: 'Buscar animal, tipo ou observação',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: _busca.isEmpty
+                ? null
+                : IconButton(
+                    onPressed: () => setState(() => _busca = ''),
+                    icon: const Icon(Icons.clear),
+                  ),
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 42,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _chipTipo(null, 'Todos'),
+              ...TipoManejo.values.map(
+                (tipo) => _chipTipo(tipo, _tipo(tipo)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<String?>(
+                value: _animalFiltro,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Animal',
+                  prefixIcon: Icon(Icons.pets_outlined),
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('Todos os animais'),
+                  ),
+                  ...animais.entries.map(
+                    (entry) => DropdownMenuItem<String?>(
+                      value: entry.key,
+                      child: Text(
+                        entry.value,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+                onChanged: (value) => setState(() => _animalFiltro = value),
+              ),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: _escolherPeriodo,
+              icon: const Icon(Icons.date_range_outlined),
+              label: Text(
+                _periodoFiltro == null
+                    ? 'Período'
+                    : _periodoFiltro!.start.day.toString().padLeft(2, '0') +
+                        '/' +
+                        _periodoFiltro!.start.month.toString().padLeft(2, '0') +
+                        ' - ' +
+                        _periodoFiltro!.end.day.toString().padLeft(2, '0') +
+                        '/' +
+                        _periodoFiltro!.end.month.toString().padLeft(2, '0'),
+              ),
+            ),
+          ],
+        ),
+        if (_busca.isNotEmpty ||
+            _tipoFiltro != null ||
+            _animalFiltro != null ||
+            _periodoFiltro != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _limparFiltros,
+              icon: const Icon(Icons.clear_all),
+              label: const Text('Limpar filtros'),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _chipTipo(TipoManejo? tipo, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: _tipoFiltro == tipo,
+        onSelected: (_) => setState(() => _tipoFiltro = tipo),
+      ),
+    );
   }
 
   void _mensagem(String texto) {
@@ -163,13 +350,33 @@ class _ManejosPageState extends State<ManejosPage> {
       );
     }
 
-    return ListView.separated(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-      itemCount: _manejos.length,
+    final manejos = _manejosFiltrados;
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          child: _filtros(),
+        ),
+        Expanded(
+          child: manejos.isEmpty
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text(
+                      'Nenhum manejo encontrado com os filtros selecionados.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
+                  itemCount: manejos.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final registro = _manejos[index];
+                  final registro = manejos[index];
         final manejo = Manejo.fromMap(registro);
         return Card(
           child: Padding(
@@ -282,7 +489,10 @@ class _ManejosPageState extends State<ManejosPage> {
             ),
           ),
         );
-      },
+                  },
+                ),
+        ),
+      ],
     );
   }
 }
