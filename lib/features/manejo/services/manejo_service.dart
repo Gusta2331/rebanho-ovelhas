@@ -79,6 +79,23 @@ class ManejoService {
 
     return Map<String, dynamic>.from(resultado);
   }
+
+  Future<List<Map<String, dynamic>>> getHistoricoFamacha(
+    String animalId,
+  ) async {
+    final fazendaId = await _getMinhaFazendaId();
+
+    final resultado = await _client
+        .from('manejos')
+        .select('*, animais(brinco, nome)')
+        .eq('fazenda_id', fazendaId)
+        .eq('animal_id', animalId)
+        .eq('tipo', 'famacha')
+        .order('data', ascending: false);
+
+    return List<Map<String, dynamic>>.from(resultado);
+  }
+
   Future<Map<String, dynamic>> getManejo(String id) async {
     final fazendaId = await _getMinhaFazendaId();
     final resultado = await _client
