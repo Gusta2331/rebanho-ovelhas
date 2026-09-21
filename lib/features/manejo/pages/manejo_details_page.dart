@@ -22,6 +22,7 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
   Map<String, dynamic>? _registro;
   bool _carregando = true;
   String? _erro;
+  List<Map<String, dynamic>> _historicoFamacha = [];
 
   @override
   void initState() {
@@ -32,9 +33,12 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
   Future<void> _carregar() async {
     try {
       final registro = await _service.getManejo(widget.manejoId);
+      final manejo = Manejo.fromMap(registro);
+      final historico = await _service.getHistoricoFamacha(manejo.animalId);
       if (!mounted) return;
       setState(() {
         _registro = registro;
+        _historicoFamacha = historico;
         _carregando = false;
       });
     } catch (e) {
@@ -167,7 +171,64 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
             manejo.observacoes!,
             Icons.notes_outlined,
           ),
+        if (manejo.tipo == TipoManejo.famacha &&
+            _historicoFamacha.isNotEmpty)
+          _historicoFamachaWidget(),
       ],
+    );
+  }
+
+
+  Widget _historicoFamachaWidget() {
+    return Card(
+      margin: const EdgeInsets.only(top: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(
+                  Icons.history,
+                  color: AppTheme.primaryColor,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Histórico FAMACHA do animal',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ..._historicoFamacha.take(8).map((registro) {
+              final manejo = Manejo.fromMap(registro);
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                leading: CircleAvatar(
+                  backgroundColor:
+                      AppTheme.primaryColor.withValues(alpha: 0.10),
+                  child: Text(
+                    'F' + (manejo.famachaEscore?.toString() ?? '-'),
+                    style: const TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                title: Text(_data(registro['data'])),
+                subtitle: manejo.observacoes == null
+                    ? null
+                    : Text(manejo.observacoes!),
+              );
+            }),
+          ],
+        ),
+      ),
     );
   }
 
