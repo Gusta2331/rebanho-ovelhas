@@ -6,7 +6,12 @@ import '../models/manejo.dart';
 import '../services/manejo_service.dart';
 
 class ManejoFormPage extends StatefulWidget {
-  const ManejoFormPage({super.key});
+  final Manejo? manejo;
+
+  const ManejoFormPage({
+    super.key,
+    this.manejo,
+  });
 
   @override
   State<ManejoFormPage> createState() => _ManejoFormPageState();
@@ -28,6 +33,16 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   @override
   void initState() {
     super.initState();
+
+    final manejo = widget.manejo;
+    if (manejo != null) {
+      _animalId = manejo.animalId;
+      _tipo = manejo.tipo;
+      _data = manejo.data;
+      _famacha = manejo.famachaEscore;
+      _observacoes.text = manejo.observacoes ?? '';
+    }
+
     _carregarAnimais();
   }
 
@@ -65,13 +80,24 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     setState(() => _salvando = true);
 
     try {
-      await _service.criarManejo(
-        animalId: _animalId!,
-        tipo: _tipo,
-        data: _data,
-        famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
-        observacoes: _observacoes.text,
-      );
+      if (widget.manejo == null) {
+        await _service.criarManejo(
+          animalId: _animalId!,
+          tipo: _tipo,
+          data: _data,
+          famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
+          observacoes: _observacoes.text,
+        );
+      } else {
+        await _service.atualizarManejo(
+          id: widget.manejo!.id,
+          animalId: _animalId!,
+          tipo: _tipo,
+          data: _data,
+          famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
+          observacoes: _observacoes.text,
+        );
+      }
 
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
@@ -156,7 +182,9 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Novo manejo')),
+      appBar: AppBar(
+        title: Text(widget.manejo == null ? 'Novo manejo' : 'Editar manejo'),
+      ),
       body: _carregando
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
           : ListView(
@@ -243,7 +271,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                     icon: _salvando
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.save_outlined),
-                    label: Text(_salvando ? 'Salvando...' : 'Salvar manejo'),
+                    label: Text(
+                      _salvando
+                          ? 'Salvando...'
+                          : widget.manejo == null
+                              ? 'Salvar manejo'
+                              : 'Salvar alterações',
+                    ),
                   ),
                 ),
               ],
