@@ -111,6 +111,41 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     }
   }
 
+
+  Color _corFamacha(int escore) {
+    switch (escore) {
+      case 1:
+        return const Color(0xFFB71C1C);
+      case 2:
+        return const Color(0xFFE53935);
+      case 3:
+        return const Color(0xFFE57373);
+      case 4:
+        return const Color(0xFFF8B6B6);
+      case 5:
+        return const Color(0xFFF5EAEA);
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _descricaoFamacha(int escore) {
+    switch (escore) {
+      case 1:
+        return 'Vermelho intenso';
+      case 2:
+        return 'Vermelho/rosado';
+      case 3:
+        return 'Rosa';
+      case 4:
+        return 'Rosa bem claro';
+      case 5:
+        return 'Muito pálido';
+      default:
+        return '';
+    }
+  }
+
   void _mensagem(String texto) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -245,39 +280,184 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       decoration: BoxDecoration(
         color: AppTheme.primaryColor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.18)),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.18),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Classificação FAMACHA', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Classificação FAMACHA',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 6),
           const Text(
-            'Registre o escore observado na pálpebra inferior.',
-            style: TextStyle(fontSize: 13, color: Colors.black54),
+            'Compare a mucosa da pálpebra inferior com as cores de referência antes de escolher o escore.',
+            style: TextStyle(fontSize: 13, color: Colors.black54, height: 1.4),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
+          _famachaReferencia(),
+          const SizedBox(height: 16),
+          const Text(
+            'Escore observado',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
           Row(
             children: List.generate(5, (index) {
               final escore = index + 1;
               final selecionado = _famacha == escore;
+              final cor = _corFamacha(escore);
+
               return Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(right: escore == 5 ? 0 : 6),
                   child: OutlinedButton(
-                    onPressed: _salvando ? null : () => setState(() => _famacha = escore),
+                    onPressed: _salvando
+                        ? null
+                        : () => setState(() => _famacha = escore),
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: selecionado ? AppTheme.primaryColor : Colors.white,
-                      foregroundColor: selecionado ? Colors.white : AppTheme.textColor,
+                      backgroundColor:
+                          selecionado ? AppTheme.primaryColor : Colors.white,
+                      foregroundColor: selecionado
+                          ? Colors.white
+                          : AppTheme.textColor,
+                      side: BorderSide(
+                        color: selecionado
+                            ? AppTheme.primaryColor
+                            : Colors.black12,
+                        width: selecionado ? 2 : 1,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
-                    child: Text(escore.toString()),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: cor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black26),
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          escore.toString(),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+          if (_famacha != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _corFamacha(_famacha!).withValues(alpha: 0.22),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Selecionado: FAMACHA ' +
+                    _famacha.toString() +
+                    ' • ' +
+                    _descricaoFamacha(_famacha!),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          const Text(
+            'A escala é uma referência visual. A avaliação deve ser feita observando diretamente a mucosa do animal, em boa iluminação.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.black54,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _famachaReferencia() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.visibility_outlined,
+                size: 19,
+                color: AppTheme.primaryColor,
+              ),
+              SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  'Escala de referência',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: List.generate(5, (index) {
+              final escore = index + 1;
+              final cor = _corFamacha(escore);
+
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: escore == 5 ? 0 : 6),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: cor,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.black26),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        escore.toString(),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ),
               );
             }),
           ),
           const SizedBox(height: 8),
-          const Text('1 = mucosa mais vermelha • 5 = mucosa mais pálida', style: TextStyle(fontSize: 12, color: Colors.black54)),
+          const Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Mais vermelho',
+                  style: TextStyle(fontSize: 11, color: Colors.black54),
+                ),
+              ),
+              Text(
+                'Mais pálido',
+                style: TextStyle(fontSize: 11, color: Colors.black54),
+              ),
+            ],
+          ),
         ],
       ),
     );
