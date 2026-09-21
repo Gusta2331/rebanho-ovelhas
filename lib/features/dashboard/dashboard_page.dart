@@ -12,6 +12,7 @@ import '../flock/pages/rebanho_form_page.dart';
 import '../flock/pages/rebanhos_page.dart';
 import '../flock/services/rebanho_selection_service.dart';
 import '../flock/services/rebanho_service.dart';
+import '../reproduction/pages/reproductions_page.dart';
 import 'widgets/animal_card.dart';
 import 'widgets/management_item.dart';
 import 'widgets/quick_action.dart';
@@ -330,6 +331,14 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  Future<void> _openReproductions() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const ReproductionsPage(),
+      ),
+    );
+  }
+
   Future<void> _openAnimals() async {
     await Navigator.of(context)
         .push(MaterialPageRoute(builder: (context) => const AnimalsPage()));
@@ -561,6 +570,14 @@ class _DashboardPageState extends State<DashboardPage> {
         const SizedBox(height: 12),
         Row(
           children: [
+            Expanded(
+              child: QuickAction(
+                icon: Icons.favorite_outline_rounded,
+                title: 'Reprodução',
+                onTap: _openReproductions,
+              ),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: QuickAction(
                 icon: Icons.medical_services_outlined,
