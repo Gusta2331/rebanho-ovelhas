@@ -96,6 +96,66 @@ class ManejoService {
     return List<Map<String, dynamic>>.from(resultado);
   }
 
+  Future<List<Map<String, dynamic>>> criarManejosEmLote({
+    required List<String> animalIds,
+    required DateTime data,
+    required Map<String, int> famachaPorAnimal,
+    String? observacoes,
+  }) async {
+    final fazendaId = await _getMinhaFazendaId();
+
+    if (animalIds.isEmpty) {
+      throw Exception('Selecione pelo menos um animal.');
+    }
+
+    if (famachaPorAnimal.length != animalIds.length ||
+        animalIds.any((id) {
+          final escore = famachaPorAnimal[id];
+          return escore == null || escore < 1 || escore > 5;
+        })) {
+      throw Exception('Informe o FAMACHA de todos os animais selecionados.');
+    }
+
+    final animais = await _client
+        .from('animais')
+        .select('id')
+        .eq('fazenda_id', fazendaId)
+        .eq('status', 'ativo')
+        .inFilter('id', animalIds);
+
+    final idsValidos = List<Map<String, dynamic>>.from(animais)
+        .map((animal) => animal['id'].toString())
+        .toSet();
+
+    if (idsValidos.length != animalIds.length ||
+        animalIds.any((id) => !idsValidos.contains(id))) {
+      throw Exception(
+        'Um ou mais animais selecionados não estão ativos ou não pertencem à fazenda.',
+      );
+    }
+
+    final dados = animalIds.map((animalId) {
+      return <String, dynamic>{
+        'id': const Uuid().v4(),
+        'fazenda_id': fazendaId,
+        'animal_id': animalId,
+        'tipo': Manejo.tipoToString(TipoManejo.famacha),
+        'data': data.toIso8601String(),
+        'famacha_escore': famachaPorAnimal[animalId],
+        'observacoes': observacoes?.trim().isEmpty == true
+            ? null
+            : observacoes?.trim(),
+      };
+    }).toList();
+
+    final resultado = await _client
+        .from('manejos')
+        .insert(dados)
+        .select('*, animais(brinco, nome)');
+
+    return List<Map<String, dynamic>>.from(resultado);
+  }
+
   Future<Map<String, dynamic>> getManejo(String id) async {
     final fazendaId = await _getMinhaFazendaId();
     final resultado = await _client
