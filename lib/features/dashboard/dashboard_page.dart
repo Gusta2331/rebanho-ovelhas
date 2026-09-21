@@ -12,6 +12,7 @@ import '../flock/pages/rebanho_form_page.dart';
 import '../flock/pages/rebanhos_page.dart';
 import '../flock/services/rebanho_selection_service.dart';
 import '../flock/services/rebanho_service.dart';
+import '../manejo/pages/manejos_page.dart';
 import '../reproduction/pages/reproductions_page.dart';
 import 'widgets/animal_card.dart';
 import 'widgets/management_item.dart';
@@ -331,6 +332,12 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  Future<void> _openManejos() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const ManejosPage()),
+    );
+  }
+
   Future<void> _openReproductions() async {
     await Navigator.of(
       context,
@@ -561,6 +568,11 @@ class _DashboardPageState extends State<DashboardPage> {
         onTap: _openReproductions,
       ),
       QuickAction(
+        icon: Icons.assignment_outlined,
+        title: 'Manejo',
+        onTap: _openManejos,
+      ),
+      QuickAction(
         icon: Icons.medical_services_outlined,
         title: 'Farmácia',
         onTap: () {},
@@ -621,6 +633,8 @@ class _DashboardPageState extends State<DashboardPage> {
       onDestinationSelected: (index) {
         if (index == 1) {
           _openAnimals();
+        } else if (index == 2) {
+          _openManejos();
         }
       },
       destinations: const [
