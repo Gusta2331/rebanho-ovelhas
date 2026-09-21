@@ -24,6 +24,39 @@ class ManejoService {
     return id;
   }
 
+  Future<List<Map<String, dynamic>>> getVacinas() async {
+    final fazendaId = await _getMinhaFazendaId();
+    final resultado = await _client
+        .from('vacinas')
+        .select('id, nome, fabricante, ativo')
+        .eq('fazenda_id', fazendaId)
+        .eq('ativo', true)
+        .order('nome');
+    return List<Map<String, dynamic>>.from(resultado);
+  }
+
+  Future<Map<String, dynamic>> criarVacina({
+    required String nome,
+    String? fabricante,
+  }) async {
+    final fazendaId = await _getMinhaFazendaId();
+    final nomeNormalizado = nome.trim();
+    if (nomeNormalizado.isEmpty) {
+      throw Exception('Informe o nome da vacina.');
+    }
+
+    final resultado = await _client.from('vacinas').insert({
+      'id': const Uuid().v4(),
+      'fazenda_id': fazendaId,
+      'nome': nomeNormalizado,
+      'fabricante': fabricante?.trim().isEmpty == true
+          ? null
+          : fabricante?.trim(),
+    }).select('id, nome, fabricante, ativo').single();
+
+    return Map<String, dynamic>.from(resultado);
+  }
+
   Future<List<Map<String, dynamic>>> getManejos() async {
     final fazendaId = await _getMinhaFazendaId();
     final resultado = await _client.from('manejos')
@@ -39,12 +72,29 @@ class ManejoService {
     required DateTime data,
     int? famachaEscore,
     String? observacoes,
+    String? vacinaId,
+    String? vacinaNome,
+    String? vacinaFabricante,
+    String? vacinaLote,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
 
     if (tipo == TipoManejo.famacha &&
         (famachaEscore == null || famachaEscore < 1 || famachaEscore > 5)) {
       throw Exception('Informe uma classificação FAMACHA de 1 a 5.');
+    }
+
+    if (tipo == TipoManejo.vacinacao && (vacinaId == null && (vacinaNome == null || vacinaNome.trim().isEmpty))) {
+      throw Exception('Informe qual vacina foi aplicada.');
+    }
+
+    if (tipo != TipoManejo.vacinacao &&
+        (vacinaId != null || vacinaNome != null || vacinaFabricante != null || vacinaLote != null)) {
+      throw Exception('Os dados da vacina só podem ser usados em uma vacinação.');
+    }
+
+    if (tipo == TipoManejo.vacinacao && (vacinaId == null && (vacinaNome == null || vacinaNome.trim().isEmpty))) {
+      throw Exception('Informe qual vacina foi aplicada.');
     }
 
     if (tipo != TipoManejo.famacha && famachaEscore != null) {
@@ -70,6 +120,10 @@ class ManejoService {
       'data': data.toIso8601String(),
       'famacha_escore': famachaEscore,
       'observacoes': observacoes?.trim().isEmpty == true ? null : observacoes?.trim(),
+      'vacina_id': tipo == TipoManejo.vacinacao ? vacinaId : null,
+      'vacina_nome': tipo == TipoManejo.vacinacao ? vacinaNome?.trim() : null,
+      'vacina_fabricante': tipo == TipoManejo.vacinacao ? vacinaFabricante?.trim() : null,
+      'vacina_lote': tipo == TipoManejo.vacinacao ? vacinaLote?.trim() : null,
     };
 
     final resultado = await _client.from('manejos')
@@ -99,8 +153,13 @@ class ManejoService {
   Future<List<Map<String, dynamic>>> criarManejosEmLote({
     required List<String> animalIds,
     required DateTime data,
-    required Map<String, int> famachaPorAnimal,
+    required TipoManejo tipo,
+    Map<String, int> famachaPorAnimal = const {},
     String? observacoes,
+    String? vacinaId,
+    String? vacinaNome,
+    String? vacinaFabricante,
+    String? vacinaLote,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
 
@@ -108,12 +167,16 @@ class ManejoService {
       throw Exception('Selecione pelo menos um animal.');
     }
 
-    if (famachaPorAnimal.length != animalIds.length ||
+    if (tipo == TipoManejo.famacha && (famachaPorAnimal.length != animalIds.length ||
         animalIds.any((id) {
           final escore = famachaPorAnimal[id];
           return escore == null || escore < 1 || escore > 5;
         })) {
       throw Exception('Informe o FAMACHA de todos os animais selecionados.');
+    ) }
+
+    if (tipo == TipoManejo.vacinacao && (vacinaId == null && (vacinaNome == null || vacinaNome.trim().isEmpty))) {
+      throw Exception('Informe qual vacina foi aplicada.');
     }
 
     final animais = await _client
@@ -139,12 +202,14 @@ class ManejoService {
         'id': const Uuid().v4(),
         'fazenda_id': fazendaId,
         'animal_id': animalId,
-        'tipo': Manejo.tipoToString(TipoManejo.famacha),
+        'tipo': Manejo.tipoToString(tipo),
         'data': data.toIso8601String(),
-        'famacha_escore': famachaPorAnimal[animalId],
-        'observacoes': observacoes?.trim().isEmpty == true
-            ? null
-            : observacoes?.trim(),
+        'famacha_escore': tipo == TipoManejo.famacha ? famachaPorAnimal[animalId] : null,
+        'observacoes': observacoes?.trim().isEmpty == true ? null : observacoes?.trim(),
+        'vacina_id': tipo == TipoManejo.vacinacao ? vacinaId : null,
+        'vacina_nome': tipo == TipoManejo.vacinacao ? vacinaNome?.trim() : null,
+        'vacina_fabricante': tipo == TipoManejo.vacinacao ? vacinaFabricante?.trim() : null,
+        'vacina_lote': tipo == TipoManejo.vacinacao ? vacinaLote?.trim() : null,
       };
     }).toList();
 
@@ -174,6 +239,10 @@ class ManejoService {
     required DateTime data,
     int? famachaEscore,
     String? observacoes,
+    String? vacinaId,
+    String? vacinaNome,
+    String? vacinaFabricante,
+    String? vacinaLote,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
 
@@ -209,9 +278,11 @@ class ManejoService {
           'tipo': Manejo.tipoToString(tipo),
           'data': data.toIso8601String(),
           'famacha_escore': famachaEscore,
-          'observacoes': observacoes?.trim().isEmpty == true
-              ? null
-              : observacoes?.trim(),
+          'observacoes': observacoes?.trim().isEmpty == true ? null : observacoes?.trim(),
+          'vacina_id': tipo == TipoManejo.vacinacao ? vacinaId : null,
+          'vacina_nome': tipo == TipoManejo.vacinacao ? vacinaNome?.trim() : null,
+          'vacina_fabricante': tipo == TipoManejo.vacinacao ? vacinaFabricante?.trim() : null,
+          'vacina_lote': tipo == TipoManejo.vacinacao ? vacinaLote?.trim() : null,
         })
         .eq('id', id)
         .eq('fazenda_id', fazendaId);
