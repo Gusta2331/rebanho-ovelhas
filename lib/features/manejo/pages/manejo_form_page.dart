@@ -607,6 +607,20 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                   const SizedBox(height: 16),
                   _vacinaField(),
                 ],
+                if (_tipo == TipoManejo.outro) ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _outroNome,
+                    enabled: !_salvando,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Nome do manejo',
+                      hintText: 'Ex.: Corte de cascos, limpeza do curral',
+                      prefixIcon: Icon(Icons.edit_note_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
                 if (_tipo == TipoManejo.famacha) ...[
                   const SizedBox(height: 16),
                   if (_editando)
