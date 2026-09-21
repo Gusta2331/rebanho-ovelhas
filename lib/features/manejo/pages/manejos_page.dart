@@ -67,7 +67,8 @@ class _ManejosPageState extends State<ManejosPage> {
           !textoAnimal.toLowerCase().contains(busca) &&
           !_tipo(manejo.tipo).toLowerCase().contains(busca) &&
           !(manejo.observacoes ?? '').toLowerCase().contains(busca) &&
-          !(manejo.vacinaNome ?? '').toLowerCase().contains(busca)) {
+          !(manejo.vacinaNome ?? '').toLowerCase().contains(busca) &&
+          !(manejo.outroNome ?? '').toLowerCase().contains(busca)) {
         return false;
       }
 
@@ -398,7 +399,12 @@ class _ManejosPageState extends State<ManejosPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_tipo(manejo.tipo), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(
+                        manejo.tipo == TipoManejo.outro && manejo.outroNome != null
+                            ? manejo.outroNome!
+                            : _tipo(manejo.tipo),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
                       const SizedBox(height: 4),
                       Text(_animal(registro), style: const TextStyle(color: Colors.black54)),
                       if (manejo.tipo == TipoManejo.vacinacao &&
