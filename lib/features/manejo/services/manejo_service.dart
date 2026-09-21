@@ -101,6 +101,7 @@ class ManejoService {
       vacinaNome: vacinaNome,
       vacinaFabricante: vacinaFabricante,
       vacinaLote: vacinaLote,
+      outroNome: outroNome,
     );
 
     final animal = await _client
@@ -150,6 +151,7 @@ class ManejoService {
     String? vacinaNome,
     String? vacinaFabricante,
     String? vacinaLote,
+    String? outroNome,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
 
