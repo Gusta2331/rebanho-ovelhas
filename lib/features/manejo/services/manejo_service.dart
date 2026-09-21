@@ -90,6 +90,7 @@ class ManejoService {
     String? vacinaNome,
     String? vacinaFabricante,
     String? vacinaLote,
+    String? outroNome,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
 
@@ -130,6 +131,7 @@ class ManejoService {
             vacinaNome: vacinaNome,
             vacinaFabricante: vacinaFabricante,
             vacinaLote: vacinaLote,
+            outroNome: outroNome,
           ),
         )
         .select('*, animais(brinco, nome)')
@@ -205,6 +207,7 @@ class ManejoService {
         vacinaNome: vacinaNome,
         vacinaFabricante: vacinaFabricante,
         vacinaLote: vacinaLote,
+        outroNome: outroNome,
       );
     }).toList();
 
@@ -298,6 +301,7 @@ class ManejoService {
               tipo == TipoManejo.vacinacao ? vacinaFabricante?.trim() : null,
           'vacina_lote':
               tipo == TipoManejo.vacinacao ? vacinaLote?.trim() : null,
+          'outro_nome': tipo == TipoManejo.outro ? outroNome?.trim() : null,
         })
         .eq('id', id)
         .eq('fazenda_id', fazendaId);
@@ -320,6 +324,7 @@ class ManejoService {
     String? vacinaNome,
     String? vacinaFabricante,
     String? vacinaLote,
+    String? outroNome,
   }) {
     if (tipo == TipoManejo.famacha &&
         (famachaEscore == null ||
@@ -338,6 +343,15 @@ class ManejoService {
         (vacinaId == null &&
             (vacinaNome == null || vacinaNome.trim().isEmpty))) {
       throw Exception('Informe qual vacina foi aplicada.');
+    }
+
+    if (tipo == TipoManejo.outro &&
+        (outroNome == null || outroNome.trim().isEmpty)) {
+      throw Exception('Informe o nome do outro manejo.');
+    }
+
+    if (tipo != TipoManejo.outro && outroNome != null && outroNome.trim().isNotEmpty) {
+      throw Exception('O nome personalizado só pode ser usado em Outro.');
     }
 
     if (tipo != TipoManejo.vacinacao &&
@@ -362,6 +376,7 @@ class ManejoService {
     String? vacinaNome,
     String? vacinaFabricante,
     String? vacinaLote,
+    String? outroNome,
   }) {
     return {
       'id': const Uuid().v4(),
@@ -380,6 +395,7 @@ class ManejoService {
           tipo == TipoManejo.vacinacao ? vacinaFabricante?.trim() : null,
       'vacina_lote':
           tipo == TipoManejo.vacinacao ? vacinaLote?.trim() : null,
+      'outro_nome': tipo == TipoManejo.outro ? outroNome?.trim() : null,
     };
   }
 }
