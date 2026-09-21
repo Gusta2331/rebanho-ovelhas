@@ -557,13 +557,13 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
         animalIds: _selecionados.toList(),
         observacoes: _observacoes.text,
         vacinaId: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada?['id']?.toString()
+            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString()
             : null,
         vacinaNome: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada?['nome']?.toString()
+            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['nome']?.toString()
             : null,
         vacinaFabricante: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada?['fabricante']?.toString()
+            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['fabricante']?.toString()
             : null,
       );
 
@@ -773,7 +773,7 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
-            value: _vacinaSelecionada?['id']?.toString(),
+            value: _vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString(),
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Nome da vacina',
