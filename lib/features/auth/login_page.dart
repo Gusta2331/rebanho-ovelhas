@@ -33,7 +33,6 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-
     super.dispose();
   }
 
@@ -92,8 +91,12 @@ class _LoginPageState extends State<LoginPage> {
         _loading = false;
       });
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(_getAuthErrorMessage(e))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_getAuthErrorMessage(e)),
+          duration: const Duration(seconds: 6),
+        ),
+      );
     } catch (e) {
       if (!mounted) {
         return;
@@ -104,31 +107,22 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Não foi possível entrar. Verifique sua conexão e tente novamente.',
-          ),
+        SnackBar(
+          content: Text('ERRO NÃO TRATADO: $e'),
+          duration: const Duration(seconds: 6),
         ),
       );
+
+      debugPrint('ERRO NÃO TRATADO NO LOGIN: $e');
     }
   }
 
   String _getAuthErrorMessage(AuthException error) {
-    final message = error.message.toLowerCase();
+    debugPrint('AUTH ERROR MESSAGE: ${error.message}');
 
-    if (message.contains('invalid login credentials')) {
-      return 'E-mail ou senha incorretos.';
-    }
+    debugPrint('AUTH ERROR STATUS CODE: ${error.statusCode}');
 
-    if (message.contains('email not confirmed')) {
-      return 'Confirme seu e-mail antes de entrar.';
-    }
-
-    if (message.contains('user not found')) {
-      return 'Usuário não encontrado.';
-    }
-
-    return 'Não foi possível entrar. Verifique seus dados.';
+    return 'ERRO SUPABASE: ${error.message}';
   }
 
   void _forgotPassword() {
@@ -164,24 +158,24 @@ class _LoginPageState extends State<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 24),
+
+                    // LOGO DO OVIGESTÃO
                     Center(
-                      child: Container(
-                        width: 88,
-                        height: 88,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          borderRadius: BorderRadius.circular(26),
-                        ),
-                        child: const Icon(
-                          Icons.agriculture_rounded,
-                          color: Colors.white,
-                          size: 46,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: Image.asset(
+                          'assets/images/ovigestao_logo.png',
+                          width: 170,
+                          height: 170,
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 24),
+
                     const Text(
-                      'Fazenda Baixinha',
+                      'OviGestão',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,
@@ -189,13 +183,17 @@ class _LoginPageState extends State<LoginPage> {
                         color: AppTheme.textColor,
                       ),
                     ),
+
                     const SizedBox(height: 8),
+
                     const Text(
                       'Gestão inteligente do seu rebanho',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 15, color: Colors.black54),
                     ),
+
                     const SizedBox(height: 40),
+
                     const Text(
                       'Bem-vindo de volta!',
                       style: TextStyle(
@@ -204,12 +202,16 @@ class _LoginPageState extends State<LoginPage> {
                         color: AppTheme.textColor,
                       ),
                     ),
+
                     const SizedBox(height: 8),
+
                     const Text(
                       'Entre com sua conta para continuar.',
                       style: TextStyle(fontSize: 14, color: Colors.black54),
                     ),
+
                     const SizedBox(height: 28),
+
                     const Text(
                       'E-mail',
                       style: TextStyle(
@@ -217,7 +219,9 @@ class _LoginPageState extends State<LoginPage> {
                         fontSize: 14,
                       ),
                     ),
+
                     const SizedBox(height: 8),
+
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -238,7 +242,9 @@ class _LoginPageState extends State<LoginPage> {
                         return null;
                       },
                     ),
+
                     const SizedBox(height: 20),
+
                     const Text(
                       'Senha',
                       style: TextStyle(
@@ -246,7 +252,9 @@ class _LoginPageState extends State<LoginPage> {
                         fontSize: 14,
                       ),
                     ),
+
                     const SizedBox(height: 8),
+
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _hidePassword,
@@ -280,7 +288,9 @@ class _LoginPageState extends State<LoginPage> {
                         return null;
                       },
                     ),
+
                     const SizedBox(height: 8),
+
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -294,7 +304,9 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 20),
+
                     SizedBox(
                       height: 56,
                       child: ElevatedButton(
@@ -316,12 +328,15 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 32),
+
                     const Text(
-                      'Fazenda Baixinha • Gestão do rebanho',
+                      'OviGestão • Gestão do rebanho',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 12, color: Colors.black45),
                     ),
+
                     const SizedBox(height: 16),
                   ],
                 ),

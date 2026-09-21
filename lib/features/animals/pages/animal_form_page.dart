@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../models/animal.dart';
+import '../services/animal_service.dart';
 import '../widgets/animal_photo.dart';
 import '../widgets/animal_parent_selector.dart';
 import 'racas_page.dart';
-
 
 class AnimalFormPage extends StatefulWidget {
   final Set<String> brincosExistentes;
@@ -38,6 +39,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
 
   final ImagePicker _imagePicker = ImagePicker();
   final ImageCropper _imageCropper = ImageCropper();
+  final AnimalService _animalService = AnimalService();
 
   SexoAnimal _sexoSelecionado = SexoAnimal.femea;
   StatusAnimal _statusSelecionado = StatusAnimal.ativo;
@@ -47,6 +49,8 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
 
   Animal? _maeSelecionada;
   Animal? _paiSelecionado;
+
+  bool _salvando = false;
 
   @override
   void initState() {
@@ -59,12 +63,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       _nomeController.text = animal.nome ?? '';
       _racaController.text = animal.raca;
       _observacoesController.text = animal.observacoes ?? '';
-
       _sexoSelecionado = animal.sexo;
       _statusSelecionado = animal.status;
       _dataNascimento = animal.dataNascimento;
       _fotoPath = animal.fotoPath;
-
       _maeSelecionada = _buscarAnimalPorId(animal.idMae);
       _paiSelecionado = _buscarAnimalPorId(animal.idPai);
     }
@@ -106,10 +108,17 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
   bool _brincoExiste(String brinco) {
     final brincoNormalizado = _normalizarBrinco(brinco);
 
-    return widget.brincosExistentes.any(
-      (brincoExistente) =>
-          _normalizarBrinco(brincoExistente) == brincoNormalizado,
-    );
+    for (final animal in widget.animais) {
+      if (animal.id == widget.animalParaEditar?.id) {
+        continue;
+      }
+
+      if (_normalizarBrinco(animal.brinco) == brincoNormalizado) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   int _proximoBrincoDisponivel() {
@@ -348,34 +357,128 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     }
   }
 
-  void _salvarAnimal() {
+  String _sexoParaBanco(SexoAnimal sexo) {
+    switch (sexo) {
+      case SexoAnimal.femea:
+        return 'femea';
+      case SexoAnimal.macho:
+        return 'macho';
+    }
+  }
+
+  String _statusParaBanco(StatusAnimal status) {
+    switch (status) {
+      case StatusAnimal.ativo:
+        return 'ativo';
+      case StatusAnimal.vendido:
+        return 'vendido';
+      case StatusAnimal.morto:
+        return 'morto';
+      case StatusAnimal.descartado:
+        return 'descartado';
+    }
+  }
+
+  Future<void> _salvarAnimal() async {
+    if (_salvando) {
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    final animalAnterior = widget.animalParaEditar;
+    final brinco = int.tryParse(_brincoController.text.trim());
 
-    final animal = Animal(
-      id: animalAnterior?.id,
-      brinco: _brincoController.text.trim(),
-      nome: _nomeController.text.trim().isEmpty
-          ? null
-          : _nomeController.text.trim(),
-      sexo: _sexoSelecionado,
-      raca: _racaController.text.trim(),
-      dataNascimento: _dataNascimento,
-      status: _statusSelecionado,
-      observacoes: _observacoesController.text.trim().isEmpty
-          ? null
-          : _observacoesController.text.trim(),
-      fotoPath: _fotoPath,
+    if (brinco == null || brinco <= 0) {
+      return;
+    }
 
-      // Filiação
-      idMae: _maeSelecionada?.id,
-      idPai: _paiSelecionado?.id,
-    );
+    setState(() {
+      _salvando = true;
+    });
 
-    Navigator.of(context).pop(animal);
+    try {
+      final animalAnterior = widget.animalParaEditar;
+
+      if (animalAnterior == null) {
+        await _animalService.criarAnimal(
+          brinco: brinco,
+          nome: _nomeController.text,
+          sexo: _sexoParaBanco(_sexoSelecionado),
+          raca: _racaController.text,
+          dataNascimento: _dataNascimento,
+          status: _statusParaBanco(_statusSelecionado),
+          dataEntrada: DateTime.now(),
+          observacoes: _observacoesController.text,
+          fotoUrl: null,
+          maeId: null,
+          paiId: null,
+        );
+      } else {
+        await _animalService.atualizarAnimal(
+          id: animalAnterior.id,
+          brinco: brinco,
+          nome: _nomeController.text,
+          sexo: _sexoParaBanco(_sexoSelecionado),
+          raca: _racaController.text,
+          dataNascimento: _dataNascimento,
+          status: _statusParaBanco(_statusSelecionado),
+          dataEntrada: null,
+          dataSaida: _statusSelecionado == StatusAnimal.ativo
+              ? null
+              : DateTime.now(),
+          observacoes: _observacoesController.text,
+          fotoUrl: null,
+          maeId: null,
+          paiId: null,
+        );
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            animalAnterior == null
+                ? 'Animal cadastrado com sucesso.'
+                : 'Animal atualizado com sucesso.',
+          ),
+        ),
+      );
+
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      String mensagem = 'Não foi possível salvar o animal.';
+
+      if (error is PostgrestException) {
+        mensagem = error.message;
+      } else if (error is Exception) {
+        final texto = error.toString();
+
+        if (texto.startsWith('Exception: ')) {
+          mensagem = texto.substring(11);
+        } else {
+          mensagem = texto;
+        }
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mensagem), duration: const Duration(seconds: 4)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _salvando = false;
+        });
+      }
+    }
   }
 
   String _formatarData(DateTime data) {
@@ -389,13 +492,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     switch (status) {
       case StatusAnimal.ativo:
         return 'Ativo';
-
       case StatusAnimal.vendido:
         return 'Vendido';
-
       case StatusAnimal.morto:
         return 'Morto';
-
       case StatusAnimal.descartado:
         return 'Descartado';
     }
@@ -405,13 +505,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     switch (status) {
       case StatusAnimal.ativo:
         return Icons.check_circle_outline_rounded;
-
       case StatusAnimal.vendido:
         return Icons.sell_outlined;
-
       case StatusAnimal.morto:
         return Icons.cancel_outlined;
-
       case StatusAnimal.descartado:
         return Icons.remove_circle_outline_rounded;
     }
@@ -456,7 +553,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 child: Column(
                   children: [
                     GestureDetector(
-                      onTap: _abrirOpcoesFoto,
+                      onTap: _salvando ? null : _abrirOpcoesFoto,
                       child: Stack(
                         children: [
                           AnimalPhoto(
@@ -490,7 +587,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                     ),
                     const SizedBox(height: 12),
                     TextButton.icon(
-                      onPressed: _abrirOpcoesFoto,
+                      onPressed: _salvando ? null : _abrirOpcoesFoto,
                       icon: Icon(
                         _fotoPath == null
                             ? Icons.add_a_photo_outlined
@@ -515,21 +612,16 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
+
               TextFormField(
                 controller: _brincoController,
-                readOnly: modoEdicao,
+                readOnly: _salvando,
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Ex.: 001',
-                  prefixIcon: const Icon(Icons.confirmation_number_outlined),
-                  suffixIcon: modoEdicao
-                      ? const Icon(
-                          Icons.lock_outline_rounded,
-                          color: Colors.black38,
-                        )
-                      : null,
+                  prefixIcon: Icon(Icons.confirmation_number_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -542,7 +634,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                     return 'Informe um número de brinco válido.';
                   }
 
-                  if (!modoEdicao && _brincoExiste(value)) {
+                  if (_brincoExiste(value)) {
                     return 'O brinco '
                         '${numero.toString().padLeft(3, '0')} '
                         'já está cadastrado.';
@@ -552,34 +644,32 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 },
               ),
 
-              if (modoEdicao)
-                const Padding(
-                  padding: EdgeInsets.only(top: 6, left: 12),
-                  child: Text(
-                    'O número do brinco identifica o animal '
-                    'e não pode ser alterado.',
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
-                  ),
+              const Padding(
+                padding: EdgeInsets.only(top: 6, left: 12),
+                child: Text(
+                  'O número do brinco pode ser alterado, '
+                  'mas nunca pode ser igual ao de outro animal.',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
+              ),
 
-              if (!modoEdicao) ...[
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 46,
-                  child: OutlinedButton.icon(
-                    onPressed: _gerarBrincoAutomatico,
-                    icon: const Icon(Icons.auto_awesome_rounded),
-                    label: const Text('Gerar brinco automaticamente'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.primaryColor,
-                      side: const BorderSide(color: AppTheme.primaryColor),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+              const SizedBox(height: 10),
+
+              SizedBox(
+                height: 46,
+                child: OutlinedButton.icon(
+                  onPressed: _salvando ? null : _gerarBrincoAutomatico,
+                  icon: const Icon(Icons.auto_awesome_rounded),
+                  label: const Text('Gerar brinco automaticamente'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryColor,
+                    side: const BorderSide(color: AppTheme.primaryColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                 ),
-              ],
+              ),
 
               const SizedBox(height: 20),
 
@@ -589,8 +679,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
+
               TextFormField(
                 controller: _nomeController,
+                readOnly: _salvando,
                 textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
                   hintText: 'Ex.: Branquinha',
@@ -606,6 +698,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
+
               SegmentedButton<SexoAnimal>(
                 segments: const [
                   ButtonSegment<SexoAnimal>(
@@ -620,11 +713,13 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                   ),
                 ],
                 selected: {_sexoSelecionado},
-                onSelectionChanged: (selection) {
-                  setState(() {
-                    _sexoSelecionado = selection.first;
-                  });
-                },
+                onSelectionChanged: _salvando
+                    ? null
+                    : (selection) {
+                        setState(() {
+                          _sexoSelecionado = selection.first;
+                        });
+                      },
                 style: ButtonStyle(
                   foregroundColor: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) {
@@ -651,8 +746,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
+
               InkWell(
-                onTap: _selecionarRaca,
+                onTap: _salvando ? null : _selecionarRaca,
                 borderRadius: BorderRadius.circular(14),
                 child: InputDecorator(
                   decoration: const InputDecoration(
@@ -689,8 +785,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
+
               InkWell(
-                onTap: _selecionarDataNascimento,
+                onTap: _salvando ? null : _selecionarDataNascimento,
                 borderRadius: BorderRadius.circular(14),
                 child: InputDecorator(
                   decoration: const InputDecoration(
@@ -725,7 +822,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 'Informe a mãe e o pai do animal, se conhecidos.',
                 style: TextStyle(fontSize: 13, color: Colors.black54),
               ),
-
               const SizedBox(height: 16),
 
               // MÃE
@@ -737,6 +833,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 animais: widget.animais,
                 idAnimalAtual: widget.animalParaEditar?.id,
                 onChanged: (animal) {
+                  if (_salvando) {
+                    return;
+                  }
+
                   setState(() {
                     _maeSelecionada = animal;
                   });
@@ -754,6 +854,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 animais: widget.animais,
                 idAnimalAtual: widget.animalParaEditar?.id,
                 onChanged: (animal) {
+                  if (_salvando) {
+                    return;
+                  }
+
                   setState(() {
                     _paiSelecionado = animal;
                   });
@@ -768,6 +872,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
+
               DropdownButtonFormField<StatusAnimal>(
                 initialValue: _statusSelecionado,
                 decoration: const InputDecoration(
@@ -785,15 +890,17 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                     ),
                   );
                 }).toList(),
-                onChanged: (status) {
-                  if (status == null) {
-                    return;
-                  }
+                onChanged: _salvando
+                    ? null
+                    : (status) {
+                        if (status == null) {
+                          return;
+                        }
 
-                  setState(() {
-                    _statusSelecionado = status;
-                  });
-                },
+                        setState(() {
+                          _statusSelecionado = status;
+                        });
+                      },
               ),
 
               const SizedBox(height: 20),
@@ -804,8 +911,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
+
               TextFormField(
                 controller: _observacoesController,
+                readOnly: _salvando,
                 maxLines: 4,
                 textInputAction: TextInputAction.newline,
                 decoration: const InputDecoration(
@@ -825,10 +934,23 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
               SizedBox(
                 height: 56,
                 child: ElevatedButton.icon(
-                  onPressed: _salvarAnimal,
-                  icon: const Icon(Icons.save_outlined),
+                  onPressed: _salvando ? null : _salvarAnimal,
+                  icon: _salvando
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.save_outlined),
                   label: Text(
-                    modoEdicao ? 'Salvar alterações' : 'Salvar animal',
+                    _salvando
+                        ? 'Salvando...'
+                        : modoEdicao
+                        ? 'Salvar alterações'
+                        : 'Salvar animal',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -837,6 +959,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppTheme.primaryColor.withValues(
+                      alpha: 0.6,
+                    ),
+                    disabledForegroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
