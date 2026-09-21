@@ -79,4 +79,75 @@ class ManejoService {
 
     return Map<String, dynamic>.from(resultado);
   }
+  Future<Map<String, dynamic>> getManejo(String id) async {
+    final fazendaId = await _getMinhaFazendaId();
+    final resultado = await _client
+        .from('manejos')
+        .select('*, animais(brinco, nome)')
+        .eq('id', id)
+        .eq('fazenda_id', fazendaId)
+        .single();
+    return Map<String, dynamic>.from(resultado);
+  }
+
+  Future<void> atualizarManejo({
+    required String id,
+    required String animalId,
+    required TipoManejo tipo,
+    required DateTime data,
+    int? famachaEscore,
+    String? observacoes,
+  }) async {
+    final fazendaId = await _getMinhaFazendaId();
+
+    if (tipo == TipoManejo.famacha &&
+        (famachaEscore == null || famachaEscore < 1 || famachaEscore > 5)) {
+      throw Exception('Informe uma classificação FAMACHA de 1 a 5.');
+    }
+
+    if (tipo != TipoManejo.famacha && famachaEscore != null) {
+      throw Exception(
+        'A classificação FAMACHA só pode ser usada em uma avaliação FAMACHA.',
+      );
+    }
+
+    final animal = await _client
+        .from('animais')
+        .select('id')
+        .eq('id', animalId)
+        .eq('fazenda_id', fazendaId)
+        .eq('status', 'ativo')
+        .maybeSingle();
+
+    if (animal == null) {
+      throw Exception(
+        'O animal selecionado não está ativo ou não pertence à fazenda.',
+      );
+    }
+
+    await _client
+        .from('manejos')
+        .update({
+          'animal_id': animalId,
+          'tipo': Manejo.tipoToString(tipo),
+          'data': data.toIso8601String(),
+          'famacha_escore': famachaEscore,
+          'observacoes': observacoes?.trim().isEmpty == true
+              ? null
+              : observacoes?.trim(),
+        })
+        .eq('id', id)
+        .eq('fazenda_id', fazendaId);
+  }
+
+  Future<void> excluirManejo(String id) async {
+    final fazendaId = await _getMinhaFazendaId();
+
+    await _client
+        .from('manejos')
+        .delete()
+        .eq('id', id)
+        .eq('fazenda_id', fazendaId);
+  }
+
 }
