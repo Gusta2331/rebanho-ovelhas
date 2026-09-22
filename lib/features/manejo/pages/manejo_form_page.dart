@@ -93,6 +93,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       final resultados = await Future.wait([
         _rebanhoService.getRebanhos(somenteAtivos: true),
         _service.getVacinas(),
+        _service.getVermifugos(),
+        _service.getMedicamentos(),
       ]);
 
       if (!mounted) return;
@@ -100,6 +102,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       setState(() {
         _rebanhos = List<Map<String, dynamic>>.from(resultados[0] as List);
         _vacinas = List<Map<String, dynamic>>.from(resultados[1] as List);
+        _vermifugos = List<Map<String, dynamic>>.from(resultados[2] as List);
+        _medicamentos = List<Map<String, dynamic>>.from(resultados[3] as List);
         _carregando = false;
       });
 
@@ -110,6 +114,9 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
           _animais = animais;
           _animaisSelecionados.add(_animalId!);
         });
+        if (widget.manejo?.vermifugoId != null) _vermifugoSelecionado = _findItem(_vermifugos, widget.manejo!.vermifugoId);
+        if (widget.manejo?.medicamentoId != null) _medicamentoSelecionado = _findItem(_medicamentos, widget.manejo!.medicamentoId);
+        await _carregarPesos();
       } else {
         await _carregarAnimais();
       }
@@ -127,6 +134,58 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       setState(() => _carregando = false);
       _mensagem(e.toString().replaceFirst('Exception: ', ''));
     }
+  }
+
+  Map<String, dynamic>? _findItem(List<Map<String, dynamic>> lista, String? id) {
+    if (id == null) return null;
+    for (final item in lista) {
+      if (item['id']?.toString() == id) return item;
+    }
+    return null;
+  }
+
+  Future<void> _carregarPesos() async {
+    if (_animaisSelecionados.isEmpty) return;
+    setState(() => _carregandoPesos = true);
+    for (final id in _animaisSelecionados) {
+      final peso = await _service.getUltimoPeso(id);
+      if (peso != null) _pesos[id] = peso;
+    }
+    if (!mounted) return;
+    setState(() => _carregandoPesos = false);
+    _calcularDoses();
+  }
+
+  double? _numero(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString().replaceAll(',', '.') ?? '');
+  }
+
+  Map<String, dynamic>? _produtoAtual() {
+    if (_tipo == TipoManejo.vacinacao) return _vacinaSelecionada;
+    if (_tipo == TipoManejo.vermifugacao) return _vermifugoSelecionado;
+    if (_tipo == TipoManejo.tratamento) return _medicamentoSelecionado;
+    return null;
+  }
+
+  void _calcularDoses() {
+    final produto = _produtoAtual();
+    final dose = _numero(produto?['dose']);
+    final referencia = _numero(produto?['peso_referencia_kg']);
+    if (dose == null || referencia == null || referencia <= 0) {
+      setState(() => _dosesCalculadas.clear());
+      return;
+    }
+    final calculadas = <String, double>{};
+    for (final id in _animaisSelecionados) {
+      final peso = _pesos[id];
+      if (peso != null && peso > 0) calculadas[id] = peso / referencia * dose;
+    }
+    setState(() {
+      _dosesCalculadas
+        ..clear()
+        ..addAll(calculadas);
+    });
   }
 
   Future<void> _carregarAnimais() async {
