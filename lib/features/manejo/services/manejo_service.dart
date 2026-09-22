@@ -165,7 +165,6 @@ class ManejoService {
         .select('peso_kg, data')
         .eq('fazenda_id', fazendaId)
         .eq('animal_id', animalId)
-        .eq('tipo', 'pesagem')
         .not('peso_kg', 'is', null)
         .order('data', ascending: false)
         .limit(1)
@@ -309,13 +308,31 @@ class ManejoService {
       famachaEscore: tipo == TipoManejo.famacha ? famachaPorAnimal[animalId] : null,
       observacoes: observacoes, vacinaId: vacinaId, vacinaNome: vacinaNome,
       vacinaFabricante: vacinaFabricante, vacinaLote: vacinaLote,
-      outroNome: outroNome, pesoKg: tipo == TipoManejo.pesagem ? pesoPorAnimal[animalId] : null,
+      outroNome: outroNome, pesoKg: pesoPorAnimal[animalId],
       dose: dosePorAnimal[animalId] ?? dose, doseUnidade: doseUnidade, pesoReferenciaKg: pesoReferenciaKg,
       viaAplicacao: viaAplicacao, validade: validade, carenciaDias: carenciaDias,
       vermifugoId: vermifugoId, vermifugoNome: vermifugoNome,
       vermifugoPrincipioAtivo: vermifugoPrincipioAtivo, medicamentoId: medicamentoId,
       medicamentoNome: medicamentoNome, medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
     )).toList();
+
+    if (tipo == TipoManejo.famacha) {
+      final registros = <Map<String, dynamic>>[];
+      for (final dadosAnimal in dados) {
+        final registro = await _client
+            .from('manejos')
+            .insert(dadosAnimal)
+            .select('*, animais(brinco, nome)')
+            .single();
+
+        final escoreSalvo = registro['famacha_escore'];
+        if (escoreSalvo == null) {
+          throw Exception('O FAMACHA do animal não foi salvo corretamente.');
+        }
+        registros.add(Map<String, dynamic>.from(registro));
+      }
+      return registros;
+    }
 
     final resultado = await _client.from('manejos').insert(dados)
         .select('*, animais(brinco, nome)');
