@@ -220,6 +220,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   Future<void> _adicionarVacina() async {
     String nome = '';
     String fabricante = '';
+    String dose = '';
+    String unidade = 'mL';
+    String referencia = '';
+    String via = '';
+    String carencia = '';
 
     final dados = await showDialog<Map<String, String>>(
       context: context,
@@ -245,6 +250,16 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                   hintText: 'Opcional',
                 ),
               ),
+              const SizedBox(height: 12),
+              const Align(alignment: Alignment.centerLeft, child: Text('Regra da dose da bula', style: TextStyle(fontWeight: FontWeight.bold))),
+              Row(children: [
+                Expanded(child: TextField(keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (v) => dose = v, decoration: const InputDecoration(labelText: 'Dose'))),
+                const SizedBox(width: 8),
+                Expanded(child: TextField(onChanged: (v) => unidade = v, decoration: const InputDecoration(labelText: 'Unidade'))),
+              ]),
+              TextField(keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (v) => referencia = v, decoration: const InputDecoration(labelText: 'Por quantos kg?')),
+              TextField(onChanged: (v) => via = v, decoration: const InputDecoration(labelText: 'Via')),
+              TextField(keyboardType: TextInputType.number, onChanged: (v) => carencia = v, decoration: const InputDecoration(labelText: 'Carência (dias)')),
             ],
           ),
           actions: [
@@ -258,6 +273,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                 Navigator.of(dialogContext).pop({
                   'nome': nome.trim(),
                   'fabricante': fabricante.trim(),
+                  'dose': dose.trim(),
+                  'unidade': unidade.trim(),
+                  'referencia': referencia.trim(),
+                  'via': via.trim(),
+                  'carencia': carencia.trim(),
                 });
               },
               child: const Text('Cadastrar'),
@@ -273,6 +293,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       final vacina = await _service.criarVacina(
         nome: dados['nome']!,
         fabricante: dados['fabricante'],
+        dose: _numero(dados['dose']),
+        doseUnidade: dados['unidade'],
+        pesoReferenciaKg: _numero(dados['referencia']),
+        viaAplicacao: dados['via'],
+        carenciaDias: int.tryParse(dados['carencia'] ?? ''),
       );
 
       setState(() {
