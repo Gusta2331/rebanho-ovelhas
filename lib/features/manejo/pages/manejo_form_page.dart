@@ -385,13 +385,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         famachaPorAnimal: _famachaPorAnimal,
         observacoes: _observacoes.text,
         vacinaId: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString()
+            ? (_vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString())
             : null,
         vacinaNome: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['nome']?.toString()
+            ? (_vacinaSelecionada == null ? null : _vacinaSelecionada!['nome']?.toString())
             : null,
         vacinaFabricante: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['fabricante']?.toString()
+            ? (_vacinaSelecionada == null ? null : _vacinaSelecionada!['fabricante']?.toString())
             : null,
         vacinaLote: _tipo == TipoManejo.vacinacao
             ? _vacinaLote.text
@@ -448,13 +448,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
         observacoes: _observacoes.text,
         vacinaId: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString()
+            ? (_vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString())
             : null,
         vacinaNome: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['nome']?.toString()
+            ? (_vacinaSelecionada == null ? null : _vacinaSelecionada!['nome']?.toString())
             : null,
         vacinaFabricante: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['fabricante']?.toString()
+            ? (_vacinaSelecionada == null ? null : _vacinaSelecionada!['fabricante']?.toString())
             : null,
         vacinaLote: _tipo == TipoManejo.vacinacao ? _vacinaLote.text : null,
         outroNome: _tipo == TipoManejo.outro ? _outroNome.text : null,
@@ -1043,6 +1043,18 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _info(String texto) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(texto, style: const TextStyle(color: Colors.black54)),
     );
   }
 
