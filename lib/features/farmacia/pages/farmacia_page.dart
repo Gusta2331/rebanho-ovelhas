@@ -43,7 +43,7 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
       final produtos = await _service.listarProdutos();
       final animais = loteId == null
           ? <Map<String, dynamic>>[]
-          : await _animalService.getAnimaisAtivos(rebanhoId: loteId);
+          : await _animalService.getTodosAnimais(rebanhoId: loteId);
       final movimentos = loteId == null
           ? <Map<String, dynamic>>[]
           : await _service.listarMovimentacoes(loteId: loteId);
