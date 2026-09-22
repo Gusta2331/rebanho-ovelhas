@@ -165,10 +165,6 @@ class _ManejosPageState extends State<ManejosPage> {
         LayoutBuilder(
           builder: (context, constraints) {
             final estreito = constraints.maxWidth < 430;
-            final largura = estreito
-                ? constraints.maxWidth
-                : constraints.maxWidth - 120;
-
             final animalField = DropdownButtonFormField<String?>(
               value: _animalFiltro,
               isExpanded: true,
