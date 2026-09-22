@@ -151,12 +151,12 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
                           child: ListTile(
                             leading: const CircleAvatar(child: Icon(Icons.medical_services_outlined)),
                             title: Text(produto['nome'].toString()),
-                            subtitle: Text('\${produto['categoria']} • \${produto['unidade']}'),
+                            subtitle: Text("\${produto['categoria']} • \${produto['unidade']}"),
                             trailing: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text('\${produto['estoque']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                Text("\${produto['estoque']}", style: const TextStyle(fontWeight: FontWeight.bold)),
                                 TextButton(onPressed: () => _movimentar(produto), child: const Text('Movimentar')),
                               ],
                             ),
@@ -178,7 +178,7 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
                               color: item['tipo'] == 'entrada' ? Colors.green : Colors.orange,
                             ),
                             title: Text(nome),
-                            subtitle: Text('\${item['tipo']} • \${item['quantidade']}'),
+                            subtitle: Text("\${item['tipo']} • \${item['quantidade']}"),
                           );
                         }),
                     ],
