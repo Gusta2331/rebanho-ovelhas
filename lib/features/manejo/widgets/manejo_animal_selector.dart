@@ -56,15 +56,15 @@ class ManejoAnimalSelector extends StatelessWidget {
           value: rebanhoId,
           isExpanded: true,
           decoration: const InputDecoration(
-            labelText: 'Rebanho',
+            labelText: 'Lote',
             prefixIcon: Icon(Icons.groups_outlined),
             border: OutlineInputBorder(),
           ),
-          hint: const Text('Todos os rebanhos'),
+          hint: const Text('Todos os lotes'),
           items: [
             const DropdownMenuItem<String?>(
               value: null,
-              child: Text('Todos os rebanhos'),
+              child: Text('Todos os lotes'),
             ),
             ...rebanhos.map((rebanho) {
               final id = rebanho['id']?.toString();
@@ -75,7 +75,7 @@ class ManejoAnimalSelector extends StatelessWidget {
                 child: Text(
                   quantidade is num
                       ? rebanho['nome'].toString() + ' • ' + quantidade.toInt().toString() + ' animais'
-                      : rebanho['nome']?.toString() ?? 'Rebanho',
+                      : rebanho['nome']?.toString() ?? 'Lote',
                   overflow: TextOverflow.ellipsis,
                 ),
               );
@@ -149,7 +149,7 @@ class ManejoAnimalSelector extends StatelessWidget {
                   child: Text(
                     multiSelecao
                         ? selecionados.length.toString() + ' animal(is) selecionado(s)'
-                        : animais.length.toString() + ' animal(is) no rebanho',
+                        : animais.length.toString() + ' animal(is) no lote',
                     style: const TextStyle(color: Colors.black54),
                   ),
                 ),
@@ -166,7 +166,7 @@ class ManejoAnimalSelector extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.all(20),
                   child: Text(
-                    'Nenhum animal ativo encontrado para o rebanho selecionado.',
+                    'Nenhum animal ativo encontrado para o lote selecionado.',
                     textAlign: TextAlign.center,
                   ),
                 )
