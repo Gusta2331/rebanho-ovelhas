@@ -1012,9 +1012,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             ),
           ),
         ),
-      ),
-    },
-  );
+      },
+    ),
+  ),
+);
   }
 
   Widget _intro() {
