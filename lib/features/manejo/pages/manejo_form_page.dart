@@ -28,24 +28,33 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   final TextEditingController _observacoes = TextEditingController();
   final TextEditingController _vacinaLote = TextEditingController();
   final TextEditingController _outroNome = TextEditingController();
+  final TextEditingController _peso = TextEditingController();
+  final TextEditingController _doseManual = TextEditingController();
 
   List<Map<String, dynamic>> _rebanhos = [];
   List<Map<String, dynamic>> _animais = [];
   List<Map<String, dynamic>> _vacinas = [];
+  List<Map<String, dynamic>> _vermifugos = [];
+  List<Map<String, dynamic>> _medicamentos = [];
 
   String? _rebanhoId;
   String? _animalId;
   final Set<String> _animaisSelecionados = {};
   final Map<String, int> _famachaPorAnimal = {};
+  final Map<String, double> _pesos = {};
+  final Map<String, double> _dosesCalculadas = {};
 
   TipoManejo _tipo = TipoManejo.vacinacao;
   DateTime _data = DateTime.now();
   int? _famacha;
 
   Map<String, dynamic>? _vacinaSelecionada;
+  Map<String, dynamic>? _vermifugoSelecionado;
+  Map<String, dynamic>? _medicamentoSelecionado;
   bool _carregando = true;
   bool _carregandoAnimais = false;
   bool _salvando = false;
+  bool _carregandoPesos = false;
 
   bool get _editando => widget.manejo != null;
 
@@ -62,6 +71,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       _observacoes.text = manejo.observacoes ?? '';
       _vacinaLote.text = manejo.vacinaLote ?? '';
       _outroNome.text = manejo.outroNome ?? '';
+      if (manejo.pesoKg != null) _peso.text = manejo.pesoKg.toString();
+      if (manejo.dose != null) _doseManual.text = manejo.dose.toString();
     }
 
     _carregarDados();
@@ -72,6 +83,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     _observacoes.dispose();
     _vacinaLote.dispose();
     _outroNome.dispose();
+    _peso.dispose();
+    _doseManual.dispose();
     super.dispose();
   }
 
