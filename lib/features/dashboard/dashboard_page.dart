@@ -14,6 +14,8 @@ import '../flock/services/rebanho_selection_service.dart';
 import '../flock/services/rebanho_service.dart';
 import '../manejo/pages/manejos_page.dart';
 import '../manejo/pages/manejo_agenda_page.dart';
+import '../manejo/models/manejo.dart';
+import '../manejo/services/manejo_programado_service.dart';
 import '../farmacia/pages/farmacia_page.dart';
 import '../financeiro/pages/financeiro_page.dart';
 import '../more/mais_page.dart';
@@ -35,6 +37,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final FarmService _farmService = FarmService();
   final AnimalService _animalService = AnimalService();
   final RebanhoService _rebanhoService = RebanhoService();
+  final ManejoProgramadoService _manejoProgramadoService = ManejoProgramadoService();
 
   final RebanhoSelectionService _rebanhoSelectionService =
       RebanhoSelectionService.instance;
@@ -52,6 +55,7 @@ class _DashboardPageState extends State<DashboardPage> {
   int _totalFemeas = 0;
   int _totalMachos = 0;
   int _totalFemeasNaIdadeReproducao = 0;
+  List<Map<String, dynamic>> _proximosManejos = [];
 
   @override
   void initState() {
@@ -124,6 +128,7 @@ class _DashboardPageState extends State<DashboardPage> {
       });
 
       await _loadAnimals();
+      await _loadProximosManejos();
     } catch (error) {
       if (!mounted) {
         return;
@@ -212,6 +217,61 @@ class _DashboardPageState extends State<DashboardPage> {
 
       _mostrarErro(error);
     }
+  }
+
+  Future<void> _loadProximosManejos() async {
+    final loteId = _rebanhoSelecionado?.id;
+    if (loteId == null) {
+      if (mounted) setState(() => _proximosManejos = []);
+      return;
+    }
+
+    try {
+      final programados = await _manejoProgramadoService.getProgramados();
+      final animais = await _animalService.getTodosAnimais(rebanhoId: loteId);
+      final ids = animais.map((animal) => animal['id'].toString()).toSet();
+
+      final filtrados = programados.where((item) {
+        if (item['concluido'] == true) return false;
+        final lista = item['manejos_programados_animais'];
+        if (lista is! List) return false;
+        return lista.any((vinculo) {
+          final id = vinculo is Map ? vinculo['animal_id']?.toString() : null;
+          return id != null && ids.contains(id);
+        });
+      }).take(3).toList();
+
+      if (mounted) setState(() => _proximosManejos = filtrados);
+    } catch (_) {
+      if (mounted) setState(() => _proximosManejos = []);
+    }
+  }
+
+  String _tipoManejo(String? valor) {
+    switch (Manejo.tipoFromString(valor)) {
+      case TipoManejo.vacinacao:
+        return 'Vacinação';
+      case TipoManejo.vermifugacao:
+        return 'Vermifugação';
+      case TipoManejo.tratamento:
+        return 'Tratamento';
+      case TipoManejo.tosquia:
+        return 'Tosquia';
+      case TipoManejo.pesagem:
+        return 'Pesagem';
+      case TipoManejo.famacha:
+        return 'FAMACHA';
+      case TipoManejo.outro:
+        return 'Outro';
+    }
+  }
+
+  String _dataManejo(dynamic valor) {
+    final data = DateTime.tryParse(valor?.toString() ?? '');
+    if (data == null) return 'Data não informada';
+    return data.day.toString().padLeft(2, '0') + '/' +
+        data.month.toString().padLeft(2, '0') + '/' +
+        data.year.toString();
   }
 
   DateTime _dataLimiteReproducao() {
@@ -632,27 +692,29 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildManagementItems() {
+    if (_proximosManejos.isEmpty) {
+      return const ManagementItem(
+        icon: Icons.check_circle_outline,
+        title: 'Nenhum manejo programado',
+        description: 'O lote não possui cuidados pendentes.',
+        date: '',
+      );
+    }
+
     return Column(
       children: [
-        ManagementItem(
-          icon: Icons.vaccines_outlined,
-          title: 'Vacinação',
-          description: 'Próxima vacinação do lote',
-          date: 'Em breve',
-        ),
-        const SizedBox(height: 12),
-        ManagementItem(
-          icon: Icons.monitor_weight_outlined,
-          title: 'Pesagem',
-          description: 'Acompanhe o peso dos animais',
-          date: 'Em breve',
-        ),
-        const SizedBox(height: 12),
-        ManagementItem(
-          icon: Icons.favorite_border_rounded,
-          title: 'Acompanhamento',
-          description: 'Controle reprodutivo do lote',
-          date: 'Em breve',
+        ..._proximosManejos.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: ManagementItem(
+              icon: Icons.event_note_outlined,
+              title: _tipoManejo(item['tipo']?.toString()),
+              description: item['observacoes']?.toString().trim().isNotEmpty == true
+                  ? item['observacoes'].toString()
+                  : 'Manejo programado para o lote',
+              date: _dataManejo(item['data_programada']),
+            ),
+          ),
         ),
       ],
     );
