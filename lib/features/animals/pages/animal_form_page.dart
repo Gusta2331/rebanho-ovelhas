@@ -36,6 +36,8 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
   final _nomeController = TextEditingController();
   final _racaController = TextEditingController();
   final _observacoesController = TextEditingController();
+  final _valorAquisicaoController = TextEditingController();
+  final _vendedorController = TextEditingController();
 
   final ImagePicker _imagePicker = ImagePicker();
   final ImageCropper _imageCropper = ImageCropper();
@@ -48,7 +50,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
   StatusAnimal _statusSelecionado = StatusAnimal.ativo;
 
   DateTime? _dataNascimento;
+  DateTime? _dataAquisicao;
   String? _fotoPath;
+
+  OrigemAnimal _origemSelecionada = OrigemAnimal.nascido;
 
   Animal? _maeSelecionada;
   Animal? _paiSelecionado;
@@ -69,7 +74,13 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       _sexoSelecionado = animal.sexo;
       _statusSelecionado = animal.status;
       _dataNascimento = animal.dataNascimento;
+      _dataAquisicao = animal.dataAquisicao;
       _fotoPath = animal.fotoPath;
+      _origemSelecionada = animal.origem;
+      _valorAquisicaoController.text = animal.valorAquisicao == null
+          ? ''
+          : animal.valorAquisicao!.toStringAsFixed(2).replaceAll('.', ',');
+      _vendedorController.text = animal.vendedor ?? '';
       _maeSelecionada = _buscarAnimalPorId(animal.idMae);
       _paiSelecionado = _buscarAnimalPorId(animal.idPai);
     }
@@ -95,6 +106,8 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     _nomeController.dispose();
     _racaController.dispose();
     _observacoesController.dispose();
+    _valorAquisicaoController.dispose();
+    _vendedorController.dispose();
     super.dispose();
   }
 
@@ -184,6 +197,27 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     if (data != null && mounted) {
       setState(() {
         _dataNascimento = data;
+      });
+    }
+  }
+
+
+  Future<void> _selecionarDataAquisicao() async {
+    final hoje = DateTime.now();
+
+    final data = await showDatePicker(
+      context: context,
+      initialDate: _dataAquisicao ?? hoje,
+      firstDate: DateTime(2000),
+      lastDate: hoje,
+      helpText: 'Selecione a data da compra',
+      cancelText: 'Cancelar',
+      confirmText: 'Confirmar',
+    );
+
+    if (data != null && mounted) {
+      setState(() {
+        _dataAquisicao = data;
       });
     }
   }
@@ -402,6 +436,28 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       return;
     }
 
+    if (!widget.modoEdicao && _origemSelecionada == OrigemAnimal.comprado) {
+      final valor = double.tryParse(_valorAquisicaoController.text.trim().replaceAll(',', '.'));
+
+      if (_dataAquisicao == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Informe a data da compra.')),
+        );
+        return;
+      }
+
+      if (valor == null || valor <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Informe um valor de compra maior que zero.')),
+        );
+        return;
+      }
+    }
+
+    final valorAquisicao = double.tryParse(
+      _valorAquisicaoController.text.trim().replaceAll(',', '.'),
+    );
+
     final rebanhoSelecionado = _rebanhoSelectionService.rebanhoSelecionado;
 
     if (rebanhoSelecionado == null) {
@@ -440,6 +496,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
           // A filiação é salva no Supabase.
           maeId: _maeSelecionada?.id,
           paiId: _paiSelecionado?.id,
+          origem: _origemSelecionada == OrigemAnimal.comprado ? 'comprado' : 'nascido',
+          dataAquisicao: _dataAquisicao,
+          valorAquisicao: valorAquisicao,
+          vendedor: _vendedorController.text,
         );
       } else {
         dadosSalvos = await _animalService.atualizarAnimal(
@@ -843,6 +903,129 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                   ),
                 ),
               ),
+
+
+              const SizedBox(height: 20),
+
+              // ORIGEM
+              const Text(
+                'Origem do animal *',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              SegmentedButton<OrigemAnimal>(
+                segments: const [
+                  ButtonSegment<OrigemAnimal>(
+                    value: OrigemAnimal.nascido,
+                    icon: Icon(Icons.child_friendly_outlined),
+                    label: Text('Nascido'),
+                  ),
+                  ButtonSegment<OrigemAnimal>(
+                    value: OrigemAnimal.comprado,
+                    icon: Icon(Icons.shopping_cart_outlined),
+                    label: Text('Comprado'),
+                  ),
+                ],
+                selected: {_origemSelecionada},
+                onSelectionChanged: _salvando
+                    ? null
+                    : (selection) {
+                        setState(() {
+                          _origemSelecionada = selection.first;
+
+                          if (_origemSelecionada == OrigemAnimal.nascido) {
+                            _dataAquisicao = null;
+                            _valorAquisicaoController.clear();
+                            _vendedorController.clear();
+                          }
+                        });
+                      },
+                style: ButtonStyle(
+                  foregroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return Colors.white;
+                    }
+
+                    return AppTheme.textColor;
+                  }),
+                  backgroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return AppTheme.primaryColor;
+                    }
+
+                    return Colors.white;
+                  }),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _origemSelecionada == OrigemAnimal.nascido
+                    ? 'Animal nascido na própria fazenda. Não gera lançamento financeiro.'
+                    : 'Animal comprado. O valor será lançado automaticamente no financeiro do lote.',
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+              if (_origemSelecionada == OrigemAnimal.comprado) ...[
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: _salvando ? null : _selecionarDataAquisicao,
+                  borderRadius: BorderRadius.circular(14),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Data da compra *',
+                      prefixIcon: Icon(Icons.calendar_month_outlined),
+                    ),
+                    child: Text(
+                      _dataAquisicao == null
+                          ? 'Selecionar data'
+                          : _formatarData(_dataAquisicao!),
+                      style: TextStyle(
+                        color: _dataAquisicao == null
+                            ? Colors.black45
+                            : AppTheme.textColor,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _valorAquisicaoController,
+                  readOnly: _salvando,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'Valor da compra *',
+                    hintText: 'Ex.: 850,00',
+                    prefixIcon: Icon(Icons.attach_money_rounded),
+                  ),
+                  validator: (value) {
+                    if (_origemSelecionada != OrigemAnimal.comprado) {
+                      return null;
+                    }
+
+                    final valor = double.tryParse(
+                      value?.trim().replaceAll(',', '.') ?? '',
+                    );
+
+                    if (valor == null || valor <= 0) {
+                      return 'Informe um valor de compra válido.';
+                    }
+
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _vendedorController,
+                  readOnly: _salvando,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Vendedor / fornecedor',
+                    hintText: 'Opcional',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 28),
 
