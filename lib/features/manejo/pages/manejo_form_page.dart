@@ -642,6 +642,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                               _vacinaSelecionada = null;
                               _vacinaLote.clear();
                             }
+                            if (value != TipoManejo.vermifugacao) {
+                              _vermifugoSelecionado = null;
+                            }
+                            if (value != TipoManejo.tratamento) {
+                              _medicamentoSelecionado = null;
+                            }
+                            _dosesCalculadas.clear();
                             if (value != TipoManejo.outro) {
                               _outroNome.clear();
                             }
@@ -668,6 +675,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                         _rebanhoId = id;
                         _animaisSelecionados.clear();
                         _famachaPorAnimal.clear();
+                        _pesos.clear();
+                        _dosesCalculadas.clear();
                       });
                       _carregarAnimais();
                     },
@@ -678,6 +687,43 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                 if (_tipo == TipoManejo.vacinacao) ...[
                   const SizedBox(height: 16),
                   _vacinaField(),
+                  _doseCalculadora(),
+                ],
+                if (_tipo == TipoManejo.vermifugacao) ...[
+                  const SizedBox(height: 16),
+                  _produtoField(
+                    titulo: 'Vermífugo',
+                    itens: _vermifugos,
+                    selecionado: _vermifugoSelecionado,
+                    onChanged: (item) => setState(() => _vermifugoSelecionado = item),
+                    onAdicionar: _adicionarVermifugoCompleto,
+                  ),
+                  _doseCalculadora(),
+                ],
+                if (_tipo == TipoManejo.tratamento) ...[
+                  const SizedBox(height: 16),
+                  _produtoField(
+                    titulo: 'Medicamento',
+                    itens: _medicamentos,
+                    selecionado: _medicamentoSelecionado,
+                    onChanged: (item) => setState(() => _medicamentoSelecionado = item),
+                    onAdicionar: _adicionarMedicamentoCompleto,
+                  ),
+                  _doseCalculadora(),
+                ],
+                if (_tipo == TipoManejo.pesagem) ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _peso,
+                    enabled: !_salvando,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Peso do animal (kg)',
+                      hintText: 'Ex.: 47,5',
+                      prefixIcon: Icon(Icons.monitor_weight_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
                 ],
                 if (_tipo == TipoManejo.outro) ...[
                   const SizedBox(height: 16),
