@@ -27,6 +27,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   final TextEditingController _outroNome = TextEditingController();
   final TextEditingController _peso = TextEditingController();
   final TextEditingController _doseManual = TextEditingController();
+  final TextEditingController _doseBaseController = TextEditingController();
+  final TextEditingController _pesoReferenciaController = TextEditingController();
+  final TextEditingController _viaAplicacaoController = TextEditingController();
+  final TextEditingController _carenciaController = TextEditingController();
 
   List<Map<String, dynamic>> _rebanhos = [];
   List<Map<String, dynamic>> _animais = [];
@@ -48,6 +52,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   String _viaAplicacao = '';
   String _carenciaTexto = '';
   int _doseEditorVersao = 0;
+  int _produtoEditorVersao = 0;
 
   TipoManejo _tipo = TipoManejo.vacinacao;
   DateTime _data = DateTime.now();
@@ -91,6 +96,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         _carenciaTexto = manejo.carenciaDias.toString();
     }
 
+    _doseBaseController.text = _doseBaseTexto;
+    _pesoReferenciaController.text = _pesoReferenciaTexto;
+    _viaAplicacaoController.text = _viaAplicacao;
+    _carenciaController.text = _carenciaTexto;
+
     _carregarDados();
   }
 
@@ -101,6 +111,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     _outroNome.dispose();
     _peso.dispose();
     _doseManual.dispose();
+    _doseBaseController.dispose();
+    _pesoReferenciaController.dispose();
+    _viaAplicacaoController.dispose();
+    _carenciaController.dispose();
     super.dispose();
   }
 
@@ -172,17 +186,77 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   }
 
   Future<void> _carregarPesos() async {
-    if (_animaisSelecionados.isEmpty) return;
+    final ids = _animaisSelecionados.toList();
+    if (ids.isEmpty) return;
+
     setState(() => _carregandoPesos = true);
-    for (final id in _animaisSelecionados) {
-      final peso = await _service.getUltimoPeso(id);
-      if (peso != null) {
-        _pesos[id] = peso;
-        _pesoTextoPorAnimal[id] = peso.toString();
-      }
+
+    try {
+      final pesos = await _service.getUltimosPesos(ids);
+      if (!mounted) return;
+
+      setState(() {
+        for (final entry in pesos.entries) {
+          _pesos[entry.key] = entry.value;
+          _pesoTextoPorAnimal[entry.key] = entry.value.toString();
+        }
+        _carregandoPesos = false;
+      });
+
+      _calcularDoses();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _carregandoPesos = false);
+      _mensagem(e.toString().replaceFirst('Exception: ', ''));
     }
-    if (!mounted) return;
-    setState(() => _carregandoPesos = false);
+  }
+
+  void _aplicarDadosProduto(Map<String, dynamic>? item) {
+    if (item == null) return;
+
+    final dose = _numero(item['dose']);
+    final referencia = _numero(item['peso_referencia_kg']);
+    final unidade = item['dose_unidade']?.toString().trim();
+    final via = item['via_aplicacao']?.toString().trim();
+    final carencia = item['carencia_dias'];
+
+    setState(() {
+      if (dose != null && dose > 0) {
+        _doseBaseTexto = dose.toString();
+        _doseBaseController.text = _doseBaseTexto;
+      }
+
+      if (referencia != null && referencia > 0) {
+        _pesoReferenciaTexto = referencia.toString();
+        _pesoReferenciaController.text = _pesoReferenciaTexto;
+      }
+
+      if (unidade != null && unidade.isNotEmpty) {
+        const unidadesPermitidas = {
+          'mL',
+          'mg',
+          'g',
+          'comprimido',
+          'aplicação',
+        };
+        if (unidadesPermitidas.contains(unidade)) {
+          _unidadeDose = unidade;
+        }
+      }
+
+      if (via != null && via.isNotEmpty) {
+        _viaAplicacao = via;
+        _viaAplicacaoController.text = via;
+      }
+
+      if (carencia != null) {
+        _carenciaTexto = carencia.toString();
+        _carenciaController.text = _carenciaTexto;
+      }
+
+      _produtoEditorVersao++;
+    });
+
     _calcularDoses();
   }
 
@@ -1072,6 +1146,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                         _outroNome.clear();
                                       }
                                     });
+
+                                    if (value == TipoManejo.vacinacao ||
+                                        value == TipoManejo.vermifugacao ||
+                                        value == TipoManejo.tratamento) {
+                                      _carregarPesos();
+                                    }
                                   },
                           ),
                           const SizedBox(height: 16),
@@ -1109,8 +1189,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                               titulo: 'Vacina',
                               itens: _vacinas,
                               selecionado: _vacinaSelecionada,
-                              onChanged: (item) =>
-                                  setState(() => _vacinaSelecionada = item),
+                              onChanged: (item) {
+                                setState(() => _vacinaSelecionada = item);
+                                _aplicarDadosProduto(item);
+                              },
                               onAdicionar: _adicionarVacina,
                             ),
                             _doseCalculadora(),
@@ -1121,8 +1203,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                               titulo: 'Vermífugo',
                               itens: _vermifugos,
                               selecionado: _vermifugoSelecionado,
-                              onChanged: (item) =>
-                                  setState(() => _vermifugoSelecionado = item),
+                              onChanged: (item) {
+                                setState(() => _vermifugoSelecionado = item);
+                                _aplicarDadosProduto(item);
+                              },
                               onAdicionar: _adicionarVermifugoCompleto,
                             ),
                             _doseCalculadora(),
@@ -1364,12 +1448,14 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                   SizedBox(
                     width: largura,
                     child: TextFormField(
-                      initialValue: _doseBaseTexto,
+                      key: ValueKey('dose-base-$_produtoEditorVersao'),
+                      controller: _doseBaseController,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                       onChanged: (v) {
                         _doseBaseTexto = v;
+                        _calcularDoses();
                       },
                       decoration: const InputDecoration(
                         labelText: 'Dose base',
@@ -1382,12 +1468,14 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                   SizedBox(
                     width: largura,
                     child: TextFormField(
-                      initialValue: _pesoReferenciaTexto,
+                      key: ValueKey('peso-referencia-$_produtoEditorVersao'),
+                      controller: _pesoReferenciaController,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                       onChanged: (v) {
                         _pesoReferenciaTexto = v;
+                        _calcularDoses();
                       },
                       decoration: const InputDecoration(
                         labelText: 'Para quantos kg?',
@@ -1414,7 +1502,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                   SizedBox(
                     width: largura,
                     child: TextFormField(
-                      initialValue: _viaAplicacao,
+                      key: ValueKey('via-aplicacao-$_produtoEditorVersao'),
+                      controller: _viaAplicacaoController,
                       onChanged: (v) => _viaAplicacao = v,
                       decoration: const InputDecoration(
                         labelText: 'Via de aplicação',
@@ -1427,7 +1516,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                   SizedBox(
                     width: largura,
                     child: TextFormField(
-                      initialValue: _carenciaTexto,
+                      key: ValueKey('carencia-$_produtoEditorVersao'),
+                      controller: _carenciaController,
                       keyboardType: TextInputType.number,
                       onChanged: (v) => _carenciaTexto = v,
                       decoration: const InputDecoration(
