@@ -512,7 +512,7 @@ class ManejoService {
       'vacina_fabricante': tipo == TipoManejo.vacinacao ? _text(vacinaFabricante) : null,
       'vacina_lote': tipo == TipoManejo.vacinacao ? _text(vacinaLote) : null,
       'outro_nome': tipo == TipoManejo.outro ? _text(outroNome) : null,
-      'peso_kg': tipo == TipoManejo.pesagem ? pesoKg : null,
+      'peso_kg': pesoKg,
       'dose': dose,
       'dose_unidade': _text(doseUnidade),
       'peso_referencia_kg': pesoReferenciaKg,
