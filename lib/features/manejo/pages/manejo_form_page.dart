@@ -461,15 +461,9 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         data: _data,
         famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
         observacoes: _observacoes.text,
-        vacinaId: _tipo == TipoManejo.vacinacao
-            ? (_vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString())
-            : null,
-        vacinaNome: _tipo == TipoManejo.vacinacao
-            ? (_vacinaSelecionada == null ? null : _vacinaSelecionada!['nome']?.toString())
-            : null,
-        vacinaFabricante: _tipo == TipoManejo.vacinacao
-            ? (_vacinaSelecionada == null ? null : _vacinaSelecionada!['fabricante']?.toString())
-            : null,
+        vacinaId: vacinaId,
+        vacinaNome: vacinaNome,
+        vacinaFabricante: vacinaFabricante,
         vacinaLote: _tipo == TipoManejo.vacinacao ? _vacinaLote.text : null,
         outroNome: _tipo == TipoManejo.outro ? _outroNome.text : null,
         pesoKg: _tipo == TipoManejo.pesagem ? _numero(_peso.text) : _pesos[_animalId],
