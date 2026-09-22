@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
+import '../../flock/services/rebanho_selection_service.dart';
 import '../models/reproducao.dart';
 import '../services/reproducao_service.dart';
 import 'reproduction_details_page.dart';
@@ -18,6 +19,8 @@ class ReproductionsPage extends StatefulWidget {
 class _ReproductionsPageState extends State<ReproductionsPage> {
   final ReproducaoService _service = ReproducaoService();
   final AnimalService _animalService = AnimalService();
+  final RebanhoSelectionService _rebanhoSelectionService =
+      RebanhoSelectionService.instance;
 
   Map<String, Map<String, dynamic>> _animais = {};
 
@@ -29,6 +32,18 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
   @override
   void initState() {
     super.initState();
+    _rebanhoSelectionService.addListener(_onLoteChanged);
+    _carregarReproducoes();
+  }
+
+  @override
+  void dispose() {
+    _rebanhoSelectionService.removeListener(_onLoteChanged);
+    super.dispose();
+  }
+
+  void _onLoteChanged() {
+    if (!mounted) return;
     _carregarReproducoes();
   }
 
@@ -43,7 +58,23 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
     });
 
     try {
-      final reproducoes = await _service.getReproducoes();
+      final loteId = _rebanhoSelectionService.rebanhoSelecionadoId;
+      if (loteId == null) {
+        if (!mounted) return;
+        setState(() {
+          _reproducoes = [];
+          _animais = {};
+          _carregando = false;
+        });
+        return;
+      }
+
+      final reproducoesTodas = await _service.getReproducoes();
+      final animaisDoLote = await _animalService.getAnimaisAtivos(rebanhoId: loteId);
+      final idsDoLote = animaisDoLote.map((animal) => animal['id'].toString()).toSet();
+      final reproducoes = reproducoesTodas
+          .where((item) => idsDoLote.contains(item.maeId))
+          .toList();
       final ids = <String>{
         for (final reproducao in reproducoes) ...[
           reproducao.maeId,
@@ -209,6 +240,20 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
 
     if (_erro != null) {
       return _buildErro();
+    }
+
+    if (_rebanhoSelectionService.rebanhoSelecionado == null) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(24, 70, 24, 120),
+        children: [
+          Icon(Icons.layers_outlined, size: 72, color: AppTheme.primaryColor.withValues(alpha: 0.65)),
+          const SizedBox(height: 18),
+          const Text('Selecione um lote', textAlign: TextAlign.center, style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Escolha o lote no início para visualizar a reprodução dele.', textAlign: TextAlign.center, style: TextStyle(color: Colors.black54, height: 1.4)),
+        ],
+      );
     }
 
     if (_reproducoes.isEmpty) {
