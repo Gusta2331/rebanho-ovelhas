@@ -72,7 +72,7 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
         _carregando = false;
       });
 
-      _mostrarErro('Não foi possível carregar os rebanhos.', e);
+      _mostrarErro('Não foi possível carregar os lotes.', e);
     }
   }
 
@@ -80,7 +80,7 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
     final destinoId = _rebanhoSelecionadoId;
 
     if (destinoId == null) {
-      _mostrarMensagem('Selecione o rebanho de destino.');
+      _mostrarMensagem('Selecione o lote de destino.');
       return;
     }
 
@@ -88,7 +88,7 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
       (rebanho) => rebanho['id'].toString() == destinoId,
     );
 
-    final destinoNome = destino['nome']?.toString() ?? 'Rebanho';
+    final destinoNome = destino['nome']?.toString() ?? 'Lote';
 
     final confirmou = await _confirmarTransferencia(destinoNome);
 
@@ -275,7 +275,7 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
 
   Widget _buildRebanhoAtual() {
     return _buildSection(
-      title: 'Rebanho atual',
+      title: 'Lote atual',
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
@@ -304,12 +304,12 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
 
   Widget _buildDestino() {
     return _buildSection(
-      title: 'Novo rebanho',
+      title: 'Novo lote',
       child: DropdownButtonFormField<String>(
         initialValue: _rebanhoSelecionadoId,
         isExpanded: true,
         decoration: InputDecoration(
-          labelText: 'Selecione o rebanho de destino',
+          labelText: 'Selecione o lote de destino',
           prefixIcon: const Icon(Icons.drive_file_move_outline),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           enabledBorder: OutlineInputBorder(
@@ -326,7 +326,7 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
         ),
         items: _rebanhos.map((rebanho) {
           final id = rebanho['id'].toString();
-          final nome = rebanho['nome']?.toString() ?? 'Rebanho';
+          final nome = rebanho['nome']?.toString() ?? 'Lote';
 
           final quantidade = rebanho['quantidade_animais'];
 
@@ -415,7 +415,7 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Nenhum outro rebanho disponível',
+              'Nenhum outro lote disponível',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18,
@@ -425,7 +425,7 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Crie outro rebanho para poder transferir este animal.',
+              'Crie outro lote para poder transferir este animal.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.black54),
             ),
