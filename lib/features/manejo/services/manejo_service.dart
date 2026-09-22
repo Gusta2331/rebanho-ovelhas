@@ -128,9 +128,7 @@ class ManejoService {
           .eq('ativo', true)
           .order('nome');
     }
-      resultado = await _client.from('vermifugos').select('*')
-          .eq('fazenda_id', fazendaId).eq('ativo', true).order('nome');
-    }
+
     return List<Map<String, dynamic>>.from(resultado);
   }
 
