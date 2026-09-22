@@ -889,6 +889,186 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     );
   }
 
+  Widget _produtoField({
+    required String titulo,
+    required List<Map<String, dynamic>> itens,
+    required Map<String, dynamic>? selecionado,
+    required ValueChanged<Map<String, dynamic>?> onChanged,
+    required VoidCallback onAdicionar,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(titulo, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(
+            value: selecionado?['id']?.toString(),
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: titulo,
+              prefixIcon: const Icon(Icons.medical_services_outlined),
+              border: const OutlineInputBorder(),
+            ),
+            items: itens.map((item) {
+              final id = item['id']?.toString();
+              if (id == null) return null;
+              return DropdownMenuItem<String>(
+                value: id,
+                child: Text(item['nome'].toString(), overflow: TextOverflow.ellipsis),
+              );
+            }).whereType<DropdownMenuItem<String>>().toList(),
+            onChanged: _salvando ? null : (id) {
+              final item = id == null ? null : itens.firstWhere((x) => x['id']?.toString() == id);
+              onChanged(item);
+              _calcularDoses();
+            },
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: _salvando ? null : onAdicionar,
+            icon: const Icon(Icons.add),
+            label: Text('Cadastrar novo ' + titulo.toLowerCase()),
+          ),
+          if (selecionado != null && selecionado['dose'] != null && selecionado['peso_referencia_kg'] != null)
+            Text(
+              'Bula cadastrada: ' + selecionado['dose'].toString() + ' ' +
+                  (selecionado['dose_unidade'] ?? '').toString() + ' por ' +
+                  selecionado['peso_referencia_kg'].toString() + ' kg',
+              style: const TextStyle(color: Colors.black54),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _doseCalculadora() {
+    final produto = _produtoAtual();
+    if (produto == null) return const SizedBox.shrink();
+    final regra = _numero(produto['dose']);
+    final referencia = _numero(produto['peso_referencia_kg']);
+    final unidade = produto['dose_unidade']?.toString() ?? '';
+    if (regra == null || referencia == null || referencia <= 0) {
+      return _info('Cadastre na ficha do produto a dose da bula e o peso de referência para ativar a calculadora automática.');
+    }
+    return Card(
+      margin: const EdgeInsets.only(top: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Calculadora de dose', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            Text('Regra: ' + regra.toString() + ' ' + unidade + ' para cada ' + referencia.toString() + ' kg'),
+            if (_carregandoPesos) const Padding(padding: EdgeInsets.only(top: 8), child: LinearProgressIndicator()),
+            ..._dosesCalculadas.entries.map((entry) => Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                children: [
+                  Expanded(child: Text(_animalTexto(_animalPorId(entry.key) ?? {}))),
+                  Text(entry.value.toStringAsFixed(2) + ' ' + unidade, style: const TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+            )),
+            if (!_carregandoPesos && _dosesCalculadas.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text('Não encontrei peso registrado no histórico para calcular automaticamente.'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _adicionarVermifugoCompleto() async {
+    String nome = '';
+    String principio = '';
+    String dose = '';
+    String unidade = 'mL';
+    String referencia = '';
+    String via = '';
+    String carencia = '';
+    final dados = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Novo vermífugo'),
+        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(autofocus: true, onChanged: (v) => nome = v, decoration: const InputDecoration(labelText: 'Nome do produto')),
+          TextField(onChanged: (v) => principio = v, decoration: const InputDecoration(labelText: 'Princípio ativo')),
+          const SizedBox(height: 8),
+          const Align(alignment: Alignment.centerLeft, child: Text('Dose conforme bula', style: TextStyle(fontWeight: FontWeight.bold))),
+          Row(children: [
+            Expanded(child: TextField(keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (v) => dose = v, decoration: const InputDecoration(labelText: 'Dose'))),
+            const SizedBox(width: 8),
+            Expanded(child: TextField(onChanged: (v) => unidade = v, decoration: const InputDecoration(labelText: 'Unidade'))),
+          ]),
+          TextField(keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (v) => referencia = v, decoration: const InputDecoration(labelText: 'Para quantos kg?')),
+          TextField(onChanged: (v) => via = v, decoration: const InputDecoration(labelText: 'Via')),
+          TextField(keyboardType: TextInputType.number, onChanged: (v) => carencia = v, decoration: const InputDecoration(labelText: 'Carência (dias)')),
+        ])),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancelar')),
+          FilledButton(onPressed: () {
+            if (nome.trim().isEmpty) return;
+            Navigator.of(dialogContext).pop({'nome': nome.trim(), 'principio': principio.trim(), 'dose': dose, 'unidade': unidade, 'referencia': referencia, 'via': via, 'carencia': carencia});
+          }, child: const Text('Cadastrar')),
+        ],
+      ),
+    );
+    if (dados == null || !mounted) return;
+    try {
+      final item = await _service.criarVermifugo(
+        nome: dados['nome']!,
+        principioAtivo: dados['principio'],
+        dose: _numero(dados['dose']),
+        doseUnidade: dados['unidade'],
+        pesoReferenciaKg: _numero(dados['referencia']),
+        viaAplicacao: dados['via'],
+        carenciaDias: int.tryParse(dados['carencia'] ?? ''),
+      );
+      setState(() {
+        _vermifugos = [..._vermifugos, item];
+        _vermifugoSelecionado = item;
+      });
+      _calcularDoses();
+    } catch (e) { _mensagem(e.toString().replaceFirst('Exception: ', '')); }
+  }
+
+  Future<void> _adicionarMedicamentoCompleto() async {
+    String nome = '';
+    String principio = '';
+    final dados = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Novo medicamento'),
+        content: TextField(autofocus: true, onChanged: (v) => nome = v, decoration: const InputDecoration(labelText: 'Nome do medicamento')),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancelar')),
+          FilledButton(onPressed: () {
+            if (nome.trim().isEmpty) return;
+            Navigator.of(dialogContext).pop({'nome': nome.trim(), 'principio': principio});
+          }, child: const Text('Cadastrar')),
+        ],
+      ),
+    );
+    if (dados == null || !mounted) return;
+    try {
+      final item = await _service.criarMedicamento(nome: dados['nome']!, principioAtivo: dados['principio']);
+      setState(() {
+        _medicamentos = [..._medicamentos, item];
+        _medicamentoSelecionado = item;
+      });
+      _calcularDoses();
+    } catch (e) { _mensagem(e.toString().replaceFirst('Exception: ', '')); }
+  }
+
   Widget _avaliacaoLote() {
     final selecionados = _animaisSelecionados
         .map(_animalPorId)
