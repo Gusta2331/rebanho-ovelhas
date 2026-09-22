@@ -71,7 +71,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Rebanho "${rebanho.nome}" criado com sucesso.')),
+      SnackBar(content: Text('Lote "${lote.nome}" criado com sucesso.')),
     );
   }
 
@@ -93,7 +93,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Rebanho atualizado com sucesso.')),
+      const SnackBar(content: Text('Lote atualizado com sucesso.')),
     );
   }
 
@@ -104,11 +104,11 @@ class _RebanhosPageState extends State<RebanhosPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(novoStatus ? 'Ativar rebanho' : 'Inativar rebanho'),
+          title: Text(novoStatus ? 'Ativar lote' : 'Inativar lote'),
           content: Text(
             novoStatus
-                ? 'Deseja ativar o rebanho "${rebanho.nome}"?'
-                : 'Deseja inativar o rebanho "${rebanho.nome}"?',
+                ? 'Deseja ativar o lote "${lote.nome}"?'
+                : 'Deseja inativar o lote "${lote.nome}"?',
           ),
           actions: [
             TextButton(
@@ -156,7 +156,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
       return mensagem.substring('Exception: '.length);
     }
 
-    return 'Não foi possível carregar os rebanhos.';
+    return 'Não foi possível carregar os lotes.';
   }
 
   Future<void> _atualizar() async {
@@ -172,7 +172,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Rebanhos',
+          'Lotes',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -193,7 +193,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text('Novo rebanho'),
+        label: const Text('Novo lote'),
       ),
     );
   }
@@ -217,7 +217,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
           ),
           const SizedBox(height: 18),
           const Text(
-            'Nenhum rebanho cadastrado',
+            'Nenhum lote cadastrado',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 21,
@@ -227,7 +227,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Crie o primeiro rebanho para começar a organizar os animais da Fazenda Baixinha.',
+            'Crie o primeiro lote para começar a organizar os animais da Fazenda Baixinha.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Colors.black54),
           ),
@@ -236,7 +236,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
             child: FilledButton.icon(
               onPressed: _novoRebanho,
               icon: const Icon(Icons.add),
-              label: const Text('Criar primeiro rebanho'),
+              label: const Text('Criar primeiro lote'),
               style: FilledButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
               ),
