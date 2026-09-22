@@ -965,6 +965,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                       (item) => item['id']?.toString() == id,
                     );
                     setState(() => _vacinaSelecionada = vacina);
+                    _calcularDoses();
                   },
           ),
           const SizedBox(height: 8),
