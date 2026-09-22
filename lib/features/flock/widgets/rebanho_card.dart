@@ -65,8 +65,8 @@ class RebanhoCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      '${rebanho.quantidadeAnimais} '
-                      '${rebanho.quantidadeAnimais == 1 ? 'animal' : 'animais'}',
+                      '${lote.quantidadeAnimais} '
+                      '${lote.quantidadeAnimais == 1 ? 'animal' : 'animais'}',
                       style: const TextStyle(
                         fontSize: 13,
                         color: Colors.black54,
