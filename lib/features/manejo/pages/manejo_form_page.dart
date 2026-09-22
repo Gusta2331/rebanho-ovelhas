@@ -1007,7 +1007,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                               : 'Salvar manejo',
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
