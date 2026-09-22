@@ -43,6 +43,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   final Map<String, int> _famachaPorAnimal = {};
   final Map<String, double> _pesos = {};
   final Map<String, double> _dosesCalculadas = {};
+  final Map<String, String> _pesoTextoPorAnimal = {};
+  final Map<String, String> _doseTextoPorAnimal = {};
+  String _doseBaseTexto = '';
+  String _pesoReferenciaTexto = '1';
+  String _unidadeDose = 'mL';
+  int _doseEditorVersao = 0;
 
   TipoManejo _tipo = TipoManejo.vacinacao;
   DateTime _data = DateTime.now();
@@ -73,7 +79,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       _vacinaLote.text = manejo.vacinaLote ?? '';
       _outroNome.text = manejo.outroNome ?? '';
       if (manejo.pesoKg != null) _peso.text = manejo.pesoKg.toString();
-      if (manejo.dose != null) _doseManual.text = manejo.dose.toString();
+      if (manejo.dose != null) {
+        _doseManual.text = manejo.dose.toString();
+        _doseBaseTexto = manejo.dose.toString();
+      }
+      if (manejo.pesoReferenciaKg != null) _pesoReferenciaTexto = manejo.pesoReferenciaKg.toString();
+      if (manejo.doseUnidade != null && manejo.doseUnidade!.trim().isNotEmpty) _unidadeDose = manejo.doseUnidade!;
     }
 
     _carregarDados();
@@ -150,7 +161,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     setState(() => _carregandoPesos = true);
     for (final id in _animaisSelecionados) {
       final peso = await _service.getUltimoPeso(id);
-      if (peso != null) _pesos[id] = peso;
+      if (peso != null) {
+        _pesos[id] = peso;
+        _pesoTextoPorAnimal[id] = peso.toString();
+      }
     }
     if (!mounted) return;
     setState(() => _carregandoPesos = false);
@@ -175,22 +189,68 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   }
 
   void _calcularDoses() {
-    final produto = _produtoAtual();
-    final dose = _numero(produto?['dose']);
-    final referencia = _numero(produto?['peso_referencia_kg']);
-    if (dose == null || referencia == null || referencia <= 0) {
+    final doseBase = _numero(_doseBaseTexto);
+    final referencia = _numero(_pesoReferenciaTexto);
+    if (doseBase == null || doseBase <= 0 || referencia == null || referencia <= 0) {
       setState(() => _dosesCalculadas.clear());
       return;
     }
     final calculadas = <String, double>{};
     for (final id in _animaisSelecionados) {
-      final peso = _pesos[id];
-      if (peso != null && peso > 0) calculadas[id] = peso / referencia * dose;
+      final peso = _numero(_pesoTextoPorAnimal[id]) ?? _pesos[id];
+      if (peso != null && peso > 0) calculadas[id] = peso / referencia * doseBase;
+    }
+    setState(() => _dosesCalculadas
+      ..clear()
+      ..addAll(calculadas));
+  }
+
+  void _atualizarPesoAnimal(String id, String valor) {
+    _pesoTextoPorAnimal[id] = valor;
+    final peso = _numero(valor);
+    if (peso != null && peso > 0) {
+      _pesos[id] = peso;
+    } else {
+      _pesos.remove(id);
+    }
+    _calcularDoses();
+  }
+
+  void _atualizarDoseAnimal(String id, String valor) {
+    _doseTextoPorAnimal[id] = valor;
+    final dose = _numero(valor);
+    if (dose == null || dose < 0) {
+      _dosesCalculadas.remove(id);
+    } else {
+      _dosesCalculadas[id] = dose;
+    }
+    setState(() {});
+  }
+
+  void _aplicarRegraDoseTodos() {
+    final doseBase = _numero(_doseBaseTexto);
+    final referencia = _numero(_pesoReferenciaTexto);
+    if (doseBase == null || doseBase <= 0 || referencia == null || referencia <= 0) {
+      _mensagem('Informe a dose base e o peso de referência.');
+      return;
+    }
+    final calculadas = <String, double>{};
+    for (final id in _animaisSelecionados) {
+      final peso = _numero(_pesoTextoPorAnimal[id]) ?? _pesos[id];
+      if (peso != null && peso > 0) calculadas[id] = peso / referencia * doseBase;
+    }
+    if (calculadas.length != _animaisSelecionados.length) {
+      _mensagem('Informe o peso de cada animal antes de aplicar a dose em lote.');
+      return;
     }
     setState(() {
       _dosesCalculadas
         ..clear()
         ..addAll(calculadas);
+      _doseEditorVersao++;
+      for (final entry in calculadas.entries) {
+        _doseTextoPorAnimal[entry.key] = entry.value.toStringAsFixed(2);
+      }
     });
   }
 
@@ -226,86 +286,43 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   Future<void> _adicionarVacina() async {
     String nome = '';
     String fabricante = '';
-    String dose = '';
-    String unidade = 'mL';
-    String referencia = '';
-    String via = '';
-    String carencia = '';
 
     final dados = await showDialog<Map<String, String>>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Nova vacina'),
-          content: Column(
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Nova vacina'),
+        content: SingleChildScrollView(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 autofocus: true,
                 onChanged: (value) => nome = value,
-                decoration: const InputDecoration(
-                  labelText: 'Nome da vacina',
-                  hintText: 'Ex.: Vacina contra clostridioses',
-                ),
+                decoration: const InputDecoration(labelText: 'Nome da vacina'),
               ),
               const SizedBox(height: 12),
               TextField(
                 onChanged: (value) => fabricante = value,
-                decoration: const InputDecoration(
-                  labelText: 'Fabricante',
-                  hintText: 'Opcional',
-                ),
+                decoration: const InputDecoration(labelText: 'Fabricante'),
               ),
-              const SizedBox(height: 12),
-              const Align(alignment: Alignment.centerLeft, child: Text('Regra da dose da bula', style: TextStyle(fontWeight: FontWeight.bold))),
-              Row(children: [
-                Expanded(child: TextField(keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (v) => dose = v, decoration: const InputDecoration(labelText: 'Dose'))),
-                const SizedBox(width: 8),
-                Expanded(child: TextField(onChanged: (v) => unidade = v, decoration: const InputDecoration(labelText: 'Unidade'))),
-              ]),
-              TextField(keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (v) => referencia = v, decoration: const InputDecoration(labelText: 'Por quantos kg?')),
-              TextField(onChanged: (v) => via = v, decoration: const InputDecoration(labelText: 'Via')),
-              TextField(keyboardType: TextInputType.number, onChanged: (v) => carencia = v, decoration: const InputDecoration(labelText: 'Carência (dias)')),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () {
-                if (nome.trim().isEmpty) return;
-                Navigator.of(dialogContext).pop({
-                  'nome': nome.trim(),
-                  'fabricante': fabricante.trim(),
-                  'dose': dose.trim(),
-                  'unidade': unidade.trim(),
-                  'referencia': referencia.trim(),
-                  'via': via.trim(),
-                  'carencia': carencia.trim(),
-                });
-              },
-              child: const Text('Cadastrar'),
-            ),
-          ],
-        );
-      },
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () {
+              if (nome.trim().isEmpty) return;
+              Navigator.of(dialogContext).pop({'nome': nome.trim(), 'fabricante': fabricante.trim()});
+            },
+            child: const Text('Cadastrar'),
+          ),
+        ],
+      ),
     );
-
     if (dados == null || !mounted) return;
-
     try {
-      final vacina = await _service.criarVacina(
-        nome: dados['nome']!,
-        fabricante: dados['fabricante'],
-        dose: _numero(dados['dose']),
-        doseUnidade: dados['unidade'],
-        pesoReferenciaKg: _numero(dados['referencia']),
-        viaAplicacao: dados['via'],
-        carenciaDias: int.tryParse(dados['carencia'] ?? ''),
-      );
-
+      final vacina = await _service.criarVacina(nome: dados['nome']!, fabricante: dados['fabricante']);
       setState(() {
         _vacinas = [..._vacinas, vacina]
           ..sort((a, b) => (a['nome'] ?? '').toString().compareTo((b['nome'] ?? '').toString()));
@@ -320,18 +337,21 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     setState(() {
       _animaisSelecionados
         ..clear()
-        ..addAll(
-          _animais
-              .map((animal) => animal['id']?.toString())
-              .whereType<String>(),
-        );
+        ..addAll(_animais.map((animal) => animal['id']?.toString()).whereType<String>());
     });
+    if (_tipo == TipoManejo.vacinacao || _tipo == TipoManejo.vermifugacao || _tipo == TipoManejo.tratamento) {
+      _carregarPesos();
+    }
   }
 
   void _limparSelecao() {
     setState(() {
       _animaisSelecionados.clear();
       _famachaPorAnimal.clear();
+      _pesos.clear();
+      _dosesCalculadas.clear();
+      _pesoTextoPorAnimal.clear();
+      _doseTextoPorAnimal.clear();
     });
   }
 
@@ -446,11 +466,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         outroNome: _tipo == TipoManejo.outro ? _outroNome.text : null,
         pesoPorAnimal: pesosParaSalvar,
         dosePorAnimal: dosesParaSalvar,
-        dose: _numero(_produtoAtual()?['dose']),
-        doseUnidade: _produtoAtual()?['dose_unidade']?.toString(),
-        pesoReferenciaKg: _numero(_produtoAtual()?['peso_referencia_kg']),
-        viaAplicacao: _produtoAtual()?['via_aplicacao']?.toString(),
-        carenciaDias: int.tryParse(_produtoAtual()?['carencia_dias']?.toString() ?? ''),
+        dose: _numero(_doseBaseTexto),
+        doseUnidade: _unidadeDose,
+        pesoReferenciaKg: _numero(_pesoReferenciaTexto),
+        viaAplicacao: null,
+        carenciaDias: null,
         validade: _validade,
         vermifugoId: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'id')?.toString() : null,
         vermifugoNome: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'nome')?.toString() : null,
@@ -511,10 +531,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         outroNome: _tipo == TipoManejo.outro ? _outroNome.text : null,
         pesoKg: _tipo == TipoManejo.pesagem ? _numero(_peso.text) : _pesos[_animalId],
         dose: _dosesCalculadas[_animalId] ?? _numero(_doseManual.text),
-        doseUnidade: _produtoAtual()?['dose_unidade']?.toString(),
-        pesoReferenciaKg: _numero(_produtoAtual()?['peso_referencia_kg']),
-        viaAplicacao: _produtoAtual()?['via_aplicacao']?.toString(),
-        carenciaDias: int.tryParse(_produtoAtual()?['carencia_dias']?.toString() ?? ''),
+        doseUnidade: _unidadeDose,
+        pesoReferenciaKg: _numero(_pesoReferenciaTexto),
+        viaAplicacao: null,
+        carenciaDias: null,
         vermifugoId: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'id')?.toString() : null,
         vermifugoNome: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'nome')?.toString() : null,
         vermifugoPrincipioAtivo: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'principio_ativo')?.toString() : null,
@@ -1063,6 +1083,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       decoration: BoxDecoration(
         color: AppTheme.primaryColor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.14)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1073,16 +1094,21 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             value: selecionado?['id']?.toString(),
             isExpanded: true,
             decoration: InputDecoration(
-              labelText: titulo,
+              labelText: 'Selecionar ${titulo.toLowerCase()}',
               prefixIcon: const Icon(Icons.medical_services_outlined),
               border: const OutlineInputBorder(),
             ),
             items: itens.map((item) {
               final id = item['id']?.toString();
               if (id == null) return null;
+              final principio = item['principio_ativo']?.toString().trim();
+              final nome = item['nome']?.toString() ?? titulo;
               return DropdownMenuItem<String>(
                 value: id,
-                child: Text(item['nome'].toString(), overflow: TextOverflow.ellipsis),
+                child: Text(
+                  principio == null || principio.isEmpty ? nome : '$nome • $principio',
+                  overflow: TextOverflow.ellipsis,
+                ),
               );
             }).whereType<DropdownMenuItem<String>>().toList(),
             onChanged: _salvando ? null : (id) {
@@ -1095,197 +1121,142 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
           TextButton.icon(
             onPressed: _salvando ? null : onAdicionar,
             icon: const Icon(Icons.add),
-            label: Text('Cadastrar novo ' + titulo.toLowerCase()),
+            label: Text('Cadastrar novo ${titulo.toLowerCase()}'),
           ),
-          if (selecionado != null && selecionado['dose'] != null && selecionado['peso_referencia_kg'] != null)
-            Text(
-              'Bula cadastrada: ' + selecionado['dose'].toString() + ' ' +
-                  (selecionado['dose_unidade'] ?? '').toString() + ' por ' +
-                  selecionado['peso_referencia_kg'].toString() + ' kg',
-              style: const TextStyle(color: Colors.black54),
-            ),
         ],
       ),
     );
   }
 
-  Widget _info(String texto) {
+  Widget _dosePorAnimalEditor() {
+    if (_animaisSelecionados.isEmpty) return const SizedBox.shrink();
+    final sanitario = _tipo == TipoManejo.vacinacao ||
+        _tipo == TipoManejo.vermifugacao ||
+        _tipo == TipoManejo.tratamento;
+    if (!sanitario) return const SizedBox.shrink();
+
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
+        color: AppTheme.primaryColor.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.16)),
       ),
-      child: Text(texto, style: const TextStyle(color: Colors.black54)),
-    );
-  }
-
-  Widget _doseCalculadora() {
-    final produto = _produtoAtual();
-    if (produto == null) return const SizedBox.shrink();
-    final regra = _numero(produto['dose']);
-    final referencia = _numero(produto['peso_referencia_kg']);
-    final unidade = produto['dose_unidade']?.toString() ?? '';
-    if (regra == null || referencia == null || referencia <= 0) {
-      return _info('Cadastre na ficha do produto a dose da bula e o peso de referência para ativar a calculadora automática.');
-    }
-    return Card(
-      margin: const EdgeInsets.only(top: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Calculadora de dose', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            Text('Regra: ' + regra.toString() + ' ' + unidade + ' para cada ' + referencia.toString() + ' kg'),
-            if (_carregandoPesos) const Padding(padding: EdgeInsets.only(top: 8), child: LinearProgressIndicator()),
-            ..._dosesCalculadas.entries.map((entry) => Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Row(
-                children: [
-                  Expanded(child: Text(_animalTexto(_animalPorId(entry.key) ?? {}))),
-                  Text(entry.value.toStringAsFixed(2) + ' ' + unidade, style: const TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
-            )),
-            if (!_carregandoPesos && _dosesCalculadas.isEmpty)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text('Não encontrei peso registrado no histórico para calcular automaticamente.'),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _adicionarVermifugoCompleto() async {
-    String nome = '';
-    String principio = '';
-    String dose = '';
-    String unidade = 'mL';
-    String referencia = '';
-    String via = '';
-    String carencia = '';
-    final dados = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Novo vermífugo'),
-        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(autofocus: true, onChanged: (v) => nome = v, decoration: const InputDecoration(labelText: 'Nome do produto')),
-          TextField(onChanged: (v) => principio = v, decoration: const InputDecoration(labelText: 'Princípio ativo')),
-          const SizedBox(height: 8),
-          const Align(alignment: Alignment.centerLeft, child: Text('Dose conforme bula', style: TextStyle(fontWeight: FontWeight.bold))),
-          Row(children: [
-            Expanded(child: TextField(keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (v) => dose = v, decoration: const InputDecoration(labelText: 'Dose'))),
-            const SizedBox(width: 8),
-            Expanded(child: TextField(onChanged: (v) => unidade = v, decoration: const InputDecoration(labelText: 'Unidade'))),
-          ]),
-          TextField(keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (v) => referencia = v, decoration: const InputDecoration(labelText: 'Para quantos kg?')),
-          TextField(onChanged: (v) => via = v, decoration: const InputDecoration(labelText: 'Via')),
-          TextField(keyboardType: TextInputType.number, onChanged: (v) => carencia = v, decoration: const InputDecoration(labelText: 'Carência (dias)')),
-        ])),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancelar')),
-          FilledButton(onPressed: () {
-            if (nome.trim().isEmpty) return;
-            Navigator.of(dialogContext).pop({'nome': nome.trim(), 'principio': principio.trim(), 'dose': dose, 'unidade': unidade, 'referencia': referencia, 'via': via, 'carencia': carencia});
-          }, child: const Text('Cadastrar')),
-        ],
-      ),
-    );
-    if (dados == null || !mounted) return;
-    try {
-      final item = await _service.criarVermifugo(
-        nome: dados['nome']!,
-        principioAtivo: dados['principio'],
-        dose: _numero(dados['dose']),
-        doseUnidade: dados['unidade'],
-        pesoReferenciaKg: _numero(dados['referencia']),
-        viaAplicacao: dados['via'],
-        carenciaDias: int.tryParse(dados['carencia'] ?? ''),
-      );
-      setState(() {
-        _vermifugos = [..._vermifugos, item];
-        _vermifugoSelecionado = item;
-      });
-      _calcularDoses();
-    } catch (e) { _mensagem(e.toString().replaceFirst('Exception: ', '')); }
-  }
-
-  Future<void> _adicionarMedicamentoCompleto() async {
-    String nome = '';
-    String principio = '';
-    String dose = '';
-    String unidade = 'mL';
-    String referencia = '';
-    String via = '';
-    String carencia = '';
-
-    final dados = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Novo medicamento'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(autofocus: true, onChanged: (v) => nome = v, decoration: const InputDecoration(labelText: 'Nome do medicamento')),
-              TextField(onChanged: (v) => principio = v, decoration: const InputDecoration(labelText: 'Princípio ativo')),
-              const SizedBox(height: 8),
-              const Align(alignment: Alignment.centerLeft, child: Text('Dose conforme bula', style: TextStyle(fontWeight: FontWeight.bold))),
-              Row(children: [
-                Expanded(child: TextField(keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (v) => dose = v, decoration: const InputDecoration(labelText: 'Dose'))),
-                const SizedBox(width: 8),
-                Expanded(child: TextField(onChanged: (v) => unidade = v, decoration: const InputDecoration(labelText: 'Unidade'))),
-              ]),
-              TextField(keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (v) => referencia = v, decoration: const InputDecoration(labelText: 'Para quantos kg?')),
-              TextField(onChanged: (v) => via = v, decoration: const InputDecoration(labelText: 'Via')),
-              TextField(keyboardType: TextInputType.number, onChanged: (v) => carencia = v, decoration: const InputDecoration(labelText: 'Carência (dias)')),
-            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Dose deste manejo', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 5),
+          const Text(
+            'A regra é definida aqui e não fica presa ao cadastro do produto. Cada animal recebe peso e dose próprios.',
+            style: TextStyle(color: Colors.black54, height: 1.35),
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancelar')),
-          FilledButton(onPressed: () {
-            if (nome.trim().isEmpty) return;
-            Navigator.of(dialogContext).pop({
-              'nome': nome.trim(),
-              'principio': principio.trim(),
-              'dose': dose,
-              'unidade': unidade,
-              'referencia': referencia,
-              'via': via,
-              'carencia': carencia,
-            });
-          }, child: const Text('Cadastrar')),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final largura = constraints.maxWidth < 430 ? constraints.maxWidth : (constraints.maxWidth - 12) / 2;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                    width: largura,
+                    child: TextFormField(
+                      initialValue: _doseBaseTexto,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (v) { _doseBaseTexto = v; },
+                      decoration: const InputDecoration(labelText: 'Dose base', hintText: 'Ex.: 1', prefixIcon: Icon(Icons.medication_outlined), border: OutlineInputBorder()),
+                    ),
+                  ),
+                  SizedBox(
+                    width: largura,
+                    child: TextFormField(
+                      initialValue: _pesoReferenciaTexto,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (v) { _pesoReferenciaTexto = v; },
+                      decoration: const InputDecoration(labelText: 'Para quantos kg?', hintText: 'Ex.: 10', prefixIcon: Icon(Icons.monitor_weight_outlined), border: OutlineInputBorder()),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(
+            value: _unidadeDose,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: 'Unidade da dose', prefixIcon: Icon(Icons.straighten_outlined), border: OutlineInputBorder()),
+            items: const [
+              DropdownMenuItem(value: 'mL', child: Text('mL')),
+              DropdownMenuItem(value: 'mg', child: Text('mg')),
+              DropdownMenuItem(value: 'g', child: Text('g')),
+              DropdownMenuItem(value: 'comprimido', child: Text('Comprimido')),
+              DropdownMenuItem(value: 'aplicação', child: Text('Aplicação')),
+            ],
+            onChanged: _salvando ? null : (value) {
+              if (value != null) setState(() => _unidadeDose = value);
+            },
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _salvando ? null : _aplicarRegraDoseTodos,
+              icon: const Icon(Icons.calculate_outlined),
+              label: const Text('Aplicar a mesma dose por kg a todas'),
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (_carregandoPesos) const LinearProgressIndicator(),
+          const SizedBox(height: 8),
+          ..._animaisSelecionados.map(_animalPorId).whereType<Map<String, dynamic>>().map(_itemDoseAnimal),
         ],
       ),
     );
-
-    if (dados == null || !mounted) return;
-
-    try {
-      final item = await _service.criarMedicamento(
-        nome: dados['nome']!,
-        principioAtivo: dados['principio'],
-        dose: _numero(dados['dose']),
-        doseUnidade: dados['unidade'],
-        pesoReferenciaKg: _numero(dados['referencia']),
-        viaAplicacao: dados['via'],
-        carenciaDias: int.tryParse(dados['carencia'] ?? ''),
-      );
-      setState(() {
-        _medicamentos = [..._medicamentos, item];
-        _medicamentoSelecionado = item;
-      });
-      _calcularDoses();
-    } catch (e) {
-      _mensagem(e.toString().replaceFirst('Exception: ', ''));
-    }
   }
+
+  Widget _itemDoseAnimal(Map<String, dynamic> animal) {
+    final id = animal['id']?.toString() ?? '';
+    final peso = _pesoTextoPorAnimal[id] ?? '';
+    final dose = _doseTextoPorAnimal[id] ?? '';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final estreito = constraints.maxWidth < 380;
+          final pesoField = TextFormField(
+            initialValue: peso,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (v) => _atualizarPesoAnimal(id, v),
+            decoration: const InputDecoration(labelText: 'Peso (kg)', prefixIcon: Icon(Icons.monitor_weight_outlined), border: OutlineInputBorder()),
+          );
+          final doseField = TextFormField(
+            key: ValueKey('dose-$id-$_doseEditorVersao'),
+            initialValue: dose,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (v) => _atualizarDoseAnimal(id, v),
+            decoration: InputDecoration(labelText: 'Dose aplicada ($_unidadeDose)', prefixIcon: const Icon(Icons.medication_outlined), border: const OutlineInputBorder()),
+          );
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_animalTexto(animal), style: const TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 10),
+              if (estreito)
+                Column(children: [pesoField, const SizedBox(height: 10), doseField])
+              else
+                Row(children: [Expanded(child: pesoField), const SizedBox(width: 12), Expanded(child: doseField)]),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _doseCalculadora() => _dosePorAnimalEditor();
 
   Widget _avaliacaoLote() {
     final selecionados = _animaisSelecionados
