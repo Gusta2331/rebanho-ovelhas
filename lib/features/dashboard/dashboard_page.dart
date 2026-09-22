@@ -162,11 +162,9 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     try {
-      final animais = await _animalService.getAnimaisAtivos();
-
-      final animaisDoRebanho = animais.where((animal) {
-        return animal['rebanho_id']?.toString() == _rebanhoSelecionado!.id;
-      }).toList();
+      final animaisDoRebanho = await _animalService.getAnimaisAtivos(
+        rebanhoId: _rebanhoSelecionado!.id,
+      );
 
       int femeas = 0;
       int machos = 0;
