@@ -204,7 +204,7 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
   }
 
   String _formatarMoeda(double valor) {
-    return 'R\$ $valor.toStringAsFixed(2).replaceAll('.', ',')}';
+    return 'R\$ ${valor.toStringAsFixed(2).replaceAll('.', ',')}';
   }
 
   String _formatarData(DateTime data) {
