@@ -8,30 +8,30 @@ class RebanhoHelpPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajuda sobre rebanhos')),
+      appBar: AppBar(title: const Text('Ajuda sobre lotes')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           _intro(context),
           const SizedBox(height: 16),
-          _section(context, 'O que é um rebanho?', Icons.groups_outlined, [
+          _section(context, 'O que é um lote?', Icons.groups_outlined, [
             _item(
-              'Rebanho',
-              'É um grupo de animais organizado dentro da fazenda. Uma fazenda pode ter vários rebanhos.',
+              'Lote',
+              'É um grupo de animais organizado dentro da fazenda. Uma fazenda pode ter vários lotes.',
             ),
             _item(
               'Quantidade de animais',
-              'Mostra quantos animais ativos estão atualmente naquele rebanho.',
+              'Mostra quantos animais ativos estão atualmente naquele lote.',
             ),
             _item(
               'Nome',
-              'É a identificação usada para diferenciar um rebanho dos outros, como Rebanho 01 ou Rebanho 02.',
+              'É a identificação usada para diferenciar um lote dos outros, como Lote 01 ou Lote 02.',
             ),
           ]),
           const SizedBox(height: 16),
           _section(
             context,
-            'Informações do rebanho',
+            'Informações do lote',
             Icons.info_outline_rounded,
             [
               _item(
@@ -44,38 +44,38 @@ class RebanhoHelpPage extends StatelessWidget {
               ),
               _item(
                 'Localização',
-                'Indica onde o rebanho está mantido na propriedade, quando essa informação for útil.',
+                'Indica onde o lote está mantido na propriedade, quando essa informação for útil.',
               ),
             ],
           ),
           const SizedBox(height: 16),
           _section(context, 'Ativo e inativo', Icons.toggle_on_outlined, [
             _item(
-              'Rebanho ativo',
+              'Lote ativo',
               'Pode ser utilizado normalmente e pode receber animais.',
             ),
             _item(
-              'Rebanho inativo',
-              'Deixa de ser usado como rebanho ativo, mas seus registros são preservados.',
+              'Lote inativo',
+              'Deixa de ser usado como lote ativo, mas seus registros são preservados.',
             ),
           ]),
           const SizedBox(height: 16),
           _section(
             context,
-            'Rebanho selecionado',
+            'Lote selecionado',
             Icons.check_circle_outline_rounded,
             [
               _item(
                 'Seleção atual',
-                'O rebanho selecionado define quais animais aparecem em telas que trabalham com um rebanho específico.',
+                'O lote selecionado define quais animais aparecem em telas que trabalham com um lote específico.',
               ),
               _item(
                 'Cadastro de animais',
-                'Ao cadastrar um novo animal, ele pertence automaticamente ao rebanho selecionado.',
+                'Ao cadastrar um novo animal, ele pertence automaticamente ao lote selecionado.',
               ),
               _item(
-                'Troca de rebanho',
-                'Um animal pode ser transferido para outro rebanho. A movimentação pode ser registrada para preservar o histórico.',
+                'Troca de lote',
+                'Um animal pode ser transferido para outro lote. A movimentação pode ser registrada para preservar o histórico.',
               ),
             ],
           ),
@@ -101,7 +101,7 @@ class RebanhoHelpPage extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Os rebanhos servem para organizar os animais da fazenda em grupos. Eles não representam categorias como “matrizes” ou “cordeiros”.',
+                'Os lotes servem para organizar os animais da fazenda em grupos. Eles não representam categorias como “matrizes” ou “cordeiros”.',
                 style: Theme.of(context).textTheme.bodyMedium
                     ?.copyWith(height: 1.5),
               ),
@@ -174,7 +174,7 @@ class RebanhoHelpPage extends StatelessWidget {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Dica: um animal pertence a um rebanho por vez. Quando ele mudar de grupo, use a transferência para manter o histórico da movimentação.',
+              'Dica: um animal pertence a um lote por vez. Quando ele mudar de grupo, use a transferência para manter o histórico da movimentação.',
               style: TextStyle(height: 1.4),
             ),
           ),
