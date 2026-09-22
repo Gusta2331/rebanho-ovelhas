@@ -46,6 +46,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
 
   TipoManejo _tipo = TipoManejo.vacinacao;
   DateTime _data = DateTime.now();
+  DateTime? _validade;
   int? _famacha;
 
   Map<String, dynamic>? _vacinaSelecionada;
@@ -403,6 +404,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         pesoReferenciaKg: _numero(_produtoAtual()?['peso_referencia_kg']),
         viaAplicacao: _produtoAtual()?['via_aplicacao']?.toString(),
         carenciaDias: int.tryParse(_produtoAtual()?['carencia_dias']?.toString() ?? ''),
+        validade: _validade,
         vermifugoId: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['id']?.toString() : null,
         vermifugoNome: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['nome']?.toString() : null,
         vermifugoPrincipioAtivo: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['principio_ativo']?.toString() : null,
