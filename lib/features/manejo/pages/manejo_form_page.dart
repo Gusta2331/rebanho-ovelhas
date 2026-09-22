@@ -378,21 +378,25 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     setState(() => _salvando = true);
 
     try {
+      final vacinaId = _tipo == TipoManejo.vacinacao
+          ? _vacinaSelecionada?['id']?.toString()
+          : null;
+      final vacinaNome = _tipo == TipoManejo.vacinacao
+          ? _vacinaSelecionada?['nome']?.toString()
+          : null;
+      final vacinaFabricante = _tipo == TipoManejo.vacinacao
+          ? _vacinaSelecionada?['fabricante']?.toString()
+          : null;
+
       await _service.criarManejosEmLote(
         animalIds: _animaisSelecionados.toList(),
         data: _data,
         tipo: _tipo,
         famachaPorAnimal: _famachaPorAnimal,
         observacoes: _observacoes.text,
-        vacinaId: _tipo == TipoManejo.vacinacao
-            ? (_vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString())
-            : null,
-        vacinaNome: _tipo == TipoManejo.vacinacao
-            ? (_vacinaSelecionada == null ? null : _vacinaSelecionada!['nome']?.toString())
-            : null,
-        vacinaFabricante: _tipo == TipoManejo.vacinacao
-            ? (_vacinaSelecionada == null ? null : _vacinaSelecionada!['fabricante']?.toString())
-            : null,
+        vacinaId: vacinaId,
+        vacinaNome: vacinaNome,
+        vacinaFabricante: vacinaFabricante,
         vacinaLote: _tipo == TipoManejo.vacinacao
             ? _vacinaLote.text
             : null,
@@ -440,6 +444,16 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     setState(() => _salvando = true);
 
     try {
+      final vacinaId = _tipo == TipoManejo.vacinacao
+          ? _vacinaSelecionada?['id']?.toString()
+          : null;
+      final vacinaNome = _tipo == TipoManejo.vacinacao
+          ? _vacinaSelecionada?['nome']?.toString()
+          : null;
+      final vacinaFabricante = _tipo == TipoManejo.vacinacao
+          ? _vacinaSelecionada?['fabricante']?.toString()
+          : null;
+
       await _service.atualizarManejo(
         id: widget.manejo!.id,
         animalId: _animalId!,
