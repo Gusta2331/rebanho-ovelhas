@@ -152,12 +152,18 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
                             leading: const CircleAvatar(child: Icon(Icons.medical_services_outlined)),
                             title: Text(produto['nome'].toString()),
                             subtitle: Text("${produto['categoria']} • ${produto['unidade']}"),
-                            trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text("${produto['estoque']}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                                TextButton(onPressed: () => _movimentar(produto), child: const Text('Movimentar')),
+                                Text(
+                                  "${produto['estoque']}",
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                IconButton(
+                                  tooltip: 'Movimentar',
+                                  onPressed: () => _movimentar(produto),
+                                  icon: const Icon(Icons.swap_vert_rounded),
+                                ),
                               ],
                             ),
                           ),
