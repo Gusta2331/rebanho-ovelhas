@@ -345,12 +345,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         const SizedBox(height: 10),
         DropdownButtonFormField<String>(
           value: selecionado?['id']?.toString(), isExpanded: true,
-          decoration: InputDecoration(labelText: 'Selecionar $'+'titulo', prefixIcon: const Icon(Icons.medical_services_outlined), border: const OutlineInputBorder()),
+          decoration: InputDecoration(labelText: 'Selecionar ' + titulo, prefixIcon: const Icon(Icons.medical_services_outlined), border: const OutlineInputBorder()),
           items: itens.map((item) {
             final id = item['id']?.toString(); if (id == null) return null;
             final nome = item['nome']?.toString() ?? titulo;
             final principio = item['principio_ativo']?.toString().trim();
-            return DropdownMenuItem<String>(value: id, child: Text(principio == null || principio.isEmpty ? nome : '$'+'nome • $'+'principio', overflow: TextOverflow.ellipsis));
+            return DropdownMenuItem<String>(value: id, child: Text(principio == null || principio.isEmpty ? nome : '$nome • $principio', overflow: TextOverflow.ellipsis));
           }).whereType<DropdownMenuItem<String>>().toList(),
           onChanged: _salvando ? null : (id) {
             final item = id == null ? null : itens.firstWhere((x) => x['id']?.toString() == id);
@@ -358,7 +358,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
           },
         ),
         const SizedBox(height: 8),
-        TextButton.icon(onPressed: _salvando ? null : onAdicionar, icon: const Icon(Icons.add), label: Text('Cadastrar novo $'+'{titulo.toLowerCase()}')),
+        TextButton.icon(onPressed: _salvando ? null : onAdicionar, icon: const Icon(Icons.add), label: Text('Cadastrar novo ' + titulo.toLowerCase())),
       ]),
     );
   }
@@ -1006,14 +1006,14 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                               ? 'Salvar alterações'
                               : 'Salvar manejo',
                     ),
-                  ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                  ],
+                ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
     );
   }
 
