@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/services/supabase_service.dart';
-import '../../financeiro/services/financeiro_service.dart';
 
 class AnimalService {
   SupabaseClient get _client => SupabaseService.client;
