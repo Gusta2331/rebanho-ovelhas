@@ -304,6 +304,7 @@ class _DashboardPageState extends State<DashboardPage> {
     });
 
     await _loadAnimals();
+    await _loadProximosManejos();
   }
 
   Future<void> _abrirGerenciamentoRebanhos() async {
