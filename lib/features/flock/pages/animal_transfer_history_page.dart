@@ -250,12 +250,12 @@ class _AnimalTransferHistoryPageState extends State<AnimalTransferHistoryPage> {
   ) {
     final origem = _nomeRebanho(
       transferencia['rebanho_origem'],
-      'Rebanho de origem',
+      'Lote de origem',
     );
 
     final destino = _nomeRebanho(
       transferencia['rebanho_destino'],
-      'Rebanho de destino',
+      'Lote de destino',
     );
 
     final data = _dataHoraTexto(transferencia['data_transferencia']);
@@ -454,7 +454,7 @@ class _AnimalTransferHistoryPageState extends State<AnimalTransferHistoryPage> {
           const SizedBox(height: 8),
           Text(
             'O animal ${widget.brinco} ainda não possui '
-            'transferências entre rebanhos.',
+            'transferências entre lotes.',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 14,
