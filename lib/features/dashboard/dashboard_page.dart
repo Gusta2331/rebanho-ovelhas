@@ -14,6 +14,9 @@ import '../flock/services/rebanho_selection_service.dart';
 import '../flock/services/rebanho_service.dart';
 import '../manejo/pages/manejos_page.dart';
 import '../manejo/pages/manejo_agenda_page.dart';
+import '../farmacia/pages/farmacia_page.dart';
+import '../financeiro/pages/financeiro_page.dart';
+import '../more/mais_page.dart';
 import '../reproduction/pages/reproductions_page.dart';
 import 'widgets/animal_card.dart';
 import 'widgets/management_item.dart';
@@ -351,6 +354,24 @@ class _DashboardPageState extends State<DashboardPage> {
     ).push(MaterialPageRoute(builder: (context) => const ReproductionsPage()));
   }
 
+  Future<void> _openFarmacia() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const FarmaciaPage()),
+    );
+  }
+
+  Future<void> _openFinanceiro() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const FinanceiroPage()),
+    );
+  }
+
+  Future<void> _openMais() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const MaisPage()),
+    );
+  }
+
   Future<void> _openAnimals() async {
     await Navigator.of(context)
         .push(MaterialPageRoute(builder: (context) => const AnimalsPage()));
@@ -587,12 +608,12 @@ class _DashboardPageState extends State<DashboardPage> {
       QuickAction(
         icon: Icons.medical_services_outlined,
         title: 'Farmácia',
-        onTap: () {},
+        onTap: _openFarmacia,
       ),
       QuickAction(
         icon: Icons.attach_money_rounded,
         title: 'Despesas e lucro',
-        onTap: () {},
+        onTap: _openFinanceiro,
       ),
     ];
 
@@ -647,6 +668,8 @@ class _DashboardPageState extends State<DashboardPage> {
           _openAnimals();
         } else if (index == 2) {
           _openManejos();
+        } else if (index == 3) {
+          _openMais();
         }
       },
       destinations: const [
