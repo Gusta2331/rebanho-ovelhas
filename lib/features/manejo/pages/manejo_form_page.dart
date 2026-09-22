@@ -371,6 +371,19 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             ? _vacinaLote.text
             : null,
         outroNome: _tipo == TipoManejo.outro ? _outroNome.text : null,
+        pesoPorAnimal: _pesos,
+        dosePorAnimal: _dosesCalculadas,
+        dose: _numero(_produtoAtual()?['dose']),
+        doseUnidade: _produtoAtual()?['dose_unidade']?.toString(),
+        pesoReferenciaKg: _numero(_produtoAtual()?['peso_referencia_kg']),
+        viaAplicacao: _produtoAtual()?['via_aplicacao']?.toString(),
+        carenciaDias: int.tryParse(_produtoAtual()?['carencia_dias']?.toString() ?? ''),
+        vermifugoId: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['id']?.toString() : null,
+        vermifugoNome: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['nome']?.toString() : null,
+        vermifugoPrincipioAtivo: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['principio_ativo']?.toString() : null,
+        medicamentoId: _tipo == TipoManejo.tratamento ? _medicamentoSelecionado?['id']?.toString() : null,
+        medicamentoNome: _tipo == TipoManejo.tratamento ? _medicamentoSelecionado?['nome']?.toString() : null,
+        medicamentoPrincipioAtivo: _tipo == TipoManejo.tratamento ? _medicamentoSelecionado?['principio_ativo']?.toString() : null,
       );
 
       if (mounted) Navigator.of(context).pop(true);
@@ -418,6 +431,18 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             : null,
         vacinaLote: _tipo == TipoManejo.vacinacao ? _vacinaLote.text : null,
         outroNome: _tipo == TipoManejo.outro ? _outroNome.text : null,
+        pesoKg: _tipo == TipoManejo.pesagem ? _numero(_peso.text) : _pesos[_animalId],
+        dose: _dosesCalculadas[_animalId] ?? _numero(_doseManual.text),
+        doseUnidade: _produtoAtual()?['dose_unidade']?.toString(),
+        pesoReferenciaKg: _numero(_produtoAtual()?['peso_referencia_kg']),
+        viaAplicacao: _produtoAtual()?['via_aplicacao']?.toString(),
+        carenciaDias: int.tryParse(_produtoAtual()?['carencia_dias']?.toString() ?? ''),
+        vermifugoId: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['id']?.toString() : null,
+        vermifugoNome: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['nome']?.toString() : null,
+        vermifugoPrincipioAtivo: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['principio_ativo']?.toString() : null,
+        medicamentoId: _tipo == TipoManejo.tratamento ? _medicamentoSelecionado?['id']?.toString() : null,
+        medicamentoNome: _tipo == TipoManejo.tratamento ? _medicamentoSelecionado?['nome']?.toString() : null,
+        medicamentoPrincipioAtivo: _tipo == TipoManejo.tratamento ? _medicamentoSelecionado?['principio_ativo']?.toString() : null,
       );
 
       if (mounted) Navigator.of(context).pop(true);
