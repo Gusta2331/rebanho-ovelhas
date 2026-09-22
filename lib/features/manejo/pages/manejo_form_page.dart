@@ -340,6 +340,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       if (_animaisSelecionados.contains(id)) {
         _animaisSelecionados.remove(id);
         _famachaPorAnimal.remove(id);
+        _pesoTextoPorAnimal.remove(id);
+        _doseTextoPorAnimal.remove(id);
+        _pesos.remove(id);
+        _dosesCalculadas.remove(id);
       } else {
         _animaisSelecionados.add(id);
       }
@@ -348,6 +352,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         _animalId = null;
       }
     });
+
+    if (_animaisSelecionados.contains(id) &&
+        (_tipo == TipoManejo.vacinacao ||
+            _tipo == TipoManejo.vermifugacao ||
+            _tipo == TipoManejo.tratamento)) {
+      _carregarPesos();
+    }
   }
 
   void _definirFamacha(String animalId, int escore) {
@@ -380,6 +391,23 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       return;
     }
 
+    final tipoSanitario = _tipo == TipoManejo.vacinacao ||
+        _tipo == TipoManejo.vermifugacao ||
+        _tipo == TipoManejo.tratamento;
+
+    if (tipoSanitario) {
+      final faltando = _animaisSelecionados.where((id) {
+        final peso = _numero(_pesoTextoPorAnimal[id]) ?? _pesos[id];
+        final dose = _numero(_doseTextoPorAnimal[id]) ?? _dosesCalculadas[id];
+        return peso == null || peso <= 0 || dose == null || dose < 0;
+      });
+
+      if (faltando.isNotEmpty) {
+        _mensagem('Informe peso e dose de cada animal. Use "Aplicar a mesma dose por kg a todas" se quiser calcular em lote.');
+        return;
+      }
+    }
+
     setState(() => _salvando = true);
 
     try {
@@ -392,6 +420,16 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       final vacinaFabricante = _tipo == TipoManejo.vacinacao
           ? _campo(_vacinaSelecionada, 'fabricante')?.toString()
           : null;
+
+      final pesosParaSalvar = <String, double>{};
+      final dosesParaSalvar = <String, double>{};
+
+      for (final id in _animaisSelecionados) {
+        final peso = _numero(_pesoTextoPorAnimal[id]) ?? _pesos[id];
+        final dose = _numero(_doseTextoPorAnimal[id]) ?? _dosesCalculadas[id];
+        if (peso != null) pesosParaSalvar[id] = peso;
+        if (dose != null) dosesParaSalvar[id] = dose;
+      }
 
       await _service.criarManejosEmLote(
         animalIds: _animaisSelecionados.toList(),
@@ -406,8 +444,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             ? _vacinaLote.text
             : null,
         outroNome: _tipo == TipoManejo.outro ? _outroNome.text : null,
-        pesoPorAnimal: _pesos,
-        dosePorAnimal: _dosesCalculadas,
+        pesoPorAnimal: pesosParaSalvar,
+        dosePorAnimal: dosesParaSalvar,
         dose: _numero(_produtoAtual()?['dose']),
         doseUnidade: _produtoAtual()?['dose_unidade']?.toString(),
         pesoReferenciaKg: _numero(_produtoAtual()?['peso_referencia_kg']),
