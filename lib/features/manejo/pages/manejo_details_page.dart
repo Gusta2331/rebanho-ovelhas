@@ -208,6 +208,8 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
           _item('Via', manejo.viaAplicacao!, Icons.route_outlined),
         if (manejo.carenciaDias != null)
           _item('Carência', manejo.carenciaDias.toString() + ' dias', Icons.timer_outlined),
+        if (manejo.validade != null)
+          _item('Validade', _data(manejo.validade!.toIso8601String()), Icons.event_available_outlined),
         if (manejo.tipo == TipoManejo.vermifugacao && manejo.vermifugoNome != null)
           _item(
             'Vermífugo',
