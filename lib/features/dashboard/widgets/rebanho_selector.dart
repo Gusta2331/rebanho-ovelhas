@@ -55,7 +55,7 @@ class RebanhoSelector extends StatelessWidget {
           ),
           SizedBox(width: 12),
           Text(
-            'Carregando rebanhos...',
+            'Carregando lotes...',
             style: TextStyle(color: Colors.black54),
           ),
         ],
@@ -95,7 +95,7 @@ class RebanhoSelector extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Nenhum rebanho cadastrado',
+                      'Nenhum lote cadastrado',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppTheme.textColor,
@@ -103,7 +103,7 @@ class RebanhoSelector extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Crie um rebanho para começar a organizar os animais.',
+                      'Crie um lote para começar a organizar os animais.',
                       style: TextStyle(fontSize: 13, color: Colors.black54),
                     ),
                   ],
@@ -117,7 +117,7 @@ class RebanhoSelector extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onCriar,
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Criar rebanho'),
+              label: const Text('Criar lote'),
               style: FilledButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
               ),
@@ -177,7 +177,7 @@ class RebanhoSelector extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${rebanho.quantidadeAnimais} animais ativos',
+                          '${lote.quantidadeAnimais} animais ativos',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.black54,
@@ -197,7 +197,7 @@ class RebanhoSelector extends StatelessWidget {
           ),
           IconButton(
             onPressed: onGerenciar,
-            tooltip: 'Gerenciar rebanhos',
+            tooltip: 'Gerenciar lotes',
             icon: const Icon(
               Icons.settings_outlined,
               color: AppTheme.primaryColor,
