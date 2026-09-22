@@ -54,6 +54,7 @@ class FinanceiroService {
     required String loteId,
     String? animalId,
     String? observacoes,
+    bool origemAutomatica = false,
   }) async {
     final fazendaId = await _fazendaId();
     if (descricao.trim().isEmpty) throw Exception('Informe a descrição.');
@@ -70,8 +71,56 @@ class FinanceiroService {
       'data': data.toIso8601String().split('T').first,
       'lote_id': loteId,
       'animal_id': animalId,
+      'origem_automatica': origemAutomatica,
       'observacoes': observacoes?.trim().isEmpty == true ? null : observacoes?.trim(),
     });
+  }
+
+  Future<void> criarCompraAnimal({
+    required String animalId,
+    required String loteId,
+    required double valor,
+    required DateTime data,
+    required String brinco,
+    String? vendedor,
+    String? observacoes,
+  }) async {
+    if (valor <= 0) {
+      throw Exception('O valor da compra deve ser maior que zero.');
+    }
+
+    final fazendaId = await _fazendaId();
+
+    final existente = await _client
+        .from('financeiro_lancamentos')
+        .select('id')
+        .eq('fazenda_id', fazendaId)
+        .eq('animal_id', animalId)
+        .eq('tipo', 'despesa')
+        .eq('categoria', 'Compra de animal')
+        .eq('origem_automatica', true)
+        .maybeSingle();
+
+    if (existente != null) {
+      return;
+    }
+
+    await criar(
+      tipo: 'despesa',
+      categoria: 'Compra de animal',
+      descricao: 'Compra do animal brinco $brinco',
+      valor: valor,
+      data: data,
+      loteId: loteId,
+      animalId: animalId,
+      observacoes: [
+        if (vendedor != null && vendedor.trim().isNotEmpty)
+          'Vendedor: ${vendedor.trim()}',
+        if (observacoes != null && observacoes.trim().isNotEmpty)
+          observacoes.trim(),
+      ].join(' • '),
+      origemAutomatica: true,
+    );
   }
 
   Future<void> excluir(String id) async {
