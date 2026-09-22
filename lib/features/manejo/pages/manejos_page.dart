@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../animals/services/animal_service.dart';
+import '../../flock/services/rebanho_selection_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
 import 'manejo_form_page.dart';
@@ -15,6 +17,9 @@ class ManejosPage extends StatefulWidget {
 
 class _ManejosPageState extends State<ManejosPage> {
   final ManejoService _service = ManejoService();
+  final AnimalService _animalService = AnimalService();
+  final RebanhoSelectionService _rebanhoSelectionService =
+      RebanhoSelectionService.instance;
   List<Map<String, dynamic>> _manejos = [];
   bool _carregando = true;
   String? _erro;
@@ -23,10 +28,23 @@ class _ManejosPageState extends State<ManejosPage> {
   TipoManejo? _tipoFiltro;
   String? _animalFiltro;
   DateTimeRange? _periodoFiltro;
+  Set<String> _animalIdsDoLote = {};
 
   @override
   void initState() {
     super.initState();
+    _rebanhoSelectionService.addListener(_onLoteChanged);
+    _carregar();
+  }
+
+  @override
+  void dispose() {
+    _rebanhoSelectionService.removeListener(_onLoteChanged);
+    super.dispose();
+  }
+
+  void _onLoteChanged() {
+    if (!mounted) return;
     _carregar();
   }
 
@@ -37,10 +55,21 @@ class _ManejosPageState extends State<ManejosPage> {
     });
 
     try {
+      final loteId = _rebanhoSelectionService.rebanhoSelecionadoId;
       final dados = await _service.getManejos();
+      final animaisDoLote = loteId == null
+          ? <Map<String, dynamic>>[]
+          : await _animalService.getAnimaisAtivos(rebanhoId: loteId);
+      final ids = animaisDoLote.map((animal) => animal['id'].toString()).toSet();
+      final filtrados = loteId == null
+          ? <Map<String, dynamic>>[]
+          : dados.where((item) => ids.contains(item['animal_id']?.toString())).toList();
+
       if (!mounted) return;
       setState(() {
-        _manejos = dados;
+        _animalIdsDoLote = ids;
+        _manejos = filtrados;
+        _animalFiltro = null;
         _carregando = false;
       });
     } catch (e) {
@@ -349,6 +378,20 @@ class _ManejosPageState extends State<ManejosPage> {
           Text(_erro!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black54)),
           const SizedBox(height: 20),
           Center(child: FilledButton.icon(onPressed: _carregar, icon: const Icon(Icons.refresh), label: const Text('Tentar novamente'))),
+        ],
+      );
+    }
+
+    if (_rebanhoSelectionService.rebanhoSelecionado == null) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(24, 70, 24, 120),
+        children: [
+          Icon(Icons.layers_outlined, size: 72, color: AppTheme.primaryColor.withValues(alpha: 0.65)),
+          const SizedBox(height: 18),
+          const Text('Selecione um lote', textAlign: TextAlign.center, style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Escolha o lote no início para visualizar os manejos dele.', textAlign: TextAlign.center, style: TextStyle(color: Colors.black54, height: 1.4)),
         ],
       );
     }
