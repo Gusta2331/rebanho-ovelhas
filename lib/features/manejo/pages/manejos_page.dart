@@ -66,7 +66,6 @@ class _ManejosPageState extends State<ManejosPage> {
 
       if (!mounted) return;
       setState(() {
-        _animalIdsDoLote = ids;
         _manejos = filtrados;
         _animalFiltro = null;
         _carregando = false;
