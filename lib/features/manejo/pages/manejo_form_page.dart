@@ -185,13 +185,6 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     return double.tryParse(value?.toString().replaceAll(',', '.') ?? '');
   }
 
-  Map<String, dynamic>? _produtoAtual() {
-    if (_tipo == TipoManejo.vacinacao) return _vacinaSelecionada;
-    if (_tipo == TipoManejo.vermifugacao) return _vermifugoSelecionado;
-    if (_tipo == TipoManejo.tratamento) return _medicamentoSelecionado;
-    return null;
-  }
-
   void _calcularDoses() {
     final doseBase = _numero(_doseBaseTexto);
     final referencia = _numero(_pesoReferenciaTexto);
