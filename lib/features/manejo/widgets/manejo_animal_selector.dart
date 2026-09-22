@@ -94,27 +94,52 @@ class ManejoAnimalSelector extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 14, 10, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        titulo,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final estreito = constraints.maxWidth < 360;
+                    final tituloWidget = Text(
+                      titulo,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    if (multiSelecao)
-                      TextButton(
-                        onPressed: !enabled || carregando
-                            ? null
-                            : todos
-                                ? onLimpar
-                                : onSelecionarTodos,
-                        child: Text(todos ? 'Limpar' : 'Selecionar todas'),
-                      ),
-                  ],
+                    );
+
+                    if (estreito && multiSelecao) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          tituloWidget,
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton(
+                              onPressed: !enabled || carregando
+                                  ? null
+                                  : todos
+                                      ? onLimpar
+                                      : onSelecionarTodos,
+                              child: Text(todos ? 'Limpar' : 'Selecionar todas'),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: tituloWidget),
+                        if (multiSelecao)
+                          TextButton(
+                            onPressed: !enabled || carregando
+                                ? null
+                                : todos
+                                    ? onLimpar
+                                    : onSelecionarTodos,
+                            child: Text(todos ? 'Limpar' : 'Selecionar todas'),
+                          ),
+                      ],
+                    );
+                  },
                 ),
               ),
               Padding(
