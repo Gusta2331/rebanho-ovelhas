@@ -337,6 +337,136 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     }
   }
 
+  Future<void> _adicionarVermifugoCompleto() async {
+    String nome = '';
+    String principio = '';
+
+    final dados = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Novo vermífugo'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                autofocus: true,
+                onChanged: (value) => nome = value,
+                decoration: const InputDecoration(
+                  labelText: 'Nome do produto',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                onChanged: (value) => principio = value,
+                decoration: const InputDecoration(
+                  labelText: 'Princípio ativo',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (nome.trim().isEmpty) return;
+              Navigator.of(dialogContext).pop({
+                'nome': nome.trim(),
+                'principio': principio.trim(),
+              });
+            },
+            child: const Text('Cadastrar'),
+          ),
+        ],
+      ),
+    );
+
+    if (dados == null || !mounted) return;
+
+    try {
+      final item = await _service.criarVermifugo(
+        nome: dados['nome']!,
+        principioAtivo: dados['principio'],
+      );
+
+      setState(() {
+        _vermifugos = [..._vermifugos, item];
+        _vermifugoSelecionado = item;
+      });
+    } catch (e) {
+      _mensagem(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _adicionarMedicamentoCompleto() async {
+    String nome = '';
+    String principio = '';
+
+    final dados = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Novo medicamento'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                autofocus: true,
+                onChanged: (value) => nome = value,
+                decoration: const InputDecoration(
+                  labelText: 'Nome do medicamento',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                onChanged: (value) => principio = value,
+                decoration: const InputDecoration(
+                  labelText: 'Princípio ativo',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (nome.trim().isEmpty) return;
+              Navigator.of(dialogContext).pop({
+                'nome': nome.trim(),
+                'principio': principio.trim(),
+              });
+            },
+            child: const Text('Cadastrar'),
+          ),
+        ],
+      ),
+    );
+
+    if (dados == null || !mounted) return;
+
+    try {
+      final item = await _service.criarMedicamento(
+        nome: dados['nome']!,
+        principioAtivo: dados['principio'],
+      );
+
+      setState(() {
+        _medicamentos = [..._medicamentos, item];
+        _medicamentoSelecionado = item;
+      });
+    } catch (e) {
+      _mensagem(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
   void _selecionarTodos() {
     setState(() {
       _animaisSelecionados
@@ -821,7 +951,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                   ),
                 if (_tipo == TipoManejo.vacinacao) ...[
                   const SizedBox(height: 16),
-                  _vacinaField(),
+                  _produtoField(
+                    titulo: 'Vacina',
+                    itens: _vacinas,
+                    selecionado: _vacinaSelecionada,
+                    onChanged: (item) => setState(() => _vacinaSelecionada = item),
+                    onAdicionar: _adicionarVacina,
+                  ),
                   _doseCalculadora(),
                 ],
                 if (_tipo == TipoManejo.vermifugacao) ...[
