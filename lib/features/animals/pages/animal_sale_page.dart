@@ -165,8 +165,8 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Animal $widget.animal.brinco} vendido por '
-            '$_formatarMoeda(valorTotal)}.',
+            'Animal ${widget.animal.brinco} vendido por '
+            '${_formatarMoeda(valorTotal)}.',
           ),
         ),
       );
@@ -254,7 +254,7 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
                           Text(
                             widget.animal.nome?.trim().isNotEmpty == true
                                 ? widget.animal.nome!.trim()
-                                : 'Animal $widget.animal.brinco}',
+                                : 'Animal ${widget.animal.brinco}',
                             style: const TextStyle(
                               fontSize: 19,
                               fontWeight: FontWeight.bold,
