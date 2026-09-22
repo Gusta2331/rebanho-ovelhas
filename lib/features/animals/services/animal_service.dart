@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/services/supabase_service.dart';
+import '../../financeiro/services/financeiro_service.dart';
 
 class AnimalService {
   SupabaseClient get _client => SupabaseService.client;
@@ -218,11 +219,29 @@ class AnimalService {
     String? fotoPath,
     String? maeId,
     String? paiId,
+    String origem = 'nascido',
+    DateTime? dataAquisicao,
+    double? valorAquisicao,
+    String? vendedor,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
 
     if (fazendaId == null) {
       throw Exception('Nenhuma fazenda ativa foi encontrada.');
+    }
+
+    if (origem != 'nascido' && origem != 'comprado') {
+      throw Exception('Origem do animal inválida.');
+    }
+
+    if (origem == 'comprado') {
+      if (dataAquisicao == null) {
+        throw Exception('Informe a data da compra.');
+      }
+
+      if (valorAquisicao == null || valorAquisicao <= 0) {
+        throw Exception('Informe um valor de compra maior que zero.');
+      }
     }
 
     final rebanhoValido = await _rebanhoPertenceAFazenda(
@@ -270,12 +289,39 @@ class AnimalService {
       'foto_url': fotoUrlFinal,
       'mae_id': maeId,
       'pai_id': paiId,
+      'origem': origem,
+      'data_aquisicao': origem == 'comprado' ? dataAquisicao!.toIso8601String().split('T').first : null,
+      'valor_aquisicao': origem == 'comprado' ? valorAquisicao : null,
+      'vendedor': origem == 'comprado' && vendedor?.trim().isNotEmpty == true ? vendedor!.trim() : null,
     };
+
+    if (origem == 'comprado') {
+      await _client.rpc('criar_animal_com_compra', params: {
+        'p_animal_id': animalId,
+        'p_rebanho_id': rebanhoId,
+        'p_brinco': brinco,
+        'p_nome': nome?.trim(),
+        'p_sexo': sexo,
+        'p_raca_id': racaId,
+        'p_data_nascimento': dataNascimento?.toIso8601String(),
+        'p_status': status,
+        'p_data_entrada': dataEntrada?.toIso8601String(),
+        'p_observacoes': observacoes?.trim(),
+        'p_foto_url': fotoUrlFinal,
+        'p_mae_id': maeId,
+        'p_pai_id': paiId,
+        'p_data_aquisicao': dataAquisicao!.toIso8601String().split('T').first,
+        'p_valor_aquisicao': valorAquisicao,
+        'p_vendedor': vendedor?.trim(),
+      });
+    } else {
+      await _client.from('animais').insert(dados);
+    }
 
     final resultado = await _client
         .from('animais')
-        .insert(dados)
         .select('*, racas(nome)')
+        .eq('id', animalId)
         .single();
 
     return Map<String, dynamic>.from(resultado);
