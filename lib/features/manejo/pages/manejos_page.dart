@@ -59,7 +59,7 @@ class _ManejosPageState extends State<ManejosPage> {
       final dados = await _service.getManejos();
       final animaisDoLote = loteId == null
           ? <Map<String, dynamic>>[]
-          : await _animalService.getAnimaisAtivos(rebanhoId: loteId);
+          : await _animalService.getTodosAnimais(rebanhoId: loteId);
       final ids = animaisDoLote.map((animal) => animal['id'].toString()).toSet();
       final filtrados = loteId == null
           ? <Map<String, dynamic>>[]
