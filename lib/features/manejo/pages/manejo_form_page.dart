@@ -157,6 +157,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     _calcularDoses();
   }
 
+  dynamic _campo(Map<String, dynamic>? mapa, String chave) {
+    if (mapa == null) return null;
+    return mapa[chave];
+  }
+
   double? _numero(dynamic value) {
     if (value is num) return value.toDouble();
     return double.tryParse(value?.toString().replaceAll(',', '.') ?? '');
@@ -379,13 +384,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
 
     try {
       final vacinaId = _tipo == TipoManejo.vacinacao
-          ? _vacinaSelecionada?['id']?.toString()
+          ? _campo(_vacinaSelecionada, 'id')?.toString()
           : null;
       final vacinaNome = _tipo == TipoManejo.vacinacao
-          ? _vacinaSelecionada?['nome']?.toString()
+          ? _campo(_vacinaSelecionada, 'nome')?.toString()
           : null;
       final vacinaFabricante = _tipo == TipoManejo.vacinacao
-          ? _vacinaSelecionada?['fabricante']?.toString()
+          ? _campo(_vacinaSelecionada, 'fabricante')?.toString()
           : null;
 
       await _service.criarManejosEmLote(
@@ -409,12 +414,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         viaAplicacao: _produtoAtual()?['via_aplicacao']?.toString(),
         carenciaDias: int.tryParse(_produtoAtual()?['carencia_dias']?.toString() ?? ''),
         validade: _validade,
-        vermifugoId: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['id']?.toString() : null,
-        vermifugoNome: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['nome']?.toString() : null,
-        vermifugoPrincipioAtivo: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['principio_ativo']?.toString() : null,
-        medicamentoId: _tipo == TipoManejo.tratamento ? _medicamentoSelecionado?['id']?.toString() : null,
-        medicamentoNome: _tipo == TipoManejo.tratamento ? _medicamentoSelecionado?['nome']?.toString() : null,
-        medicamentoPrincipioAtivo: _tipo == TipoManejo.tratamento ? _medicamentoSelecionado?['principio_ativo']?.toString() : null,
+        vermifugoId: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'id')?.toString() : null,
+        vermifugoNome: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'nome')?.toString() : null,
+        vermifugoPrincipioAtivo: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'principio_ativo')?.toString() : null,
+        medicamentoId: _tipo == TipoManejo.tratamento ? _campo(_medicamentoSelecionado, 'id')?.toString() : null,
+        medicamentoNome: _tipo == TipoManejo.tratamento ? _campo(_medicamentoSelecionado, 'nome')?.toString() : null,
+        medicamentoPrincipioAtivo: _tipo == TipoManejo.tratamento ? _campo(_medicamentoSelecionado, 'principio_ativo')?.toString() : null,
       );
 
       if (mounted) Navigator.of(context).pop(true);
@@ -445,13 +450,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
 
     try {
       final vacinaId = _tipo == TipoManejo.vacinacao
-          ? _vacinaSelecionada?['id']?.toString()
+          ? _campo(_vacinaSelecionada, 'id')?.toString()
           : null;
       final vacinaNome = _tipo == TipoManejo.vacinacao
-          ? _vacinaSelecionada?['nome']?.toString()
+          ? _campo(_vacinaSelecionada, 'nome')?.toString()
           : null;
       final vacinaFabricante = _tipo == TipoManejo.vacinacao
-          ? _vacinaSelecionada?['fabricante']?.toString()
+          ? _campo(_vacinaSelecionada, 'fabricante')?.toString()
           : null;
 
       await _service.atualizarManejo(
@@ -472,12 +477,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         pesoReferenciaKg: _numero(_produtoAtual()?['peso_referencia_kg']),
         viaAplicacao: _produtoAtual()?['via_aplicacao']?.toString(),
         carenciaDias: int.tryParse(_produtoAtual()?['carencia_dias']?.toString() ?? ''),
-        vermifugoId: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['id']?.toString() : null,
-        vermifugoNome: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['nome']?.toString() : null,
-        vermifugoPrincipioAtivo: _tipo == TipoManejo.vermifugacao ? _vermifugoSelecionado?['principio_ativo']?.toString() : null,
-        medicamentoId: _tipo == TipoManejo.tratamento ? _medicamentoSelecionado?['id']?.toString() : null,
-        medicamentoNome: _tipo == TipoManejo.tratamento ? _medicamentoSelecionado?['nome']?.toString() : null,
-        medicamentoPrincipioAtivo: _tipo == TipoManejo.tratamento ? _medicamentoSelecionado?['principio_ativo']?.toString() : null,
+        vermifugoId: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'id')?.toString() : null,
+        vermifugoNome: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'nome')?.toString() : null,
+        vermifugoPrincipioAtivo: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'principio_ativo')?.toString() : null,
+        medicamentoId: _tipo == TipoManejo.tratamento ? _campo(_medicamentoSelecionado, 'id')?.toString() : null,
+        medicamentoNome: _tipo == TipoManejo.tratamento ? _campo(_medicamentoSelecionado, 'nome')?.toString() : null,
+        medicamentoPrincipioAtivo: _tipo == TipoManejo.tratamento ? _campo(_medicamentoSelecionado, 'principio_ativo')?.toString() : null,
       );
 
       if (mounted) Navigator.of(context).pop(true);
