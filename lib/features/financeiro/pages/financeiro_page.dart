@@ -93,7 +93,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
   }
 
   String _moeda(double value) =>
-      'R\$ \${value.toStringAsFixed(2).replaceAll('.', ',')}';
+      'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}';
 
   @override
   Widget build(BuildContext context) {
@@ -130,7 +130,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                     children: [
                       Text(
-                        'Lote: \${lote.nome}',
+                        'Lote: ${lote.nome}',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -188,7 +188,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                               ),
                               title: Text(item['descricao'].toString()),
                               subtitle: Text(
-                                '\${item['categoria']} • \${item['data']}',
+                                '${item['categoria']} • ${item['data']}',
                               ),
                               trailing: Text(
                                 _moeda((item['valor'] as num).toDouble()),
