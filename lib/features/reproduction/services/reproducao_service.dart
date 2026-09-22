@@ -675,6 +675,7 @@ class ReproducaoService {
         observacoes: observacoes,
         maeId: reproducao['mae_id']?.toString(),
         paiId: reproducao['pai_id']?.toString(),
+        origem: 'nascido',
       );
 
       final nascimento = await registrarNascimento(
