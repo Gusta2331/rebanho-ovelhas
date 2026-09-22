@@ -91,6 +91,19 @@ class ManejoService {
     String? vacinaFabricante,
     String? vacinaLote,
     String? outroNome,
+    double? pesoKg,
+    double? dose,
+    String? doseUnidade,
+    double? pesoReferenciaKg,
+    String? viaAplicacao,
+    DateTime? validade,
+    int? carenciaDias,
+    String? vermifugoId,
+    String? vermifugoNome,
+    String? vermifugoPrincipioAtivo,
+    String? medicamentoId,
+    String? medicamentoNome,
+    String? medicamentoPrincipioAtivo,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
 
@@ -102,6 +115,9 @@ class ManejoService {
       vacinaFabricante: vacinaFabricante,
       vacinaLote: vacinaLote,
       outroNome: outroNome,
+      pesoKg: pesoKg,
+      dose: dose,
+      pesoReferenciaKg: pesoReferenciaKg,
     );
 
     final animal = await _client
@@ -152,6 +168,19 @@ class ManejoService {
     String? vacinaFabricante,
     String? vacinaLote,
     String? outroNome,
+    double? pesoKg,
+    double? dose,
+    String? doseUnidade,
+    double? pesoReferenciaKg,
+    String? viaAplicacao,
+    DateTime? validade,
+    int? carenciaDias,
+    String? vermifugoId,
+    String? vermifugoNome,
+    String? vermifugoPrincipioAtivo,
+    String? medicamentoId,
+    String? medicamentoNome,
+    String? medicamentoPrincipioAtivo,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
 
@@ -211,6 +240,19 @@ class ManejoService {
         vacinaFabricante: vacinaFabricante,
         vacinaLote: vacinaLote,
         outroNome: outroNome,
+        pesoKg: pesoKg,
+        dose: dose,
+        doseUnidade: doseUnidade,
+        pesoReferenciaKg: pesoReferenciaKg,
+        viaAplicacao: viaAplicacao,
+        validade: validade,
+        carenciaDias: carenciaDias,
+        vermifugoId: vermifugoId,
+        vermifugoNome: vermifugoNome,
+        vermifugoPrincipioAtivo: vermifugoPrincipioAtivo,
+        medicamentoId: medicamentoId,
+        medicamentoNome: medicamentoNome,
+        medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
       );
     }).toList();
 
@@ -307,6 +349,32 @@ class ManejoService {
           'vacina_lote':
               tipo == TipoManejo.vacinacao ? vacinaLote?.trim() : null,
           'outro_nome': tipo == TipoManejo.outro ? outroNome?.trim() : null,
+      'peso_kg': tipo == TipoManejo.pesagem ? pesoKg : null,
+      'dose': dose,
+      'dose_unidade': doseUnidade?.trim().isEmpty == true ? null : doseUnidade?.trim(),
+      'peso_referencia_kg': pesoReferenciaKg,
+      'via_aplicacao': viaAplicacao?.trim().isEmpty == true ? null : viaAplicacao?.trim(),
+      'validade': validade?.toIso8601String(),
+      'carencia_dias': carenciaDias,
+      'vermifugo_id': tipo == TipoManejo.vermifugacao ? vermifugoId : null,
+      'vermifugo_nome': tipo == TipoManejo.vermifugacao ? vermifugoNome?.trim() : null,
+      'vermifugo_principio_ativo': tipo == TipoManejo.vermifugacao ? vermifugoPrincipioAtivo?.trim() : null,
+      'medicamento_id': tipo == TipoManejo.tratamento ? medicamentoId : null,
+      'medicamento_nome': tipo == TipoManejo.tratamento ? medicamentoNome?.trim() : null,
+      'medicamento_principio_ativo': tipo == TipoManejo.tratamento ? medicamentoPrincipioAtivo?.trim() : null,
+          'peso_kg': tipo == TipoManejo.pesagem ? pesoKg : null,
+          'dose': dose,
+          'dose_unidade': doseUnidade?.trim().isEmpty == true ? null : doseUnidade?.trim(),
+          'peso_referencia_kg': pesoReferenciaKg,
+          'via_aplicacao': viaAplicacao?.trim().isEmpty == true ? null : viaAplicacao?.trim(),
+          'validade': validade?.toIso8601String(),
+          'carencia_dias': carenciaDias,
+          'vermifugo_id': tipo == TipoManejo.vermifugacao ? vermifugoId : null,
+          'vermifugo_nome': tipo == TipoManejo.vermifugacao ? vermifugoNome?.trim() : null,
+          'vermifugo_principio_ativo': tipo == TipoManejo.vermifugacao ? vermifugoPrincipioAtivo?.trim() : null,
+          'medicamento_id': tipo == TipoManejo.tratamento ? medicamentoId : null,
+          'medicamento_nome': tipo == TipoManejo.tratamento ? medicamentoNome?.trim() : null,
+          'medicamento_principio_ativo': tipo == TipoManejo.tratamento ? medicamentoPrincipioAtivo?.trim() : null,
         })
         .eq('id', id)
         .eq('fazenda_id', fazendaId);
@@ -330,7 +398,22 @@ class ManejoService {
     String? vacinaFabricante,
     String? vacinaLote,
     String? outroNome,
+    double? pesoKg,
+    double? dose,
+    double? pesoReferenciaKg,
   }) {
+    if (tipo == TipoManejo.pesagem && (pesoKg == null || pesoKg <= 0)) {
+      throw Exception('Informe um peso válido em kg.');
+    }
+
+    if (dose != null && dose < 0) {
+      throw Exception('A dose não pode ser negativa.');
+    }
+
+    if (dose != null && (pesoReferenciaKg == null || pesoReferenciaKg <= 0)) {
+      throw Exception('Informe o peso de referência da dose.');
+    }
+
     if (tipo == TipoManejo.famacha &&
         (famachaEscore == null ||
             famachaEscore < 1 ||
@@ -382,6 +465,19 @@ class ManejoService {
     String? vacinaFabricante,
     String? vacinaLote,
     String? outroNome,
+    double? pesoKg,
+    double? dose,
+    String? doseUnidade,
+    double? pesoReferenciaKg,
+    String? viaAplicacao,
+    DateTime? validade,
+    int? carenciaDias,
+    String? vermifugoId,
+    String? vermifugoNome,
+    String? vermifugoPrincipioAtivo,
+    String? medicamentoId,
+    String? medicamentoNome,
+    String? medicamentoPrincipioAtivo,
   }) {
     return {
       'id': const Uuid().v4(),
