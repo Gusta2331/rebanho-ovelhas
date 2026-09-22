@@ -162,37 +162,40 @@ class _ManejosPageState extends State<ManejosPage> {
           ),
         ),
         const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: DropdownButtonFormField<String?>(
-                value: _animalFiltro,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Animal',
-                  prefixIcon: Icon(Icons.pets_outlined),
-                  border: OutlineInputBorder(),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final estreito = constraints.maxWidth < 430;
+            final largura = estreito
+                ? constraints.maxWidth
+                : constraints.maxWidth - 120;
+
+            final animalField = DropdownButtonFormField<String?>(
+              value: _animalFiltro,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Animal',
+                prefixIcon: Icon(Icons.pets_outlined),
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('Todos os animais'),
                 ),
-                items: [
-                  const DropdownMenuItem<String?>(
-                    value: null,
-                    child: Text('Todos os animais'),
-                  ),
-                  ...animais.entries.map(
-                    (entry) => DropdownMenuItem<String?>(
-                      value: entry.key,
-                      child: Text(
-                        entry.value,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                ...animais.entries.map(
+                  (entry) => DropdownMenuItem<String?>(
+                    value: entry.key,
+                    child: Text(
+                      entry.value,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ],
-                onChanged: (value) => setState(() => _animalFiltro = value),
-              ),
-            ),
-            const SizedBox(width: 8),
-            OutlinedButton.icon(
+                ),
+              ],
+              onChanged: (value) => setState(() => _animalFiltro = value),
+            );
+
+            final periodoButton = OutlinedButton.icon(
               onPressed: _escolherPeriodo,
               icon: const Icon(Icons.date_range_outlined),
               label: Text(
@@ -206,8 +209,26 @@ class _ManejosPageState extends State<ManejosPage> {
                         '/' +
                         _periodoFiltro!.end.month.toString().padLeft(2, '0'),
               ),
-            ),
-          ],
+            );
+
+            if (estreito) {
+              return Column(
+                children: [
+                  animalField,
+                  const SizedBox(height: 10),
+                  SizedBox(width: double.infinity, child: periodoButton),
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(child: animalField),
+                const SizedBox(width: 8),
+                SizedBox(width: 112, child: periodoButton),
+              ],
+            );
+          },
         ),
         if (_busca.isNotEmpty ||
             _tipoFiltro != null ||
