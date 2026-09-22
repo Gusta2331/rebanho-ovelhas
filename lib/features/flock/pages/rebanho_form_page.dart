@@ -110,14 +110,14 @@ class _RebanhoFormPageState extends State<RebanhoFormPage> {
       return mensagem.substring('Exception: '.length);
     }
 
-    return 'Não foi possível salvar o rebanho.';
+    return 'Não foi possível salvar o lote.';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_editando ? 'Editar rebanho' : 'Novo rebanho'),
+        title: Text(_editando ? 'Editar lote' : 'Novo lote'),
       ),
       body: SafeArea(
         child: Form(
@@ -157,13 +157,13 @@ class _RebanhoFormPageState extends State<RebanhoFormPage> {
                 textInputAction: TextInputAction.next,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
-                  labelText: 'Nome do rebanho',
-                  hintText: 'Ex.: Rebanho 01',
+                  labelText: 'Nome do lote',
+                  hintText: 'Ex.: Lote 01',
                   prefixIcon: Icon(Icons.pets_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Informe o nome do rebanho.';
+                    return 'Informe o nome do lote.';
                   }
 
                   return null;
@@ -222,7 +222,7 @@ class _RebanhoFormPageState extends State<RebanhoFormPage> {
                           ),
                         )
                       : const Icon(Icons.save_outlined),
-                  label: Text(_salvando ? 'Salvando...' : 'Salvar rebanho'),
+                  label: Text(_salvando ? 'Salvando...' : 'Salvar lote'),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                   ),
