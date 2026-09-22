@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_service.dart';
+import '../../flock/services/rebanho_selection_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_programado_service.dart';
 import '../services/manejo_service.dart';
@@ -17,22 +18,58 @@ class ManejoAgendaPage extends StatefulWidget {
 
 class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
   final ManejoProgramadoService _service = ManejoProgramadoService();
+  final AnimalService _animalService = AnimalService();
+  final RebanhoSelectionService _rebanhoSelectionService =
+      RebanhoSelectionService.instance;
   List<Map<String, dynamic>> _itens = [];
   bool _carregando = true;
 
   @override
   void initState() {
     super.initState();
+    _rebanhoSelectionService.addListener(_onLoteChanged);
+    _carregar();
+  }
+
+  @override
+  void dispose() {
+    _rebanhoSelectionService.removeListener(_onLoteChanged);
+    super.dispose();
+  }
+
+  void _onLoteChanged() {
+    if (!mounted) return;
     _carregar();
   }
 
   Future<void> _carregar() async {
     setState(() => _carregando = true);
     try {
+      final loteId = _rebanhoSelectionService.rebanhoSelecionadoId;
+      if (loteId == null) {
+        if (!mounted) return;
+        setState(() {
+          _itens = [];
+          _carregando = false;
+        });
+        return;
+      }
+
       final dados = await _service.getProgramados();
+      final animais = await _animalService.getAnimaisAtivos(rebanhoId: loteId);
+      final idsDoLote = animais.map((animal) => animal['id'].toString()).toSet();
+      final filtrados = dados.where((item) {
+        final lista = item['manejos_programados_animais'];
+        if (lista is! List) return false;
+        return lista.any((vinculo) {
+          final id = vinculo is Map ? vinculo['animal_id']?.toString() : null;
+          return id != null && idsDoLote.contains(id);
+        });
+      }).toList();
+
       if (mounted) {
         setState(() {
-          _itens = dados;
+          _itens = filtrados;
           _carregando = false;
         });
       }
@@ -394,6 +431,8 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
   final ManejoService _manejoService = ManejoService();
   final AnimalService _animalService = AnimalService();
   final RebanhoService _rebanhoService = RebanhoService();
+  final RebanhoSelectionService _rebanhoSelectionService =
+      RebanhoSelectionService.instance;
 
   final TextEditingController _observacoes = TextEditingController();
 
@@ -415,6 +454,7 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
   @override
   void initState() {
     super.initState();
+    _rebanhoId = _rebanhoSelectionService.rebanhoSelecionadoId;
     _carregar();
   }
 
@@ -434,7 +474,12 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
       if (!mounted) return;
 
       setState(() {
-        _rebanhos = List<Map<String, dynamic>>.from(resultados[0] as List);
+        final todosRebanhos = List<Map<String, dynamic>>.from(resultados[0] as List);
+        final loteId = _rebanhoSelectionService.rebanhoSelecionadoId;
+        _rebanhos = loteId == null
+            ? <Map<String, dynamic>>[]
+            : todosRebanhos.where((item) => item['id']?.toString() == loteId).toList();
+        _rebanhoId = loteId;
         _vacinas = List<Map<String, dynamic>>.from(resultados[1] as List);
         _carregando = false;
       });
