@@ -4,6 +4,8 @@ enum SexoAnimal { femea, macho }
 
 enum StatusAnimal { ativo, vendido, morto, descartado }
 
+enum OrigemAnimal { nascido, comprado }
+
 class Animal {
   final String id;
   final String brinco;
@@ -14,6 +16,10 @@ class Animal {
   final StatusAnimal status;
   final String? observacoes;
   final String? fotoPath;
+  final OrigemAnimal origem;
+  final DateTime? dataAquisicao;
+  final double? valorAquisicao;
+  final String? vendedor;
 
   // Identificação dos pais
   final String? idMae;
@@ -29,6 +35,10 @@ class Animal {
     this.status = StatusAnimal.ativo,
     this.observacoes,
     this.fotoPath,
+    this.origem = OrigemAnimal.nascido,
+    this.dataAquisicao,
+    this.valorAquisicao,
+    this.vendedor,
     this.idMae,
     this.idPai,
   }) : id = id ?? const Uuid().v4();
@@ -67,6 +77,10 @@ class Animal {
       status: _statusFromMap(map['status']),
       observacoes: _stringOrNull(map['observacoes']),
       fotoPath: _stringOrNull(map['foto_url']),
+      origem: _origemFromMap(map['origem']),
+      dataAquisicao: _dateTimeFromMap(map['data_aquisicao']),
+      valorAquisicao: _doubleFromMap(map['valor_aquisicao']),
+      vendedor: _stringOrNull(map['vendedor']),
       idMae: _stringOrNull(map['mae_id']),
       idPai: _stringOrNull(map['pai_id']),
     );
@@ -141,6 +155,28 @@ class Animal {
     }
   }
 
+  static OrigemAnimal _origemFromMap(dynamic value) {
+    switch (value?.toString().toLowerCase()) {
+      case 'comprado':
+        return OrigemAnimal.comprado;
+      case 'nascido':
+      default:
+        return OrigemAnimal.nascido;
+    }
+  }
+
+  static double? _doubleFromMap(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    return double.tryParse(value.toString().replaceAll(',', '.'));
+  }
+
   static StatusAnimal _statusFromMap(dynamic value) {
     switch (value?.toString().toLowerCase()) {
       case 'vendido':
@@ -167,6 +203,10 @@ class Animal {
     StatusAnimal? status,
     String? observacoes,
     String? fotoPath,
+    OrigemAnimal? origem,
+    DateTime? dataAquisicao,
+    double? valorAquisicao,
+    String? vendedor,
     String? idMae,
     String? idPai,
   }) {
@@ -180,6 +220,10 @@ class Animal {
       status: status ?? this.status,
       observacoes: observacoes ?? this.observacoes,
       fotoPath: fotoPath ?? this.fotoPath,
+      origem: origem ?? this.origem,
+      dataAquisicao: dataAquisicao ?? this.dataAquisicao,
+      valorAquisicao: valorAquisicao ?? this.valorAquisicao,
+      vendedor: vendedor ?? this.vendedor,
       idMae: idMae ?? this.idMae,
       idPai: idPai ?? this.idPai,
     );
