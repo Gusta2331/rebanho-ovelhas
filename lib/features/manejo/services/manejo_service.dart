@@ -6,17 +6,27 @@ import '../models/manejo.dart';
 
 class ManejoService {
   SupabaseClient get _client => SupabaseService.client;
+  String? _fazendaIdCache;
 
   Future<String> _getMinhaFazendaId() async {
+    if (_fazendaIdCache != null) return _fazendaIdCache!;
+
     final usuario = _client.auth.currentUser;
     if (usuario == null) throw Exception('Usuário não autenticado.');
 
-    final fazenda = await _client.from('fazendas').select('id')
-        .eq('proprietario_id', usuario.id).eq('ativo', true).maybeSingle();
+    final fazenda = await _client
+        .from('fazendas')
+        .select('id')
+        .eq('proprietario_id', usuario.id)
+        .eq('ativo', true)
+        .maybeSingle();
+
     final id = fazenda?['id']?.toString();
     if (id == null || id.isEmpty) {
       throw Exception('Nenhuma fazenda ativa foi encontrada.');
     }
+
+    _fazendaIdCache = id;
     return id;
   }
 
@@ -29,16 +39,30 @@ class ManejoService {
       'Vacina contra ectima contagioso',
     ];
 
-    for (final nome in padroes) {
-      final existente = await _client.from('vacinas').select('id')
-          .eq('fazenda_id', fazendaId).eq('nome', nome).maybeSingle();
-      if (existente == null) {
-        await _client.from('vacinas').insert({
-          'id': const Uuid().v4(),
-          'fazenda_id': fazendaId,
-          'nome': nome,
-        });
-      }
+    final existentes = await _client
+        .from('vacinas')
+        .select('nome')
+        .eq('fazenda_id', fazendaId)
+        .inFilter('nome', padroes);
+
+    final nomesExistentes = List<Map<String, dynamic>>.from(existentes)
+        .map((item) => item['nome']?.toString())
+        .whereType<String>()
+        .toSet();
+
+    final faltantes = padroes
+        .where((nome) => !nomesExistentes.contains(nome))
+        .map(
+          (nome) => {
+            'id': const Uuid().v4(),
+            'fazenda_id': fazendaId,
+            'nome': nome,
+          },
+        )
+        .toList();
+
+    if (faltantes.isNotEmpty) {
+      await _client.from('vacinas').insert(faltantes);
     }
 
     final resultado = await _client.from('vacinas')
@@ -85,9 +109,25 @@ class ManejoService {
         .eq('fazenda_id', fazendaId).eq('ativo', true).order('nome');
     if (resultado.isEmpty) {
       const padroes = ['Albendazol', 'Ivermectina', 'Levamisol', 'Moxidectina'];
-      for (final nome in padroes) {
-        await _client.from('vermifugos').insert({'id': const Uuid().v4(), 'fazenda_id': fazendaId, 'nome': nome, 'principio_ativo': nome});
-      }
+      final novos = padroes
+          .map(
+            (nome) => {
+              'id': const Uuid().v4(),
+              'fazenda_id': fazendaId,
+              'nome': nome,
+              'principio_ativo': nome,
+            },
+          )
+          .toList();
+
+      await _client.from('vermifugos').insert(novos);
+      resultado = await _client
+          .from('vermifugos')
+          .select('*')
+          .eq('fazenda_id', fazendaId)
+          .eq('ativo', true)
+          .order('nome');
+    }
       resultado = await _client.from('vermifugos').select('*')
           .eq('fazenda_id', fazendaId).eq('ativo', true).order('nome');
     }
@@ -160,18 +200,40 @@ class ManejoService {
   }
 
   Future<double?> getUltimoPeso(String animalId) async {
+    final pesos = await getUltimosPesos([animalId]);
+    return pesos[animalId];
+  }
+
+  Future<Map<String, double>> getUltimosPesos(List<String> animalIds) async {
+    if (animalIds.isEmpty) return {};
+
     final fazendaId = await _getMinhaFazendaId();
-    final resultado = await _client.from('manejos')
-        .select('peso_kg, data')
+    final resultado = await _client
+        .from('manejos')
+        .select('animal_id, peso_kg, data, created_at')
         .eq('fazenda_id', fazendaId)
-        .eq('animal_id', animalId)
+        .inFilter('animal_id', animalIds)
         .not('peso_kg', 'is', null)
         .order('data', ascending: false)
-        .limit(1)
-        .maybeSingle();
+        .order('created_at', ascending: false);
 
-    final peso = resultado?['peso_kg'];
-    return peso is num ? peso.toDouble() : double.tryParse(peso?.toString() ?? '');
+    final pesos = <String, double>{};
+
+    for (final item in resultado) {
+      final id = item['animal_id']?.toString();
+      if (id == null || pesos.containsKey(id)) continue;
+
+      final valor = item['peso_kg'];
+      final peso = valor is num
+          ? valor.toDouble()
+          : double.tryParse(valor?.toString() ?? '');
+
+      if (peso != null && peso > 0) {
+        pesos[id] = peso;
+      }
+    }
+
+    return pesos;
   }
 
   Future<List<Map<String, dynamic>>> getManejos() async {
@@ -286,11 +348,19 @@ class ManejoService {
     }
 
     _validarDados(
-      tipo: tipo, vacinaId: vacinaId, vacinaNome: vacinaNome,
-      vacinaFabricante: vacinaFabricante, vacinaLote: vacinaLote,
-      outroNome: outroNome, dose: dose, pesoReferenciaKg: pesoReferenciaKg,
-      vermifugoId: vermifugoId, vermifugoNome: vermifugoNome,
-      medicamentoId: medicamentoId, medicamentoNome: medicamentoNome,
+      tipo: tipo,
+      vacinaId: vacinaId,
+      vacinaNome: vacinaNome,
+      vacinaFabricante: vacinaFabricante,
+      vacinaLote: vacinaLote,
+      outroNome: outroNome,
+      dose: dose,
+      pesoReferenciaKg: pesoReferenciaKg,
+      vermifugoId: vermifugoId,
+      vermifugoNome: vermifugoNome,
+      medicamentoId: medicamentoId,
+      medicamentoNome: medicamentoNome,
+      validarFamacha: false,
     );
 
     final animais = await _client.from('animais').select('id')
@@ -315,24 +385,6 @@ class ManejoService {
       vermifugoPrincipioAtivo: vermifugoPrincipioAtivo, medicamentoId: medicamentoId,
       medicamentoNome: medicamentoNome, medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
     )).toList();
-
-    if (tipo == TipoManejo.famacha) {
-      final registros = <Map<String, dynamic>>[];
-      for (final dadosAnimal in dados) {
-        final registro = await _client
-            .from('manejos')
-            .insert(dadosAnimal)
-            .select('*, animais(brinco, nome)')
-            .single();
-
-        final escoreSalvo = registro['famacha_escore'];
-        if (escoreSalvo == null) {
-          throw Exception('O FAMACHA do animal não foi salvo corretamente.');
-        }
-        registros.add(Map<String, dynamic>.from(registro));
-      }
-      return registros;
-    }
 
     final resultado = await _client.from('manejos').insert(dados)
         .select('*, animais(brinco, nome)');
@@ -437,6 +489,7 @@ class ManejoService {
     String? vermifugoNome,
     String? medicamentoId,
     String? medicamentoNome,
+    bool validarFamacha = true,
   }) {
     if (tipo == TipoManejo.pesagem && (pesoKg == null || pesoKg <= 0)) {
       throw Exception('Informe um peso válido em kg.');
@@ -445,7 +498,8 @@ class ManejoService {
     if (dose != null && (pesoReferenciaKg == null || pesoReferenciaKg <= 0)) {
       throw Exception('Informe o peso de referência da dose.');
     }
-    if (tipo == TipoManejo.famacha &&
+    if (validarFamacha &&
+        tipo == TipoManejo.famacha &&
         (famachaEscore == null || famachaEscore < 1 || famachaEscore > 5)) {
       throw Exception('Informe uma classificação FAMACHA de 1 a 5.');
     }
