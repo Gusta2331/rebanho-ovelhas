@@ -337,6 +337,80 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     }
   }
 
+  Widget _produtoField({
+    required String titulo,
+    required List<Map<String, dynamic>> itens,
+    required Map<String, dynamic>? selecionado,
+    required ValueChanged<Map<String, dynamic>?> onChanged,
+    required VoidCallback onAdicionar,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.14))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(titulo, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<String>(
+          value: selecionado?['id']?.toString(), isExpanded: true,
+          decoration: InputDecoration(labelText: 'Selecionar $'+'titulo', prefixIcon: const Icon(Icons.medical_services_outlined), border: const OutlineInputBorder()),
+          items: itens.map((item) {
+            final id = item['id']?.toString(); if (id == null) return null;
+            final nome = item['nome']?.toString() ?? titulo;
+            final principio = item['principio_ativo']?.toString().trim();
+            return DropdownMenuItem<String>(value: id, child: Text(principio == null || principio.isEmpty ? nome : '$'+'nome • $'+'principio', overflow: TextOverflow.ellipsis));
+          }).whereType<DropdownMenuItem<String>>().toList(),
+          onChanged: _salvando ? null : (id) {
+            final item = id == null ? null : itens.firstWhere((x) => x['id']?.toString() == id);
+            onChanged(item);
+          },
+        ),
+        const SizedBox(height: 8),
+        TextButton.icon(onPressed: _salvando ? null : onAdicionar, icon: const Icon(Icons.add), label: Text('Cadastrar novo $'+'{titulo.toLowerCase()}')),
+      ]),
+    );
+  }
+
+  Future<void> _adicionarVermifugoCompleto() async {
+    String nome = ''; String principio = '';
+    final dados = await showDialog<Map<String, String>>(context: context, builder: (dialogContext) => AlertDialog(
+      title: const Text('Novo vermífugo'),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(autofocus: true, onChanged: (v) => nome = v, decoration: const InputDecoration(labelText: 'Nome do produto')),
+        const SizedBox(height: 12),
+        TextField(onChanged: (v) => principio = v, decoration: const InputDecoration(labelText: 'Princípio ativo')),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancelar')),
+        FilledButton(onPressed: () { if (nome.trim().isEmpty) return; Navigator.of(dialogContext).pop({'nome': nome.trim(), 'principio': principio.trim()}); }, child: const Text('Cadastrar')),
+      ],
+    ));
+    if (dados == null || !mounted) return;
+    try {
+      final item = await _service.criarVermifugo(nome: dados['nome']!, principioAtivo: dados['principio']);
+      setState(() { _vermifugos = [..._vermifugos, item]; _vermifugoSelecionado = item; });
+    } catch (e) { _mensagem(e.toString().replaceFirst('Exception: ', '')); }
+  }
+
+  Future<void> _adicionarMedicamentoCompleto() async {
+    String nome = ''; String principio = '';
+    final dados = await showDialog<Map<String, String>>(context: context, builder: (dialogContext) => AlertDialog(
+      title: const Text('Novo medicamento'),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(autofocus: true, onChanged: (v) => nome = v, decoration: const InputDecoration(labelText: 'Nome do medicamento')),
+        const SizedBox(height: 12),
+        TextField(onChanged: (v) => principio = v, decoration: const InputDecoration(labelText: 'Princípio ativo')),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancelar')),
+        FilledButton(onPressed: () { if (nome.trim().isEmpty) return; Navigator.of(dialogContext).pop({'nome': nome.trim(), 'principio': principio.trim()}); }, child: const Text('Cadastrar')),
+      ],
+    ));
+    if (dados == null || !mounted) return;
+    try {
+      final item = await _service.criarMedicamento(nome: dados['nome']!, principioAtivo: dados['principio']);
+      setState(() { _medicamentos = [..._medicamentos, item]; _medicamentoSelecionado = item; });
+    } catch (e) { _mensagem(e.toString().replaceFirst('Exception: ', '')); }
+  }
   void _selecionarTodos() {
     setState(() {
       _animaisSelecionados
