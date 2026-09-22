@@ -243,6 +243,13 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
   }
 
   Future<void> _alterarStatus() async {
+    if (_animal.status == StatusAnimal.vendido) {
+      _mostrarMensagem(
+        'Este animal já foi vendido. A venda registrada permanece no histórico.',
+      );
+      return;
+    }
+
     final novoStatus = await showModalBottomSheet<StatusAnimal>(
       context: context,
       showDragHandle: true,
