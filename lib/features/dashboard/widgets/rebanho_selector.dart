@@ -177,7 +177,7 @@ class RebanhoSelector extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${lote.quantidadeAnimais} animais ativos',
+                          '${rebanho.quantidadeAnimais} animais ativos',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.black54,
