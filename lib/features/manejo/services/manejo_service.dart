@@ -22,31 +22,30 @@ class ManejoService {
 
   Future<List<Map<String, dynamic>>> getVacinas() async {
     final fazendaId = await _getMinhaFazendaId();
-    var resultado = await _client.from('vacinas')
-        .select('id, nome, fabricante, ativo, dose, dose_unidade, peso_referencia_kg, via_aplicacao, carencia_dias, observacoes')
-        .eq('fazenda_id', fazendaId).eq('ativo', true).order('nome');
 
-    if (resultado.isEmpty) {
-      const nomes = [
-        'Vacina contra clostridioses',
-        'Vacina antirrábica',
-        'Vacina contra ectima contagioso',
-      ];
-      for (final nome in nomes) {
-        final existente = await _client.from('vacinas').select('id')
-            .eq('fazenda_id', fazendaId).eq('nome', nome).maybeSingle();
-        if (existente == null) {
-          await _client.from('vacinas').insert({
-            'id': const Uuid().v4(),
-            'fazenda_id': fazendaId,
-            'nome': nome,
-          });
-        }
+    const padroes = [
+      'Vacina contra clostridioses',
+      'Vacina antirrábica',
+      'Vacina contra ectima contagioso',
+    ];
+
+    for (final nome in padroes) {
+      final existente = await _client.from('vacinas').select('id')
+          .eq('fazenda_id', fazendaId).eq('nome', nome).maybeSingle();
+      if (existente == null) {
+        await _client.from('vacinas').insert({
+          'id': const Uuid().v4(),
+          'fazenda_id': fazendaId,
+          'nome': nome,
+        });
       }
-      resultado = await _client.from('vacinas')
-          .select('id, nome, fabricante, ativo, dose, dose_unidade, peso_referencia_kg, via_aplicacao, carencia_dias, observacoes')
-          .eq('fazenda_id', fazendaId).eq('ativo', true).order('nome');
     }
+
+    final resultado = await _client.from('vacinas')
+        .select('id, nome, fabricante, ativo, dose, dose_unidade, peso_referencia_kg, via_aplicacao, carencia_dias, observacoes')
+        .eq('fazenda_id', fazendaId)
+        .eq('ativo', true)
+        .order('nome');
 
     return List<Map<String, dynamic>>.from(resultado);
   }
