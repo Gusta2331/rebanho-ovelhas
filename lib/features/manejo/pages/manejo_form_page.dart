@@ -48,6 +48,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   String _doseBaseTexto = '';
   String _pesoReferenciaTexto = '1';
   String _unidadeDose = 'mL';
+  String _viaAplicacao = '';
+  String _carenciaTexto = '';
   int _doseEditorVersao = 0;
 
   TipoManejo _tipo = TipoManejo.vacinacao;
@@ -85,6 +87,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       }
       if (manejo.pesoReferenciaKg != null) _pesoReferenciaTexto = manejo.pesoReferenciaKg.toString();
       if (manejo.doseUnidade != null && manejo.doseUnidade!.trim().isNotEmpty) _unidadeDose = manejo.doseUnidade!;
+      _viaAplicacao = manejo.viaAplicacao ?? '';
+      if (manejo.carenciaDias != null) _carenciaTexto = manejo.carenciaDias.toString();
     }
 
     _carregarDados();
@@ -469,8 +473,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         dose: _numero(_doseBaseTexto),
         doseUnidade: _unidadeDose,
         pesoReferenciaKg: _numero(_pesoReferenciaTexto),
-        viaAplicacao: null,
-        carenciaDias: null,
+        viaAplicacao: _viaAplicacao.trim().isEmpty ? null : _viaAplicacao.trim(),
+        carenciaDias: int.tryParse(_carenciaTexto.trim()),
         validade: _validade,
         vermifugoId: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'id')?.toString() : null,
         vermifugoNome: _tipo == TipoManejo.vermifugacao ? _campo(_vermifugoSelecionado, 'nome')?.toString() : null,
@@ -1175,6 +1179,45 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (v) { _pesoReferenciaTexto = v; },
                       decoration: const InputDecoration(labelText: 'Para quantos kg?', hintText: 'Ex.: 10', prefixIcon: Icon(Icons.monitor_weight_outlined), border: OutlineInputBorder()),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 10),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final largura = constraints.maxWidth < 430 ? constraints.maxWidth : (constraints.maxWidth - 12) / 2;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                    width: largura,
+                    child: TextFormField(
+                      initialValue: _viaAplicacao,
+                      onChanged: (v) => _viaAplicacao = v,
+                      decoration: const InputDecoration(
+                        labelText: 'Via de aplicação',
+                        hintText: 'Ex.: Subcutânea',
+                        prefixIcon: Icon(Icons.route_outlined),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: largura,
+                    child: TextFormField(
+                      initialValue: _carenciaTexto,
+                      keyboardType: TextInputType.number,
+                      onChanged: (v) => _carenciaTexto = v,
+                      decoration: const InputDecoration(
+                        labelText: 'Carência (dias)',
+                        hintText: 'Ex.: 7',
+                        prefixIcon: Icon(Icons.schedule_outlined),
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ),
                 ],
