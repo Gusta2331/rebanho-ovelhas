@@ -1143,29 +1143,73 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   Future<void> _adicionarMedicamentoCompleto() async {
     String nome = '';
     String principio = '';
+    String dose = '';
+    String unidade = 'mL';
+    String referencia = '';
+    String via = '';
+    String carencia = '';
+
     final dados = await showDialog<Map<String, String>>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Novo medicamento'),
-        content: TextField(autofocus: true, onChanged: (v) => nome = v, decoration: const InputDecoration(labelText: 'Nome do medicamento')),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(autofocus: true, onChanged: (v) => nome = v, decoration: const InputDecoration(labelText: 'Nome do medicamento')),
+              TextField(onChanged: (v) => principio = v, decoration: const InputDecoration(labelText: 'Princípio ativo')),
+              const SizedBox(height: 8),
+              const Align(alignment: Alignment.centerLeft, child: Text('Dose conforme bula', style: TextStyle(fontWeight: FontWeight.bold))),
+              Row(children: [
+                Expanded(child: TextField(keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (v) => dose = v, decoration: const InputDecoration(labelText: 'Dose'))),
+                const SizedBox(width: 8),
+                Expanded(child: TextField(onChanged: (v) => unidade = v, decoration: const InputDecoration(labelText: 'Unidade'))),
+              ]),
+              TextField(keyboardType: const TextInputType.numberWithOptions(decimal: true), onChanged: (v) => referencia = v, decoration: const InputDecoration(labelText: 'Para quantos kg?')),
+              TextField(onChanged: (v) => via = v, decoration: const InputDecoration(labelText: 'Via')),
+              TextField(keyboardType: TextInputType.number, onChanged: (v) => carencia = v, decoration: const InputDecoration(labelText: 'Carência (dias)')),
+            ],
+          ),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancelar')),
           FilledButton(onPressed: () {
             if (nome.trim().isEmpty) return;
-            Navigator.of(dialogContext).pop({'nome': nome.trim(), 'principio': principio});
+            Navigator.of(dialogContext).pop({
+              'nome': nome.trim(),
+              'principio': principio.trim(),
+              'dose': dose,
+              'unidade': unidade,
+              'referencia': referencia,
+              'via': via,
+              'carencia': carencia,
+            });
           }, child: const Text('Cadastrar')),
         ],
       ),
     );
+
     if (dados == null || !mounted) return;
+
     try {
-      final item = await _service.criarMedicamento(nome: dados['nome']!, principioAtivo: dados['principio']);
+      final item = await _service.criarMedicamento(
+        nome: dados['nome']!,
+        principioAtivo: dados['principio'],
+        dose: _numero(dados['dose']),
+        doseUnidade: dados['unidade'],
+        pesoReferenciaKg: _numero(dados['referencia']),
+        viaAplicacao: dados['via'],
+        carenciaDias: int.tryParse(dados['carencia'] ?? ''),
+      );
       setState(() {
         _medicamentos = [..._medicamentos, item];
         _medicamentoSelecionado = item;
       });
       _calcularDoses();
-    } catch (e) { _mensagem(e.toString().replaceFirst('Exception: ', '')); }
+    } catch (e) {
+      _mensagem(e.toString().replaceFirst('Exception: ', ''));
+    }
   }
 
   Widget _avaliacaoLote() {
