@@ -71,7 +71,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Lote "${lote.nome}" criado com sucesso.')),
+      SnackBar(content: Text('Lote "${rebanho.nome}" criado com sucesso.')),
     );
   }
 
@@ -107,8 +107,8 @@ class _RebanhosPageState extends State<RebanhosPage> {
           title: Text(novoStatus ? 'Ativar lote' : 'Inativar lote'),
           content: Text(
             novoStatus
-                ? 'Deseja ativar o lote "${lote.nome}"?'
-                : 'Deseja inativar o lote "${lote.nome}"?',
+                ? 'Deseja ativar o lote "${rebanho.nome}"?'
+                : 'Deseja inativar o lote "${rebanho.nome}"?',
           ),
           actions: [
             TextButton(
