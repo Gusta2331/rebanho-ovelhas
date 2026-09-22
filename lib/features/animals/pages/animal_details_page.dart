@@ -765,18 +765,18 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
           _buildInfoRow(
             icon: Icons.monitor_weight_outlined,
             label: 'Peso na venda',
-            value: venda.pesoKg!.toStringAsFixed(2).replaceAll('.', ',') + ' kg',
+            value: '${venda.pesoKg!.toStringAsFixed(2).replaceAll('.', ',')} kg',
           ),
         if (venda.precoPorKg != null)
           _buildInfoRow(
             icon: Icons.attach_money_rounded,
             label: 'Preço por kg',
-            value: 'R$ ' + venda.precoPorKg!.toStringAsFixed(2).replaceAll('.', ','),
+            value: 'R$ ${venda.precoPorKg!.toStringAsFixed(2).replaceAll('.', ',')}',
           ),
         _buildInfoRow(
           icon: Icons.payments_outlined,
           label: 'Valor total',
-          value: 'R$ ' + venda.valorTotal.toStringAsFixed(2).replaceAll('.', ','),
+          value: 'R$ ${venda.valorTotal.toStringAsFixed(2).replaceAll('.', ',')}',
           valueColor: AppTheme.primaryColor,
         ),
         if (venda.comprador != null)
