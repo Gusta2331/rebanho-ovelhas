@@ -285,7 +285,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Rebanho "${rebanhoCriado.nome}" criado com sucesso.'),
+        content: Text('Lote "${rebanhoCriado.nome}" criado com sucesso.'),
       ),
     );
   }
@@ -442,7 +442,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                _loadingFarm ? 'Carregando fazenda...' : 'Gestão do rebanho',
+                _loadingFarm ? 'Carregando fazenda...' : 'Gestão do lote',
                 style: const TextStyle(fontSize: 14, color: Colors.black54),
               ),
             ],
@@ -566,7 +566,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       QuickAction(
         icon: Icons.groups_rounded,
-        title: 'Rebanhos',
+        title: 'Lotes',
         onTap: _abrirGerenciamentoRebanhos,
       ),
       QuickAction(
@@ -618,7 +618,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ManagementItem(
           icon: Icons.vaccines_outlined,
           title: 'Vacinação',
-          description: 'Próxima vacinação do rebanho',
+          description: 'Próxima vacinação do lote',
           date: 'Em breve',
         ),
         const SizedBox(height: 12),
@@ -632,7 +632,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ManagementItem(
           icon: Icons.favorite_border_rounded,
           title: 'Acompanhamento',
-          description: 'Controle reprodutivo do rebanho',
+          description: 'Controle reprodutivo do lote',
           date: 'Em breve',
         ),
       ],
