@@ -70,7 +70,7 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
       }
 
       final reproducoesTodas = await _service.getReproducoes();
-      final animaisDoLote = await _animalService.getAnimaisAtivos(rebanhoId: loteId);
+      final animaisDoLote = await _animalService.getTodosAnimais(rebanhoId: loteId);
       final idsDoLote = animaisDoLote.map((animal) => animal['id'].toString()).toSet();
       final reproducoes = reproducoesTodas
           .where((item) => idsDoLote.contains(item.maeId))
