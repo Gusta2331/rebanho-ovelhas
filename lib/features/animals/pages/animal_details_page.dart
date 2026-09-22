@@ -6,6 +6,9 @@ import '../../flock/pages/animal_transfer_history_page.dart';
 import '../../flock/services/rebanho_selection_service.dart';
 import '../models/animal.dart';
 import '../services/animal_service.dart';
+import '../models/animal_venda.dart';
+import '../services/animal_venda_service.dart';
+import 'animal_sale_page.dart';
 import '../widgets/animal_photo.dart';
 import '../widgets/animal_descendants.dart';
 import '../widgets/animal_family_tree.dart';
@@ -30,6 +33,9 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
   late List<Animal> _animaisContexto;
 
   final AnimalService _animalService = AnimalService();
+  final AnimalVendaService _vendaService = AnimalVendaService();
+
+  AnimalVenda? _venda;
 
   final RebanhoSelectionService _rebanhoSelectionService =
       RebanhoSelectionService.instance;
@@ -44,6 +50,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
     _animaisContexto = List<Animal>.from(widget.animais);
     _carregarRebanhoAtual();
     _carregarAnimaisRelacionados();
+    _carregarVenda();
   }
 
   Future<void> _carregarAnimaisRelacionados() async {
@@ -81,6 +88,60 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
     }
   }
 
+  Future<void> _carregarVenda() async {
+    try {
+      final venda = await _vendaService.buscarPorAnimal(_animal.id);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _venda = venda;
+      });
+    } catch (_) {
+      // A ficha continua disponível mesmo se o histórico de venda não puder ser carregado.
+    }
+  }
+
+  Future<void> _abrirVenda() async {
+    if (_animal.status != StatusAnimal.ativo) {
+      return;
+    }
+
+    final loteId = _rebanhoAtualId;
+    final loteNome = _rebanhoAtualNome;
+
+    if (loteId == null || loteNome == null) {
+      _mostrarMensagem('Não foi possível identificar o lote atual do animal.');
+      return;
+    }
+
+    final resultado = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => AnimalSalePage(
+          animal: _animal,
+          loteId: loteId,
+          loteNome: loteNome,
+        ),
+      ),
+    );
+
+    if (resultado != true || !mounted) {
+      return;
+    }
+
+    final animaisAtualizados = await _animalService.getAnimaisPorIds([_animal.id]);
+
+    if (animaisAtualizados.isNotEmpty && mounted) {
+      setState(() {
+        _animal = Animal.fromMap(animaisAtualizados.first);
+      });
+    }
+
+    await _carregarVenda();
+    _mostrarMensagem('Venda registrada com sucesso e lançada no financeiro.');
+  }
   void _carregarRebanhoAtual() {
     final rebanho = _rebanhoSelectionService.rebanhoSelecionado;
 
@@ -213,11 +274,33 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
                   icon: Icons.check_circle_outline_rounded,
                   color: AppTheme.primaryColor,
                 ),
-                _buildStatusOption(
-                  context: sheetContext,
-                  status: StatusAnimal.vendido,
-                  icon: Icons.sell_outlined,
-                  color: Colors.blue,
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: const Icon(Icons.sell_outlined, color: Colors.blue),
+                  ),
+                  title: const Text(
+                    'Vender animal',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textColor,
+                    ),
+                  ),
+                  subtitle: const Text('Registrar valor e lançar no financeiro'),
+                  trailing: const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.black38,
+                  ),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    _abrirVenda();
+                  },
                 ),
                 _buildStatusOption(
                   context: sheetContext,
@@ -489,6 +572,12 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
             tooltip: 'Alterar status',
             icon: const Icon(Icons.flag_outlined),
           ),
+          if (_animal.status == StatusAnimal.ativo)
+            IconButton(
+              onPressed: _abrirVenda,
+              tooltip: 'Vender animal',
+              icon: const Icon(Icons.sell_outlined),
+            ),
           IconButton(
             onPressed: _editarAnimal,
             tooltip: 'Editar animal',
@@ -554,6 +643,11 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
           const SizedBox(height: 16),
 
           _buildTransferHistoryCard(),
+
+          if (_venda != null) ...[
+            const SizedBox(height: 16),
+            _buildVendaCard(),
+          ],
 
           const SizedBox(height: 16),
 
@@ -641,6 +735,58 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
     );
   }
 
+  Widget _buildVendaCard() {
+    final venda = _venda!;
+
+    return _buildSection(
+      title: 'Venda',
+      icon: Icons.sell_outlined,
+      children: [
+        _buildInfoRow(
+          icon: Icons.calendar_month_outlined,
+          label: 'Data da venda',
+          value: _dataTexto(venda.dataVenda),
+        ),
+        _buildInfoRow(
+          icon: venda.tipoVenda == TipoVendaAnimal.porKg
+              ? Icons.scale_outlined
+              : Icons.payments_outlined,
+          label: 'Forma de venda',
+          value: venda.tipoVenda == TipoVendaAnimal.porKg ? 'Por kg' : 'Valor fechado',
+        ),
+        if (venda.pesoKg != null)
+          _buildInfoRow(
+            icon: Icons.monitor_weight_outlined,
+            label: 'Peso na venda',
+            value: venda.pesoKg!.toStringAsFixed(2).replaceAll('.', ',') + ' kg',
+          ),
+        if (venda.precoPorKg != null)
+          _buildInfoRow(
+            icon: Icons.attach_money_rounded,
+            label: 'Preço por kg',
+            value: 'R$ ' + venda.precoPorKg!.toStringAsFixed(2).replaceAll('.', ','),
+          ),
+        _buildInfoRow(
+          icon: Icons.payments_outlined,
+          label: 'Valor total',
+          value: 'R$ ' + venda.valorTotal.toStringAsFixed(2).replaceAll('.', ','),
+          valueColor: AppTheme.primaryColor,
+        ),
+        if (venda.comprador != null)
+          _buildInfoRow(
+            icon: Icons.person_outline,
+            label: 'Comprador',
+            value: venda.comprador!,
+          ),
+        if (venda.observacoes != null)
+          _buildInfoRow(
+            icon: Icons.notes_outlined,
+            label: 'Observações',
+            value: venda.observacoes!,
+          ),
+      ],
+    );
+  }
   Widget _buildTransferCard() {
     final temRebanho = _rebanhoAtualId != null && _rebanhoAtualNome != null;
 
