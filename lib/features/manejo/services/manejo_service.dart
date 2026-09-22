@@ -82,8 +82,16 @@ class ManejoService {
 
   Future<List<Map<String, dynamic>>> getVermifugos() async {
     final fazendaId = await _getMinhaFazendaId();
-    final resultado = await _client.from('vermifugos').select('*')
+    var resultado = await _client.from('vermifugos').select('*')
         .eq('fazenda_id', fazendaId).eq('ativo', true).order('nome');
+    if (resultado.isEmpty) {
+      const padroes = ['Albendazol', 'Ivermectina', 'Levamisol', 'Moxidectina'];
+      for (final nome in padroes) {
+        await _client.from('vermifugos').insert({'id': const Uuid().v4(), 'fazenda_id': fazendaId, 'nome': nome, 'principio_ativo': nome});
+      }
+      resultado = await _client.from('vermifugos').select('*')
+          .eq('fazenda_id', fazendaId).eq('ativo', true).order('nome');
+    }
     return List<Map<String, dynamic>>.from(resultado);
   }
 
