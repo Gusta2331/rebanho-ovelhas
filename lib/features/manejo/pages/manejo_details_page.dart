@@ -183,6 +183,47 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
                 : manejo.vacinaNome! + ' • ' + manejo.vacinaFabricante!,
             Icons.vaccines_outlined,
           ),
+        if (manejo.pesoKg != null)
+          _item(
+            'Peso registrado',
+            manejo.pesoKg!.toStringAsFixed(2) + ' kg',
+            Icons.monitor_weight_outlined,
+          ),
+        if ((manejo.tipo == TipoManejo.vacinacao ||
+                manejo.tipo == TipoManejo.vermifugacao ||
+                manejo.tipo == TipoManejo.tratamento) &&
+            manejo.dose != null)
+          _item(
+            'Dose aplicada',
+            manejo.dose!.toStringAsFixed(2) + ' ' + (manejo.doseUnidade ?? ''),
+            Icons.medication_outlined,
+          ),
+        if (manejo.pesoReferenciaKg != null)
+          _item(
+            'Regra da dose',
+            'Dose por ' + manejo.pesoReferenciaKg!.toStringAsFixed(2) + ' kg',
+            Icons.calculate_outlined,
+          ),
+        if (manejo.viaAplicacao != null)
+          _item('Via', manejo.viaAplicacao!, Icons.route_outlined),
+        if (manejo.carenciaDias != null)
+          _item('Carência', manejo.carenciaDias.toString() + ' dias', Icons.timer_outlined),
+        if (manejo.tipo == TipoManejo.vermifugacao && manejo.vermifugoNome != null)
+          _item(
+            'Vermífugo',
+            manejo.vermifugoPrincipioAtivo == null
+                ? manejo.vermifugoNome!
+                : manejo.vermifugoNome! + ' • ' + manejo.vermifugoPrincipioAtivo!,
+            Icons.medical_services_outlined,
+          ),
+        if (manejo.tipo == TipoManejo.tratamento && manejo.medicamentoNome != null)
+          _item(
+            'Medicamento',
+            manejo.medicamentoPrincipioAtivo == null
+                ? manejo.medicamentoNome!
+                : manejo.medicamentoNome! + ' • ' + manejo.medicamentoPrincipioAtivo!,
+            Icons.medication_outlined,
+          ),
         if (manejo.tipo == TipoManejo.vacinacao &&
             manejo.vacinaLote != null &&
             manejo.vacinaLote!.trim().isNotEmpty)
