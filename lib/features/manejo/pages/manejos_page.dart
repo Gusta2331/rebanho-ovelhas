@@ -28,7 +28,6 @@ class _ManejosPageState extends State<ManejosPage> {
   TipoManejo? _tipoFiltro;
   String? _animalFiltro;
   DateTimeRange? _periodoFiltro;
-  Set<String> _animalIdsDoLote = {};
 
   @override
   void initState() {
