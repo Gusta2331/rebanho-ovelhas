@@ -676,9 +676,17 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       appBar: AppBar(title: Text(_editando ? 'Editar manejo' : 'Novo manejo')),
       body: _carregando
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-              children: [
+          : SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final horizontal = constraints.maxWidth < 420 ? 14.0 : 20.0;
+                  final maxWidth = constraints.maxWidth > 760 ? 720.0 : constraints.maxWidth;
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxWidth),
+                      child: ListView(
+                        padding: EdgeInsets.fromLTRB(horizontal, 16, horizontal, 32),
+                        children: [
                 _intro(),
                 const SizedBox(height: 20),
                 DropdownButtonFormField<TipoManejo>(
@@ -864,8 +872,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                               : 'Salvar manejo',
                     ),
                   ),
-                ),
-              ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
     );
   }
@@ -1300,40 +1312,40 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         children: [
           Text(_animalTexto(animal), style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: List.generate(5, (index) {
               final valor = index + 1;
               final ativo = escore == valor;
 
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: valor == 5 ? 0 : 5),
-                  child: OutlinedButton(
-                    onPressed: _salvando ? null : () => _definirFamacha(id, valor),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: ativo ? AppTheme.primaryColor : Colors.white,
-                      foregroundColor: ativo ? Colors.white : AppTheme.textColor,
-                      side: BorderSide(
-                        color: ativo ? AppTheme.primaryColor : Colors.black12,
-                        width: ativo ? 2 : 1,
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 9),
+              return SizedBox(
+                width: 54,
+                child: OutlinedButton(
+                  onPressed: _salvando ? null : () => _definirFamacha(id, valor),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: ativo ? AppTheme.primaryColor : Colors.white,
+                    foregroundColor: ativo ? Colors.white : AppTheme.textColor,
+                    side: BorderSide(
+                      color: ativo ? AppTheme.primaryColor : Colors.black12,
+                      width: ativo ? 2 : 1,
                     ),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 18,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            color: _corFamacha(valor),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black26),
-                          ),
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: _corFamacha(valor),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black26),
                         ),
-                        const SizedBox(height: 4),
-                        Text(valor.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(valor.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ],
                   ),
                 ),
               );
@@ -1359,23 +1371,23 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
           const SizedBox(height: 8),
           FamachaReferenceWidget(selecionado: _famacha),
           const SizedBox(height: 14),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: List.generate(5, (index) {
               final escore = index + 1;
               final selecionado = _famacha == escore;
 
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: escore == 5 ? 0 : 6),
-                  child: OutlinedButton(
-                    onPressed: _salvando ? null : () => setState(() => _famacha = escore),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: selecionado ? AppTheme.primaryColor : Colors.white,
-                      foregroundColor: selecionado ? Colors.white : AppTheme.textColor,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                    child: Text(escore.toString()),
+              return SizedBox(
+                width: 54,
+                child: OutlinedButton(
+                  onPressed: _salvando ? null : () => setState(() => _famacha = escore),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: selecionado ? AppTheme.primaryColor : Colors.white,
+                    foregroundColor: selecionado ? Colors.white : AppTheme.textColor,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
+                  child: Text(escore.toString()),
                 ),
               );
             }),
