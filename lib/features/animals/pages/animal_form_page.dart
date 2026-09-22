@@ -1098,7 +1098,12 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.flag_outlined),
                 ),
-                items: StatusAnimal.values.map((status) {
+                items: (modoEdicao && widget.animalParaEditar?.status == StatusAnimal.vendido
+                        ? const [StatusAnimal.vendido]
+                        : StatusAnimal.values.where(
+                            (status) => status != StatusAnimal.vendido,
+                          ))
+                    .map((status) {
                   return DropdownMenuItem<StatusAnimal>(
                     value: status,
                     child: Row(
@@ -1122,6 +1127,17 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                         });
                       },
               ),
+
+              if (_statusSelecionado == StatusAnimal.ativo &&
+                  (!modoEdicao || widget.animalParaEditar?.status == StatusAnimal.ativo))
+                const Padding(
+                  padding: EdgeInsets.only(top: 6, left: 12),
+                  child: Text(
+                    'Para vender este animal, use a opção “Vender animal” na ficha. '
+                    'Assim o valor da venda é registrado automaticamente no financeiro.',
+                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ),
 
               const SizedBox(height: 20),
 
