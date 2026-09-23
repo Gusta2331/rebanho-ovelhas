@@ -1,10 +1,14 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/offline/connectivity_service.dart';
+import '../../../core/offline/offline_store.dart';
 import '../../../core/services/supabase_service.dart';
 
 class FinanceiroService {
   SupabaseClient get _client => SupabaseService.client;
+  final OfflineStore _offlineStore = OfflineStore();
+  final ConnectivityService _connectivity = ConnectivityService.instance;
 
   Future<String> _fazendaId() async {
     final user = _client.auth.currentUser;
@@ -20,10 +24,17 @@ class FinanceiroService {
 
   Future<List<Map<String, dynamic>>> listar({required String loteId}) async {
     final fazendaId = await _fazendaId();
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache('financeiro_' + loteId);
+      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      return [];
+    }
     final result = await _client.from('financeiro_lancamentos').select('*')
         .eq('fazenda_id', fazendaId).eq('lote_id', loteId)
         .order('data', ascending: false).order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(result);
+    final lista = List<Map<String, dynamic>>.from(result);
+    await _offlineStore.salvarCache('financeiro_' + loteId, lista);
+    return lista;
   }
 
   Future<Map<String, double>> resumo({required String loteId}) async {
