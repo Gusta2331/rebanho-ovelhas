@@ -249,7 +249,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   String _moeda(double valor) {
-    return 'R\\$ ' + valor.toStringAsFixed(2).replaceAll('.', ',');
+    return 'R\$ ' + valor.toStringAsFixed(2).replaceAll('.', ',');
   }
 
   Future<void> _loadProximosManejos() async {
