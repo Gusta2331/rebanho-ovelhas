@@ -1,12 +1,16 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/offline/connectivity_service.dart';
+import '../../../core/offline/offline_store.dart';
 import '../../../core/services/supabase_service.dart';
 import '../models/manejo.dart';
 
 class ManejoService {
   SupabaseClient get _client => SupabaseService.client;
   String? _fazendaIdCache;
+  final OfflineStore _offlineStore = OfflineStore();
+  final ConnectivityService _connectivity = ConnectivityService.instance;
 
   Future<String> _getMinhaFazendaId() async {
     if (_fazendaIdCache != null) return _fazendaIdCache!;
@@ -236,11 +240,24 @@ class ManejoService {
 
   Future<List<Map<String, dynamic>>> getManejos() async {
     final fazendaId = await _getMinhaFazendaId();
-    final resultado = await _client.from('manejos')
-        .select('*, animais(brinco, nome)')
-        .eq('fazenda_id', fazendaId)
-        .order('data', ascending: false);
-    return List<Map<String, dynamic>>.from(resultado);
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache('manejos');
+      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      return [];
+    }
+    try {
+      final resultado = await _client.from('manejos')
+          .select('*, animais(brinco, nome)')
+          .eq('fazenda_id', fazendaId)
+          .order('data', ascending: false);
+      final lista = List<Map<String, dynamic>>.from(resultado);
+      await _offlineStore.salvarCache('manejos', lista);
+      return lista;
+    } catch (_) {
+      final cache = await _offlineStore.lerCache('manejos');
+      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> criarManejo({
