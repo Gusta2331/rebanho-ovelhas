@@ -75,6 +75,7 @@ create or replace function public.sincronizar_manejo_programado(
   p_tipo text,
   p_data_programada date,
   p_observacoes text,
+  p_outro_nome text default null,
   p_animal_ids uuid[],
   p_vacina_id uuid default null,
   p_vacina_nome text default null,
@@ -110,13 +111,13 @@ begin
   end if;
 
   insert into public.manejos_programados (
-    id, fazenda_id, tipo, data_programada, observacoes,
+    id, fazenda_id, tipo, data_programada, observacoes, outro_nome,
     vacina_id, vacina_nome, vacina_fabricante,
     dose, dose_unidade, peso_referencia_kg, via_aplicacao,
     validade, carencia_dias, vermifugo_id, vermifugo_nome,
     medicamento_id, medicamento_nome
   ) values (
-    p_id, p_fazenda_id, p_tipo, p_data_programada, nullif(trim(p_observacoes), ''),
+    p_id, p_fazenda_id, p_tipo, p_data_programada, nullif(trim(p_observacoes), ''), nullif(trim(p_outro_nome), ''),
     p_vacina_id, nullif(trim(p_vacina_nome), ''), nullif(trim(p_vacina_fabricante), ''),
     p_dose, nullif(trim(p_dose_unidade), ''), p_peso_referencia_kg,
     nullif(trim(p_via_aplicacao), ''), p_validade, p_carencia_dias,
