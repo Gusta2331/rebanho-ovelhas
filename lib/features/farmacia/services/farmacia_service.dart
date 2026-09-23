@@ -13,13 +13,31 @@ class FarmaciaService {
   Future<String> _fazendaId() async {
     final user = _client.auth.currentUser;
     if (user == null) throw Exception('Usuário não autenticado.');
-    final farm = await _client.from('fazendas').select('id')
-        .eq('proprietario_id', user.id).eq('ativo', true).maybeSingle();
-    final id = farm?['id']?.toString();
-    if (id == null || id.isEmpty) {
-      throw Exception('Nenhuma fazenda ativa foi encontrada.');
+
+    const chaveCache = 'farmacia_fazenda_id';
+
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache(chaveCache);
+      final id = cache?.toString();
+      if (id != null && id.isNotEmpty) return id;
+      throw Exception('Sem internet e a fazenda ainda não foi salva neste aparelho.');
     }
-    return id;
+
+    try {
+      final farm = await _client.from('fazendas').select('id')
+          .eq('proprietario_id', user.id).eq('ativo', true).maybeSingle();
+      final id = farm?['id']?.toString();
+      if (id == null || id.isEmpty) {
+        throw Exception('Nenhuma fazenda ativa foi encontrada.');
+      }
+      await _offlineStore.salvarCache(chaveCache, id);
+      return id;
+    } catch (_) {
+      final cache = await _offlineStore.lerCache(chaveCache);
+      final id = cache?.toString();
+      if (id != null && id.isNotEmpty) return id;
+      rethrow;
+    }
   }
 
   Future<List<Map<String, dynamic>>> listarProdutos() async {
