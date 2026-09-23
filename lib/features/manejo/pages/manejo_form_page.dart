@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_service.dart';
@@ -7,6 +8,8 @@ import '../models/manejo.dart';
 import '../services/manejo_service.dart';
 import '../widgets/famacha_reference_widget.dart';
 import '../widgets/manejo_animal_selector.dart';
+import '../utils/famacha_scale.dart';
+import '../widgets/famacha_score_badge.dart';
 
 class ManejoFormPage extends StatefulWidget {
   final Manejo? manejo;
@@ -942,37 +945,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   }
 
   Color _corFamacha(int escore) {
-    switch (escore) {
-      case 1:
-        return const Color(0xFFB71C1C);
-      case 2:
-        return const Color(0xFFE53935);
-      case 3:
-        return const Color(0xFFE57373);
-      case 4:
-        return const Color(0xFFF8B6B6);
-      case 5:
-        return const Color(0xFFF5EAEA);
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _descricaoFamacha(int escore) {
-    switch (escore) {
-      case 1:
-        return 'Vermelho intenso';
-      case 2:
-        return 'Vermelho/rosado';
-      case 3:
-        return 'Rosa';
-      case 4:
-        return 'Rosa bem claro';
-      case 5:
-        return 'Muito pálido';
-      default:
-        return '';
-    }
+    return FamachaScale.color(escore);
   }
 
   void _mensagem(String texto) {
@@ -1100,7 +1073,33 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_editando ? 'Editar manejo' : 'Novo manejo')),
+      appBar: AppBar(
+        title: Text(_editando ? 'Editar manejo' : 'Novo manejo'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Registrar manejo',
+            introduction: 'Registre uma atividade realizada e associe os dados aos animais envolvidos.',
+            topics: [
+              HelpTopic(
+                title: 'Tipo de manejo',
+                description: 'Escolha pesagem, FAMACHA, tratamento ou outro tipo de atividade.',
+              ),
+              HelpTopic(
+                title: 'Seleção de animais',
+                description: 'Confira os animais selecionados antes de salvar. O registro será associado a eles.',
+              ),
+              HelpTopic(
+                title: 'Pesagem',
+                description: 'Digite o peso em quilogramas para cada animal selecionado. Use números, por exemplo 42,5 kg.',
+              ),
+              HelpTopic(
+                title: 'FAMACHA',
+                description: 'Selecione o escore observado; a cor ajuda a identificar a faixa da escala. Em caso de dúvida clínica, consulte um veterinário.',
+              ),
+            ],
+          ),
+        ],
+      ),
       body: _carregando
           ? const Center(
               child: CircularProgressIndicator(color: AppTheme.primaryColor),
@@ -1827,6 +1826,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
               );
             }),
           ),
+          if (escore != null) ...[
+            const SizedBox(height: 8),
+            FamachaScoreBadge(score: escore),
+          ],
         ],
       ),
     );
@@ -1874,20 +1877,29 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                         : AppTheme.textColor,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  child: Text(escore.toString()),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: _corFamacha(escore),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black26),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(escore.toString()),
+                    ],
+                  ),
                 ),
               );
             }),
           ),
           if (_famacha != null) ...[
             const SizedBox(height: 10),
-            Text(
-              'Selecionado: FAMACHA ' +
-                  _famacha.toString() +
-                  ' • ' +
-                  _descricaoFamacha(_famacha!),
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
+            FamachaScoreBadge(score: _famacha!),
           ],
         ],
       ),

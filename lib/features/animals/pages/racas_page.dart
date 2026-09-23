@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/racas.dart';
 import '../models/animal.dart';
@@ -353,6 +354,27 @@ class _RacasPageState extends State<RacasPage> {
           widget.modoSelecao ? 'Selecionar raça' : 'Biblioteca de raças',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          if (!widget.modoSelecao)
+            const ContextualHelpButton(
+              title: 'Biblioteca de raças',
+              introduction: 'Consulte a lista de raças disponível para preencher o cadastro e padronizar as informações dos animais.',
+              topics: [
+                HelpTopic(
+                  title: 'Buscar',
+                  description: 'Digite parte do nome para localizar uma raça na biblioteca.',
+                ),
+                HelpTopic(
+                  title: 'Selecionar raça',
+                  description: 'Ao abrir esta tela pelo cadastro, toque em uma raça para preenchê-la no animal.',
+                ),
+                HelpTopic(
+                  title: 'Dados do animal',
+                  description: 'A raça ajuda na identificação e organização, mas pode ser deixada sem seleção quando não for conhecida.',
+                ),
+              ],
+            ),
+        ],
       ),
       body: SafeArea(
         child: Column(

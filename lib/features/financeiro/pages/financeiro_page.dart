@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../flock/services/rebanho_selection_service.dart';
+import '../../flock/services/rebanho_service.dart';
 import '../services/financeiro_service.dart';
 
 class FinanceiroPage extends StatefulWidget {
@@ -13,47 +14,34 @@ class FinanceiroPage extends StatefulWidget {
 
 class _FinanceiroPageState extends State<FinanceiroPage> {
   final _service = FinanceiroService();
-  final _selection = RebanhoSelectionService.instance;
+  final _rebanhoService = RebanhoService();
 
   List<Map<String, dynamic>> _registros = [];
+  List<Map<String, dynamic>> _lotes = [];
+  String? _filtroLoteId;
   bool _carregando = true;
   Map<String, double> _resumo = {'receitas': 0, 'despesas': 0, 'saldo': 0};
 
   @override
   void initState() {
     super.initState();
-    _selection.addListener(_carregar);
     _carregar();
   }
 
-  @override
-  void dispose() {
-    _selection.removeListener(_carregar);
-    super.dispose();
-  }
-
   Future<void> _carregar() async {
-    final loteId = _selection.rebanhoSelecionadoId;
-    if (loteId == null) {
-      if (mounted) {
-        setState(() {
-          _registros = [];
-          _resumo = {'receitas': 0, 'despesas': 0, 'saldo': 0};
-          _carregando = false;
-        });
-      }
-      return;
-    }
-
     if (mounted) setState(() => _carregando = true);
 
     try {
-      final registros = await _service.listar(loteId: loteId);
-      final resumo = await _service.resumo(loteId: loteId);
+      final resultados = await Future.wait([
+        _service.listar(loteId: _filtroLoteId),
+        _service.resumo(loteId: _filtroLoteId),
+        _rebanhoService.getRebanhos(),
+      ]);
       if (!mounted) return;
       setState(() {
-        _registros = registros;
-        _resumo = resumo;
+        _registros = List<Map<String, dynamic>>.from(resultados[0] as List);
+        _resumo = Map<String, double>.from(resultados[1] as Map);
+        _lotes = List<Map<String, dynamic>>.from(resultados[2] as List);
         _carregando = false;
       });
     } catch (e) {
@@ -66,11 +54,10 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
   Future<void> _novo() async {
     final dados = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (_) => const _LancamentoDialog(),
+      builder: (_) =>
+          _LancamentoDialog(lotes: _lotes, loteIdInicial: _filtroLoteId),
     );
     if (dados == null) return;
-    final loteId = _selection.rebanhoSelecionadoId;
-    if (loteId == null) return;
 
     try {
       await _service.criar(
@@ -79,7 +66,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
         descricao: dados['descricao'],
         valor: dados['valor'],
         data: dados['data'],
-        loteId: loteId,
+        loteId: dados['loteId'] as String?,
         observacoes: dados['observacoes'],
       );
       await _carregar();
@@ -89,7 +76,8 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
   }
 
   void _msg(String text) {
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    if (mounted)
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   String _moeda(double value) =>
@@ -97,11 +85,36 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
 
   @override
   Widget build(BuildContext context) {
-    final lote = _selection.rebanhoSelecionado;
+    final loteSelecionado = _lotes.cast<Map<String, dynamic>?>().firstWhere(
+      (lote) => lote?['id']?.toString() == _filtroLoteId,
+      orElse: () => null,
+    );
     return Scaffold(
       appBar: AppBar(
         title: const Text('Despesas e lucro'),
         actions: [
+          const ContextualHelpButton(
+            title: 'Despesas e lucro',
+            introduction: 'Acompanhe receitas, despesas e saldo. A tela começa mostrando toda a fazenda e também permite filtrar por lote.',
+            topics: [
+              HelpTopic(
+                title: 'Lançamento',
+                description: 'Registre uma receita ou despesa com categoria, descrição, valor e data. Associe um lote se quiser analisar aquele grupo separadamente.',
+              ),
+              HelpTopic(
+                title: 'Toda a fazenda',
+                description: 'Inclui os lançamentos gerais e os associados aos lotes. Use esta visão para acompanhar o resultado consolidado.',
+              ),
+              HelpTopic(
+                title: 'Filtro por lote',
+                description: 'Mostra somente lançamentos associados ao lote escolhido; lançamentos gerais da fazenda não entram nesse filtro.',
+              ),
+              HelpTopic(
+                title: 'Saldo',
+                description: 'O saldo é calculado como receitas menos despesas registradas no período disponível.',
+              ),
+            ],
+          ),
           IconButton(
             onPressed: _carregando ? null : _carregar,
             icon: const Icon(Icons.refresh),
@@ -109,99 +122,118 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: lote == null || _carregando ? null : _novo,
+        onPressed: _carregando ? null : _novo,
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Lançamento'),
       ),
-      body: lote == null
-          ? const Center(
-              child: Text(
-                'Selecione um lote no início para acessar o financeiro.',
-              ),
-            )
-          : _carregando
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  onRefresh: _carregar,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                    children: [
-                      Text(
-                        'Lote: ${lote.nome}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+      body: _carregando
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _carregar,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                children: [
+                  DropdownButtonFormField<String?>(
+                    value: _filtroLoteId,
+                    decoration: const InputDecoration(
+                      labelText: 'Mostrar financeiro de',
+                      prefixIcon: Icon(Icons.filter_alt_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('Toda a fazenda'),
+                      ),
+                      ..._lotes.map(
+                        (lote) => DropdownMenuItem<String?>(
+                          value: lote['id'].toString(),
+                          child: Text(lote['nome']?.toString() ?? 'Lote'),
                         ),
                       ),
-                      const SizedBox(height: 14),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          return Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              SizedBox(
-                                width: (constraints.maxWidth - 16) / 3,
-                                child: _ResumoCard(
-                                  titulo: 'Receitas',
-                                  valor: _moeda(_resumo['receitas']!),
-                                  icone: Icons.trending_up,
-                                ),
-                              ),
-                              SizedBox(
-                                width: (constraints.maxWidth - 16) / 3,
-                                child: _ResumoCard(
-                                  titulo: 'Despesas',
-                                  valor: _moeda(_resumo['despesas']!),
-                                  icone: Icons.trending_down,
-                                ),
-                              ),
-                              SizedBox(
-                                width: (constraints.maxWidth - 16) / 3,
-                                child: _ResumoCard(
-                                  titulo: 'Saldo',
-                                  valor: _moeda(_resumo['saldo']!),
-                                  icone: Icons.account_balance_wallet_outlined,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      if (_registros.isEmpty)
-                        const Text(
-                          'Nenhum lançamento neste lote.',
-                          style: TextStyle(color: Colors.black54),
-                        )
-                      else
-                        ..._registros.map(
-                          (item) => Card(
-                            child: ListTile(
-                              leading: Icon(
-                                item['tipo'] == 'receita'
-                                    ? Icons.add_circle
-                                    : Icons.remove_circle,
-                              ),
-                              title: Text(item['descricao'].toString()),
-                              subtitle: Text(
-                                '${item['categoria']} • ${item['data']}',
-                              ),
-                              trailing: Text(
-                                _moeda((item['valor'] as num).toDouble()),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                    ],
+                    onChanged: (value) {
+                      setState(() => _filtroLoteId = value);
+                      _carregar();
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _filtroLoteId == null
+                        ? 'Visão geral: todos os lotes e lançamentos da fazenda'
+                        : 'Lote: ${loteSelecionado?['nome'] ?? 'selecionado'}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          SizedBox(
+                            width: (constraints.maxWidth - 16) / 3,
+                            child: _ResumoCard(
+                              titulo: 'Receitas',
+                              valor: _moeda(_resumo['receitas']!),
+                              icone: Icons.trending_up,
                             ),
                           ),
-                        ),
-                    ],
+                          SizedBox(
+                            width: (constraints.maxWidth - 16) / 3,
+                            child: _ResumoCard(
+                              titulo: 'Despesas',
+                              valor: _moeda(_resumo['despesas']!),
+                              icone: Icons.trending_down,
+                            ),
+                          ),
+                          SizedBox(
+                            width: (constraints.maxWidth - 16) / 3,
+                            child: _ResumoCard(
+                              titulo: 'Saldo',
+                              valor: _moeda(_resumo['saldo']!),
+                              icone: Icons.account_balance_wallet_outlined,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                ),
+                  const SizedBox(height: 20),
+                  if (_registros.isEmpty)
+                    const Text(
+                      'Nenhum lançamento neste período.',
+                      style: TextStyle(color: Colors.black54),
+                    )
+                  else
+                    ..._registros.map(
+                      (item) => Card(
+                        child: ListTile(
+                          leading: Icon(
+                            item['tipo'] == 'receita'
+                                ? Icons.add_circle
+                                : Icons.remove_circle,
+                          ),
+                          title: Text(item['descricao'].toString()),
+                          subtitle: Text(
+                            '${item['categoria']} • ${item['data']}',
+                          ),
+                          trailing: Text(
+                            _moeda((item['valor'] as num).toDouble()),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
     );
   }
 }
@@ -219,32 +251,35 @@ class _ResumoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              Icon(icone, color: AppTheme.primaryColor),
-              const SizedBox(height: 5),
-              Text(
-                titulo,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 11),
-              ),
-              const SizedBox(height: 3),
-              FittedBox(
-                child: Text(
-                  valor,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: [
+          Icon(icone, color: AppTheme.primaryColor),
+          const SizedBox(height: 5),
+          Text(
+            titulo,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 11),
           ),
-        ),
-      );
+          const SizedBox(height: 3),
+          FittedBox(
+            child: Text(
+              valor,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _LancamentoDialog extends StatefulWidget {
-  const _LancamentoDialog();
+  const _LancamentoDialog({required this.lotes, this.loteIdInicial});
+
+  final List<Map<String, dynamic>> lotes;
+  final String? loteIdInicial;
 
   @override
   State<_LancamentoDialog> createState() => _LancamentoDialogState();
@@ -252,11 +287,18 @@ class _LancamentoDialog extends StatefulWidget {
 
 class _LancamentoDialogState extends State<_LancamentoDialog> {
   String tipo = 'despesa';
+  String? loteId;
   DateTime data = DateTime.now();
   final categoria = TextEditingController();
   final descricao = TextEditingController();
   final valor = TextEditingController();
   final observacoes = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    loteId = widget.loteIdInicial;
+  }
 
   @override
   void dispose() {
@@ -269,85 +311,109 @@ class _LancamentoDialogState extends State<_LancamentoDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: const Text('Novo lançamento'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                value: tipo,
-                items: const [
-                  DropdownMenuItem(value: 'despesa', child: Text('Despesa')),
-                  DropdownMenuItem(value: 'receita', child: Text('Receita')),
-                ],
-                onChanged: (v) => setState(() => tipo = v!),
-                decoration: const InputDecoration(labelText: 'Tipo'),
+    title: const Text('Novo lançamento'),
+    content: SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DropdownButtonFormField<String>(
+            value: tipo,
+            items: const [
+              DropdownMenuItem(value: 'despesa', child: Text('Despesa')),
+              DropdownMenuItem(value: 'receita', child: Text('Receita')),
+            ],
+            onChanged: (v) => setState(() => tipo = v!),
+            decoration: const InputDecoration(labelText: 'Tipo'),
+          ),
+          TextField(
+            controller: categoria,
+            decoration: const InputDecoration(labelText: 'Categoria'),
+          ),
+          TextField(
+            controller: descricao,
+            decoration: const InputDecoration(labelText: 'Descrição'),
+          ),
+          TextField(
+            controller: valor,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'Valor'),
+          ),
+          DropdownButtonFormField<String?>(
+            value: loteId,
+            decoration: const InputDecoration(labelText: 'Vincular a lote'),
+            items: [
+              const DropdownMenuItem<String?>(
+                value: null,
+                child: Text('Fazenda toda'),
               ),
-              TextField(
-                controller: categoria,
-                decoration: const InputDecoration(labelText: 'Categoria'),
-              ),
-              TextField(
-                controller: descricao,
-                decoration: const InputDecoration(labelText: 'Descrição'),
-              ),
-              TextField(
-                controller: valor,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Valor'),
-              ),
-              InkWell(
-                onTap: () async {
-                  final selecionada = await showDatePicker(
-                    context: context,
-                    initialDate: data,
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                    locale: const Locale('pt', 'BR'),
-                  );
-                  if (selecionada != null) setState(() => data = selecionada);
-                },
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Data',
-                    prefixIcon: Icon(Icons.calendar_today_outlined),
-                  ),
-                  child: Text(data.day.toString().padLeft(2, '0') + '/' + data.month.toString().padLeft(2, '0') + '/' + data.year.toString()),
+              ...widget.lotes.map(
+                (lote) => DropdownMenuItem<String?>(
+                  value: lote['id'].toString(),
+                  child: Text(lote['nome']?.toString() ?? 'Lote'),
                 ),
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: observacoes,
-                decoration: const InputDecoration(labelText: 'Observações'),
-              ),
             ],
+            onChanged: (value) => setState(() => loteId = value),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final v = double.tryParse(valor.text.replaceAll(',', '.'));
-              if (v == null ||
-                  v <= 0 ||
-                  categoria.text.trim().isEmpty ||
-                  descricao.text.trim().isEmpty) {
-                return;
-              }
-              Navigator.pop(context, {
-                'tipo': tipo,
-                'categoria': categoria.text,
-                'descricao': descricao.text,
-                'valor': v,
-                'data': data,
-                'observacoes': observacoes.text,
-              });
+          InkWell(
+            onTap: () async {
+              final selecionada = await showDatePicker(
+                context: context,
+                initialDate: data,
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+                locale: const Locale('pt', 'BR'),
+              );
+              if (selecionada != null) setState(() => data = selecionada);
             },
-            child: const Text('Salvar'),
+            child: InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Data',
+                prefixIcon: Icon(Icons.calendar_today_outlined),
+              ),
+              child: Text(
+                data.day.toString().padLeft(2, '0') +
+                    '/' +
+                    data.month.toString().padLeft(2, '0') +
+                    '/' +
+                    data.year.toString(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: observacoes,
+            decoration: const InputDecoration(labelText: 'Observações'),
           ),
         ],
-      );
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancelar'),
+      ),
+      FilledButton(
+        onPressed: () {
+          final v = double.tryParse(valor.text.replaceAll(',', '.'));
+          if (v == null ||
+              v <= 0 ||
+              categoria.text.trim().isEmpty ||
+              descricao.text.trim().isEmpty) {
+            return;
+          }
+          Navigator.pop(context, {
+            'tipo': tipo,
+            'categoria': categoria.text,
+            'descricao': descricao.text,
+            'valor': v,
+            'data': data,
+            'loteId': loteId,
+            'observacoes': observacoes.text,
+          });
+        },
+        child: const Text('Salvar'),
+      ),
+    ],
+  );
 }

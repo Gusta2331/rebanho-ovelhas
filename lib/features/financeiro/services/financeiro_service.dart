@@ -47,29 +47,33 @@ class FinanceiroService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> listar({required String loteId}) async {
+  String _chaveCache(String? loteId) => 'financeiro_${loteId ?? 'fazenda'}';
+
+  Future<List<Map<String, dynamic>>> listar({String? loteId}) async {
     final fazendaId = await _fazendaId();
+    final chaveCache = _chaveCache(loteId);
     if (!_connectivity.isOnline) {
-      return _comOperacoesPendentes(loteId, await _lerCache(loteId));
+      return _comOperacoesPendentes(loteId, await _lerCache(chaveCache));
     }
     try {
-      final result = await _client
+      var consulta = _client
           .from('financeiro_lancamentos')
           .select('*')
-          .eq('fazenda_id', fazendaId)
-          .eq('lote_id', loteId)
+          .eq('fazenda_id', fazendaId);
+      if (loteId != null) consulta = consulta.eq('lote_id', loteId);
+      final result = await consulta
           .order('data', ascending: false)
           .order('created_at', ascending: false);
       final lista = List<Map<String, dynamic>>.from(result);
-      await _offlineStore.salvarCache('financeiro_' + loteId, lista);
+      await _offlineStore.salvarCache(chaveCache, lista);
       return await _comOperacoesPendentes(loteId, lista);
     } catch (_) {
-      return _comOperacoesPendentes(loteId, await _lerCache(loteId));
+      return _comOperacoesPendentes(loteId, await _lerCache(chaveCache));
     }
   }
 
-  Future<List<Map<String, dynamic>>> _lerCache(String loteId) async {
-    final cache = await _offlineStore.lerCache('financeiro_' + loteId);
+  Future<List<Map<String, dynamic>>> _lerCache(String chaveCache) async {
+    final cache = await _offlineStore.lerCache(chaveCache);
     if (cache is! List) return [];
     return cache
         .whereType<Map>()
@@ -78,7 +82,7 @@ class FinanceiroService {
   }
 
   Future<List<Map<String, dynamic>>> _comOperacoesPendentes(
-    String loteId,
+    String? loteId,
     List<Map<String, dynamic>> registros,
   ) async {
     final resultado = List<Map<String, dynamic>>.from(registros);
@@ -87,13 +91,14 @@ class FinanceiroService {
     for (final operacao in pendentes) {
       final dados = operacao.dados;
       if (operacao.tipo == 'financeiro.criar' &&
-          dados['lote_id']?.toString() == loteId) {
+          (loteId == null || dados['lote_id']?.toString() == loteId)) {
         final id = dados['id']?.toString();
         if (id != null &&
             !resultado.any((item) => item['id']?.toString() == id)) {
           resultado.add(Map<String, dynamic>.from(dados));
         }
-      } else if (operacao.tipo == 'financeiro.excluir') {
+      } else if (operacao.tipo == 'financeiro.excluir' &&
+          (loteId == null || dados['lote_id']?.toString() == loteId)) {
         resultado.removeWhere(
           (item) => item['id']?.toString() == dados['id']?.toString(),
         );
@@ -107,7 +112,7 @@ class FinanceiroService {
     return resultado;
   }
 
-  Future<Map<String, double>> resumo({required String loteId}) async {
+  Future<Map<String, double>> resumo({String? loteId}) async {
     final registros = await listar(loteId: loteId);
     double receitas = 0;
     double despesas = 0;
@@ -132,7 +137,7 @@ class FinanceiroService {
     required String descricao,
     required double valor,
     required DateTime data,
-    required String loteId,
+    String? loteId,
     String? animalId,
     String? observacoes,
   }) async {
@@ -162,17 +167,25 @@ class FinanceiroService {
         tipo: 'financeiro.criar',
         dados: dados,
       );
-      final registros = await _lerCache(loteId);
-      registros.add(dados);
-      await _offlineStore.salvarCache('financeiro_' + loteId, registros);
+      await _adicionarAoCache(dados);
       return;
     }
 
     await _client.from('financeiro_lancamentos').insert(dados);
-    final registros = await _lerCache(loteId);
-    registros.removeWhere((item) => item['id']?.toString() == id);
-    registros.add(dados);
-    await _offlineStore.salvarCache('financeiro_' + loteId, registros);
+    await _adicionarAoCache(dados);
+  }
+
+  Future<void> _adicionarAoCache(Map<String, dynamic> dados) async {
+    final chaves = <String>{_chaveCache(null)};
+    final loteId = dados['lote_id']?.toString();
+    if (loteId != null) chaves.add(_chaveCache(loteId));
+    for (final chave in chaves) {
+      final registros = await _lerCache(chave);
+      final id = dados['id']?.toString();
+      registros.removeWhere((item) => item['id']?.toString() == id);
+      registros.add(Map<String, dynamic>.from(dados));
+      await _offlineStore.salvarCache(chave, registros);
+    }
   }
 
   Future<void> excluir(String id, {String? loteId}) async {
@@ -182,11 +195,7 @@ class FinanceiroService {
         tipo: 'financeiro.excluir',
         dados: {'id': id, 'fazenda_id': fazendaId, 'lote_id': loteId},
       );
-      if (loteId != null) {
-        final registros = await _lerCache(loteId);
-        registros.removeWhere((item) => item['id']?.toString() == id);
-        await _offlineStore.salvarCache('financeiro_' + loteId, registros);
-      }
+      await _removerDosCaches(id, loteId);
       return;
     }
 
@@ -195,10 +204,16 @@ class FinanceiroService {
         .delete()
         .eq('id', id)
         .eq('fazenda_id', fazendaId);
-    if (loteId != null) {
-      final registros = await _lerCache(loteId);
+    await _removerDosCaches(id, loteId);
+  }
+
+  Future<void> _removerDosCaches(String id, String? loteId) async {
+    final chaves = <String>{_chaveCache(null)};
+    if (loteId != null) chaves.add(_chaveCache(loteId));
+    for (final chave in chaves) {
+      final registros = await _lerCache(chave);
       registros.removeWhere((item) => item['id']?.toString() == id);
-      await _offlineStore.salvarCache('financeiro_' + loteId, registros);
+      await _offlineStore.salvarCache(chave, registros);
     }
   }
 

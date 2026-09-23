@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_service.dart';
@@ -57,7 +58,9 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
 
       final dados = await _service.getProgramados();
       final animais = await _animalService.getAnimaisAtivos(rebanhoId: loteId);
-      final idsDoLote = animais.map((animal) => animal['id'].toString()).toSet();
+      final idsDoLote = animais
+          .map((animal) => animal['id'].toString())
+          .toSet();
       final filtrados = dados.where((item) {
         final lista = item['manejos_programados_animais'];
         if (lista is! List) return false;
@@ -171,16 +174,15 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
     return nomes.length <= 3
         ? nomes.join(', ')
         : nomes.take(3).join(', ') +
-            ' + ' +
-            (nomes.length - 3).toString() +
-            ' outros';
+              ' + ' +
+              (nomes.length - 3).toString() +
+              ' outros';
   }
 
   void _msg(String texto) {
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(texto)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(texto)));
     }
   }
 
@@ -261,11 +263,30 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Agenda de manejo')),
-      body: RefreshIndicator(
-        onRefresh: _carregar,
-        child: _body(),
+      appBar: AppBar(
+        title: const Text('Agenda de manejo'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Agenda de manejo',
+            introduction: 'Use a agenda para planejar atividades futuras e lembrar a equipe do que precisa ser feito.',
+            topics: [
+              HelpTopic(
+                title: 'Programar atividade',
+                description: 'Escolha o tipo de manejo, uma data e os animais ou lote envolvidos, quando aplicável.',
+              ),
+              HelpTopic(
+                title: 'Concluir',
+                description: 'Quando realizar a atividade, registre o manejo para guardar os dados no histórico dos animais.',
+              ),
+              HelpTopic(
+                title: 'Alterar ou excluir',
+                description: 'Abra uma programação para revisar os dados. Excluir remove somente o lembrete da agenda, não o histórico de manejos já realizados.',
+              ),
+            ],
+          ),
+        ],
       ),
+      body: RefreshIndicator(onRefresh: _carregar, child: _body()),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _carregando ? null : _novo,
         backgroundColor: AppTheme.primaryColor,
@@ -328,8 +349,9 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
                 Row(
                   children: [
                     CircleAvatar(
-                      backgroundColor:
-                          AppTheme.primaryColor.withValues(alpha: 0.10),
+                      backgroundColor: AppTheme.primaryColor.withValues(
+                        alpha: 0.10,
+                      ),
                       child: Icon(
                         _icone(item['tipo']?.toString()),
                         color: AppTheme.primaryColor,
@@ -370,7 +392,8 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
                 const SizedBox(height: 8),
                 Text('Animais: ' + _animais(item)),
                 if (tipo == TipoManejo.outro &&
-                    (item['outro_nome']?.toString().trim().isNotEmpty == true)) ...[
+                    (item['outro_nome']?.toString().trim().isNotEmpty ==
+                        true)) ...[
                   const SizedBox(height: 8),
                   Text(
                     'Manejo: ' + item['outro_nome'].toString(),
@@ -378,14 +401,17 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
                   ),
                 ],
                 if (tipo == TipoManejo.vacinacao &&
-                    (item['vacina_nome']?.toString().trim().isNotEmpty == true)) ...[
+                    (item['vacina_nome']?.toString().trim().isNotEmpty ==
+                        true)) ...[
                   const SizedBox(height: 8),
                   Text(
                     'Vacina: ' + item['vacina_nome'].toString(),
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ],
-                if ((item['observacoes']?.toString() ?? '').trim().isNotEmpty) ...[
+                if ((item['observacoes']?.toString() ?? '')
+                    .trim()
+                    .isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(
                     item['observacoes'].toString(),
@@ -484,11 +510,15 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
       if (!mounted) return;
 
       setState(() {
-        final todosRebanhos = List<Map<String, dynamic>>.from(resultados[0] as List);
+        final todosRebanhos = List<Map<String, dynamic>>.from(
+          resultados[0] as List,
+        );
         final loteId = _rebanhoSelectionService.rebanhoSelecionadoId;
         _rebanhos = loteId == null
             ? <Map<String, dynamic>>[]
-            : todosRebanhos.where((item) => item['id']?.toString() == loteId).toList();
+            : todosRebanhos
+                  .where((item) => item['id']?.toString() == loteId)
+                  .toList();
         _rebanhoId = loteId;
         _vacinas = List<Map<String, dynamic>>.from(resultados[1] as List);
         _carregando = false;
@@ -514,7 +544,10 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
       setState(() {
         _animais = animais;
         _carregandoAnimais = false;
-        final ids = animais.map((a) => a['id']?.toString()).whereType<String>().toSet();
+        final ids = animais
+            .map((a) => a['id']?.toString())
+            .whereType<String>()
+            .toSet();
         _selecionados.removeWhere((id) => !ids.contains(id));
       });
     } catch (e) {
@@ -561,10 +594,8 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
           FilledButton(
             onPressed: () {
               if (nome.trim().isEmpty) return;
-              Navigator.of(dialogContext).pop({
-                'nome': nome.trim(),
-                'fabricante': fabricante.trim(),
-              });
+              Navigator.of(dialogContext)
+                  .pop({'nome': nome.trim(), 'fabricante': fabricante.trim()});
             },
             child: const Text('Cadastrar'),
           ),
@@ -581,7 +612,11 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
       );
       setState(() {
         _vacinas = [..._vacinas, vacina]
-          ..sort((a, b) => (a['nome'] ?? '').toString().compareTo((b['nome'] ?? '').toString()));
+          ..sort(
+            (a, b) => (a['nome'] ?? '').toString().compareTo(
+              (b['nome'] ?? '').toString(),
+            ),
+          );
         _vacinaSelecionada = vacina;
       });
     } catch (e) {
@@ -614,13 +649,19 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
         animalIds: _selecionados.toList(),
         observacoes: _observacoes.text,
         vacinaId: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString()
+            ? _vacinaSelecionada == null
+                  ? null
+                  : _vacinaSelecionada!['id']?.toString()
             : null,
         vacinaNome: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['nome']?.toString()
+            ? _vacinaSelecionada == null
+                  ? null
+                  : _vacinaSelecionada!['nome']?.toString()
             : null,
         vacinaFabricante: _tipo == TipoManejo.vacinacao
-            ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['fabricante']?.toString()
+            ? _vacinaSelecionada == null
+                  ? null
+                  : _vacinaSelecionada!['fabricante']?.toString()
             : null,
         outroNome: _tipo == TipoManejo.outro ? _outroNome.text.trim() : null,
       );
@@ -661,9 +702,7 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
     setState(() {
       _selecionados
         ..clear()
-        ..addAll(
-          _animais.map((a) => a['id']?.toString()).whereType<String>(),
-        );
+        ..addAll(_animais.map((a) => a['id']?.toString()).whereType<String>());
     });
   }
 
@@ -700,16 +739,39 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
 
   void _msg(String texto) {
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(texto)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(texto)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Programar manejo')),
+      appBar: AppBar(
+        title: const Text('Programar manejo'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Programar manejo',
+            introduction:
+                'Cadastre um lembrete de atividade para uma data futura.',
+            topics: [
+              HelpTopic(
+                title: 'Tipo e data',
+                description:
+                    'Selecione a atividade e quando ela deve acontecer.',
+              ),
+              HelpTopic(
+                title: 'Animais e lote',
+                description: 'Associe os animais ou o lote correto para facilitar a execução e o acompanhamento.',
+              ),
+              HelpTopic(
+                title: 'Depois da atividade',
+                description: 'A programação é um lembrete. Registre o manejo realizado separadamente para atualizar o histórico.',
+              ),
+            ],
+          ),
+        ],
+      ),
       body: _carregando
           ? const Center(
               child: CircularProgressIndicator(color: AppTheme.primaryColor),
@@ -818,9 +880,7 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
                             ),
                           )
                         : const Icon(Icons.event_available_outlined),
-                    label: Text(
-                      _salvando ? 'Salvando...' : 'Programar manejo',
-                    ),
+                    label: Text(_salvando ? 'Salvando...' : 'Programar manejo'),
                   ),
                 ),
               ],
@@ -834,7 +894,9 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
       decoration: BoxDecoration(
         color: AppTheme.primaryColor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.18)),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.18),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -845,7 +907,9 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
-            value: _vacinaSelecionada == null ? null : _vacinaSelecionada!['id']?.toString(),
+            value: _vacinaSelecionada == null
+                ? null
+                : _vacinaSelecionada!['id']?.toString(),
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Nome da vacina',
@@ -853,20 +917,23 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
               border: OutlineInputBorder(),
             ),
             hint: const Text('Selecione a vacina'),
-            items: _vacinas.map((vacina) {
-              final id = vacina['id']?.toString();
-              if (id == null) return null;
-              final fabricante = vacina['fabricante']?.toString().trim();
-              return DropdownMenuItem<String>(
-                value: id,
-                child: Text(
-                  fabricante == null || fabricante.isEmpty
-                      ? vacina['nome'].toString()
-                      : vacina['nome'].toString() + ' • ' + fabricante,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              );
-            }).whereType<DropdownMenuItem<String>>().toList(),
+            items: _vacinas
+                .map((vacina) {
+                  final id = vacina['id']?.toString();
+                  if (id == null) return null;
+                  final fabricante = vacina['fabricante']?.toString().trim();
+                  return DropdownMenuItem<String>(
+                    value: id,
+                    child: Text(
+                      fabricante == null || fabricante.isEmpty
+                          ? vacina['nome'].toString()
+                          : vacina['nome'].toString() + ' • ' + fabricante,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                })
+                .whereType<DropdownMenuItem<String>>()
+                .toList(),
             onChanged: _salvando
                 ? null
                 : (id) {

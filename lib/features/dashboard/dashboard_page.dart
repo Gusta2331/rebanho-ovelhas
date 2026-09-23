@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/contextual_help.dart';
 import '../animals/pages/animals_page.dart';
 import '../animals/services/animal_service.dart';
 import '../auth/login_page.dart';
@@ -577,6 +578,28 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
         const SizedBox(width: 12),
+        const ContextualHelpButton(
+          title: 'Painel inicial',
+          introduction: 'Veja um resumo do rebanho, os próximos manejos e indicadores financeiros da fazenda.',
+          topics: [
+            HelpTopic(
+              title: 'Selecionar lote',
+              description: 'Escolha um lote para consultar seus animais e indicadores relacionados.',
+            ),
+            HelpTopic(
+              title: 'Resumo do rebanho',
+              description: 'Os totais consideram os animais ativos cadastrados. Abra a lista de animais para consultar ou atualizar cadastros.',
+            ),
+            HelpTopic(
+              title: 'Próximos manejos',
+              description: 'Acompanhe atividades programadas e abra a agenda para ver ou organizar os lembretes.',
+            ),
+            HelpTopic(
+              title: 'Financeiro',
+              description: 'Consulte o resumo e abra Despesas e lucro para conferir lançamentos de toda a fazenda ou filtrar por lote.',
+            ),
+          ],
+        ),
         IconButton(
           onPressed: _showLogoutConfirmation,
           tooltip: 'Sair',

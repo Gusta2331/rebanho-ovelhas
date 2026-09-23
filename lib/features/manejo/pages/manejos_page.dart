@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_selection_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
+import '../widgets/famacha_score_badge.dart';
 import 'manejo_form_page.dart';
 import 'manejo_details_page.dart';
 
@@ -59,10 +61,14 @@ class _ManejosPageState extends State<ManejosPage> {
       final animaisDoLote = loteId == null
           ? <Map<String, dynamic>>[]
           : await _animalService.getTodosAnimais(rebanhoId: loteId);
-      final ids = animaisDoLote.map((animal) => animal['id'].toString()).toSet();
+      final ids = animaisDoLote
+          .map((animal) => animal['id'].toString())
+          .toSet();
       final filtrados = loteId == null
           ? <Map<String, dynamic>>[]
-          : dados.where((item) => ids.contains(item['animal_id']?.toString())).toList();
+          : dados
+                .where((item) => ids.contains(item['animal_id']?.toString()))
+                .toList();
 
       if (!mounted) return;
       setState(() {
@@ -79,14 +85,14 @@ class _ManejosPageState extends State<ManejosPage> {
     }
   }
 
-
   List<Map<String, dynamic>> get _manejosFiltrados {
     return _manejos.where((registro) {
       final manejo = Manejo.fromMap(registro);
       final animal = registro['animais'];
       final textoAnimal = animal is Map
-          ? (animal['brinco']?.toString() ?? '') + ' ' +
-              (animal['nome']?.toString() ?? '').toLowerCase()
+          ? (animal['brinco']?.toString() ?? '') +
+                ' ' +
+                (animal['nome']?.toString() ?? '').toLowerCase()
           : '';
       final busca = _busca.trim().toLowerCase();
 
@@ -100,10 +106,15 @@ class _ManejosPageState extends State<ManejosPage> {
       }
 
       if (_tipoFiltro != null && manejo.tipo != _tipoFiltro) return false;
-      if (_animalFiltro != null && manejo.animalId != _animalFiltro) return false;
+      if (_animalFiltro != null && manejo.animalId != _animalFiltro)
+        return false;
 
       if (_periodoFiltro != null) {
-        final data = DateTime(manejo.data.year, manejo.data.month, manejo.data.day);
+        final data = DateTime(
+          manejo.data.year,
+          manejo.data.month,
+          manejo.data.day,
+        );
         final inicio = DateTime(
           _periodoFiltro!.start.year,
           _periodoFiltro!.start.month,
@@ -182,9 +193,7 @@ class _ManejosPageState extends State<ManejosPage> {
             scrollDirection: Axis.horizontal,
             children: [
               _chipTipo(null, 'Todos'),
-              ...TipoManejo.values.map(
-                (tipo) => _chipTipo(tipo, _tipo(tipo)),
-              ),
+              ...TipoManejo.values.map((tipo) => _chipTipo(tipo, _tipo(tipo))),
             ],
           ),
         ),
@@ -208,10 +217,7 @@ class _ManejosPageState extends State<ManejosPage> {
                 ...animais.entries.map(
                   (entry) => DropdownMenuItem<String?>(
                     value: entry.key,
-                    child: Text(
-                      entry.value,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    child: Text(entry.value, overflow: TextOverflow.ellipsis),
                   ),
                 ),
               ],
@@ -225,12 +231,15 @@ class _ManejosPageState extends State<ManejosPage> {
                 _periodoFiltro == null
                     ? 'Período'
                     : _periodoFiltro!.start.day.toString().padLeft(2, '0') +
-                        '/' +
-                        _periodoFiltro!.start.month.toString().padLeft(2, '0') +
-                        ' - ' +
-                        _periodoFiltro!.end.day.toString().padLeft(2, '0') +
-                        '/' +
-                        _periodoFiltro!.end.month.toString().padLeft(2, '0'),
+                          '/' +
+                          _periodoFiltro!.start.month.toString().padLeft(
+                            2,
+                            '0',
+                          ) +
+                          ' - ' +
+                          _periodoFiltro!.end.day.toString().padLeft(2, '0') +
+                          '/' +
+                          _periodoFiltro!.end.month.toString().padLeft(2, '0'),
               ),
             );
 
@@ -282,39 +291,50 @@ class _ManejosPageState extends State<ManejosPage> {
 
   void _mensagem(String texto) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(texto)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texto)));
   }
 
   Future<void> _novo() async {
-    final resultado = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const ManejoFormPage()),
-    );
+    final resultado = await Navigator.of(context)
+        .push<bool>(MaterialPageRoute(builder: (_) => const ManejoFormPage()));
     if (resultado == true && mounted) await _carregar();
   }
 
   String _tipo(TipoManejo tipo) {
     switch (tipo) {
-      case TipoManejo.vacinacao: return 'Vacinação';
-      case TipoManejo.vermifugacao: return 'Vermifugação';
-      case TipoManejo.tratamento: return 'Tratamento';
-      case TipoManejo.tosquia: return 'Tosquia';
-      case TipoManejo.pesagem: return 'Pesagem';
-      case TipoManejo.famacha: return 'FAMACHA';
-      case TipoManejo.outro: return 'Outro';
+      case TipoManejo.vacinacao:
+        return 'Vacinação';
+      case TipoManejo.vermifugacao:
+        return 'Vermifugação';
+      case TipoManejo.tratamento:
+        return 'Tratamento';
+      case TipoManejo.tosquia:
+        return 'Tosquia';
+      case TipoManejo.pesagem:
+        return 'Pesagem';
+      case TipoManejo.famacha:
+        return 'FAMACHA';
+      case TipoManejo.outro:
+        return 'Outro';
     }
   }
 
   IconData _icone(TipoManejo tipo) {
     switch (tipo) {
-      case TipoManejo.vacinacao: return Icons.vaccines_outlined;
-      case TipoManejo.vermifugacao: return Icons.medication_outlined;
-      case TipoManejo.tratamento: return Icons.medical_services_outlined;
-      case TipoManejo.tosquia: return Icons.content_cut_outlined;
-      case TipoManejo.pesagem: return Icons.monitor_weight_outlined;
-      case TipoManejo.famacha: return Icons.visibility_outlined;
-      case TipoManejo.outro: return Icons.assignment_outlined;
+      case TipoManejo.vacinacao:
+        return Icons.vaccines_outlined;
+      case TipoManejo.vermifugacao:
+        return Icons.medication_outlined;
+      case TipoManejo.tratamento:
+        return Icons.medical_services_outlined;
+      case TipoManejo.tosquia:
+        return Icons.content_cut_outlined;
+      case TipoManejo.pesagem:
+        return Icons.monitor_weight_outlined;
+      case TipoManejo.famacha:
+        return Icons.visibility_outlined;
+      case TipoManejo.outro:
+        return Icons.assignment_outlined;
     }
   }
 
@@ -323,16 +343,22 @@ class _ManejosPageState extends State<ManejosPage> {
     if (animal is! Map) return 'Animal não encontrado';
 
     final numero = int.tryParse(animal['brinco']?.toString() ?? '');
-    final brinco = numero == null ? (animal['brinco']?.toString() ?? '') : numero.toString().padLeft(3, '0');
+    final brinco = numero == null
+        ? (animal['brinco']?.toString() ?? '')
+        : numero.toString().padLeft(3, '0');
     final nome = animal['nome']?.toString().trim();
-    return nome != null && nome.isNotEmpty ? brinco + ' • ' + nome : 'Brinco ' + brinco;
+    return nome != null && nome.isNotEmpty
+        ? brinco + ' • ' + nome
+        : 'Brinco ' + brinco;
   }
 
   String _data(dynamic valor) {
     final data = DateTime.tryParse(valor?.toString() ?? '');
     if (data == null) return 'Data não informada';
-    return data.day.toString().padLeft(2, '0') + '/' +
-        data.month.toString().padLeft(2, '0') + '/' +
+    return data.day.toString().padLeft(2, '0') +
+        '/' +
+        data.month.toString().padLeft(2, '0') +
+        '/' +
         data.year.toString();
   }
 
@@ -342,6 +368,24 @@ class _ManejosPageState extends State<ManejosPage> {
       appBar: AppBar(
         title: const Text('Manejo'),
         actions: [
+          const ContextualHelpButton(
+            title: 'Manejo',
+            introduction: 'Registre atividades feitas com os animais para manter o histórico sanitário e produtivo da fazenda.',
+            topics: [
+              HelpTopic(
+                title: 'Novo manejo',
+                description: 'Escolha o tipo, a data e os animais envolvidos. Em pesagens, informe o peso individual de cada animal em quilogramas.',
+              ),
+              HelpTopic(
+                title: 'FAMACHA',
+                description: 'Registre o escore observado. A cor exibida ajuda a interpretar a escala; procure orientação veterinária diante de sinais preocupantes.',
+              ),
+              HelpTopic(
+                title: 'Histórico',
+                description: 'Toque em um registro para consultar os detalhes. O histórico ajuda a acompanhar tratamentos e evolução dos animais.',
+              ),
+            ],
+          ),
           IconButton(
             onPressed: _carregando ? null : _carregar,
             tooltip: 'Atualizar',
@@ -361,7 +405,10 @@ class _ManejosPageState extends State<ManejosPage> {
   }
 
   Widget _body() {
-    if (_carregando) return const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor));
+    if (_carregando)
+      return const Center(
+        child: CircularProgressIndicator(color: AppTheme.primaryColor),
+      );
 
     if (_erro != null) {
       return ListView(
@@ -371,11 +418,25 @@ class _ManejosPageState extends State<ManejosPage> {
           const SizedBox(height: 70),
           Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
           const SizedBox(height: 16),
-          const Text('Não foi possível carregar os manejos', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            'Não foi possível carregar os manejos',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          Text(_erro!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black54)),
+          Text(
+            _erro!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.black54),
+          ),
           const SizedBox(height: 20),
-          Center(child: FilledButton.icon(onPressed: _carregar, icon: const Icon(Icons.refresh), label: const Text('Tentar novamente'))),
+          Center(
+            child: FilledButton.icon(
+              onPressed: _carregar,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Tentar novamente'),
+            ),
+          ),
         ],
       );
     }
@@ -385,11 +446,23 @@ class _ManejosPageState extends State<ManejosPage> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(24, 70, 24, 120),
         children: [
-          Icon(Icons.layers_outlined, size: 72, color: AppTheme.primaryColor.withValues(alpha: 0.65)),
+          Icon(
+            Icons.layers_outlined,
+            size: 72,
+            color: AppTheme.primaryColor.withValues(alpha: 0.65),
+          ),
           const SizedBox(height: 18),
-          const Text('Selecione um lote', textAlign: TextAlign.center, style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
+          const Text(
+            'Selecione um lote',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          const Text('Escolha o lote no início para visualizar os manejos dele.', textAlign: TextAlign.center, style: TextStyle(color: Colors.black54, height: 1.4)),
+          const Text(
+            'Escolha o lote no início para visualizar os manejos dele.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black54, height: 1.4),
+          ),
         ],
       );
     }
@@ -399,13 +472,31 @@ class _ManejosPageState extends State<ManejosPage> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(24, 70, 24, 120),
         children: [
-          Icon(Icons.assignment_outlined, size: 72, color: AppTheme.primaryColor.withValues(alpha: 0.65)),
+          Icon(
+            Icons.assignment_outlined,
+            size: 72,
+            color: AppTheme.primaryColor.withValues(alpha: 0.65),
+          ),
           const SizedBox(height: 18),
-          const Text('Nenhum manejo registrado', textAlign: TextAlign.center, style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
+          const Text(
+            'Nenhum manejo registrado',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          const Text('Registre vacinação, vermifugação, FAMACHA e outros cuidados do rebanho.', textAlign: TextAlign.center, style: TextStyle(color: Colors.black54, height: 1.4)),
+          const Text(
+            'Registre vacinação, vermifugação, FAMACHA e outros cuidados do rebanho.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black54, height: 1.4),
+          ),
           const SizedBox(height: 24),
-          Center(child: FilledButton.icon(onPressed: _novo, icon: const Icon(Icons.add), label: const Text('Registrar primeiro manejo'))),
+          Center(
+            child: FilledButton.icon(
+              onPressed: _novo,
+              icon: const Icon(Icons.add),
+              label: const Text('Registrar primeiro manejo'),
+            ),
+          ),
         ],
       );
     }
@@ -434,135 +525,161 @@ class _ManejosPageState extends State<ManejosPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
                   itemCount: manejos.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-                  final registro = manejos[index];
-        final manejo = Manejo.fromMap(registro);
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(_icone(manejo.tipo), color: AppTheme.primaryColor),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        manejo.tipo == TipoManejo.outro && manejo.outroNome != null
-                            ? manejo.outroNome!
-                            : _tipo(manejo.tipo),
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(_animal(registro), style: const TextStyle(color: Colors.black54)),
-                      if (manejo.tipo == TipoManejo.vacinacao &&
-                          manejo.vacinaNome != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          'Vacina: ' + manejo.vacinaNome!,
-                          style: const TextStyle(color: Colors.black54),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                      const SizedBox(height: 4),
-                      Text(_data(registro['data']), style: const TextStyle(fontSize: 12, color: Colors.black45)),
-                    ],
-                  ),
-                ),
-                if (manejo.tipo == TipoManejo.famacha && manejo.famachaEscore != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text('F' + manejo.famachaEscore.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                PopupMenuButton<String>(
-                  onSelected: (acao) async {
-                    if (acao == 'detalhes') {
-                      if (!mounted) return;
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ManejoDetailsPage(manejoId: manejo.id),
-                        ),
-                      );
-                    }
-
-                    if (acao == 'editar') {
-                      final resultado = await Navigator.of(context).push<bool>(
-                        MaterialPageRoute(
-                          builder: (_) => ManejoFormPage(manejo: manejo),
-                        ),
-                      );
-                      if (resultado == true && mounted) await _carregar();
-                    }
-
-                    if (acao == 'excluir') {
-                      final confirmar = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Excluir manejo?'),
-                          content: const Text(
-                            'Este registro será removido do histórico. Essa ação não pode ser desfeita.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancelar'),
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final registro = manejos[index];
+                    final manejo = Manejo.fromMap(registro);
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.10,
+                                ),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(
+                                _icone(manejo.tipo),
+                                color: AppTheme.primaryColor,
+                              ),
                             ),
-                            FilledButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Excluir'),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    manejo.tipo == TipoManejo.outro &&
+                                            manejo.outroNome != null
+                                        ? manejo.outroNome!
+                                        : _tipo(manejo.tipo),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _animal(registro),
+                                    style: const TextStyle(
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  if (manejo.tipo == TipoManejo.vacinacao &&
+                                      manejo.vacinaNome != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Vacina: ' + manejo.vacinaNome!,
+                                      style: const TextStyle(
+                                        color: Colors.black54,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _data(registro['data']),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black45,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (manejo.tipo == TipoManejo.famacha &&
+                                manejo.famachaEscore != null)
+                              FamachaScoreBadge(score: manejo.famachaEscore!),
+                            PopupMenuButton<String>(
+                              onSelected: (acao) async {
+                                if (acao == 'detalhes') {
+                                  if (!mounted) return;
+                                  await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => ManejoDetailsPage(
+                                        manejoId: manejo.id,
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                if (acao == 'editar') {
+                                  final resultado = await Navigator.of(context)
+                                      .push<bool>(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              ManejoFormPage(manejo: manejo),
+                                        ),
+                                      );
+                                  if (resultado == true && mounted)
+                                    await _carregar();
+                                }
+
+                                if (acao == 'excluir') {
+                                  final confirmar = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Excluir manejo?'),
+                                      content: const Text(
+                                        'Este registro será removido do histórico. Essa ação não pode ser desfeita.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Cancelar'),
+                                        ),
+                                        FilledButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: const Text('Excluir'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirmar != true || !mounted) return;
+
+                                  try {
+                                    await _service.excluirManejo(manejo.id);
+                                    if (!mounted) return;
+                                    _mensagem('Manejo excluído.');
+                                    await _carregar();
+                                  } catch (e) {
+                                    if (!mounted) return;
+                                    _mensagem(
+                                      e.toString().replaceFirst(
+                                        'Exception: ',
+                                        '',
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              itemBuilder: (_) => const [
+                                PopupMenuItem(
+                                  value: 'detalhes',
+                                  child: Text('Ver detalhes'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'editar',
+                                  child: Text('Editar'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'excluir',
+                                  child: Text('Excluir'),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      );
-
-                      if (confirmar != true || !mounted) return;
-
-                      try {
-                        await _service.excluirManejo(manejo.id);
-                        if (!mounted) return;
-                        _mensagem('Manejo excluído.');
-                        await _carregar();
-                      } catch (e) {
-                        if (!mounted) return;
-                        _mensagem(
-                          e.toString().replaceFirst('Exception: ', ''),
-                        );
-                      }
-                    }
-                  },
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(
-                      value: 'detalhes',
-                      child: Text('Ver detalhes'),
-                    ),
-                    PopupMenuItem(
-                      value: 'editar',
-                      child: Text('Editar'),
-                    ),
-                    PopupMenuItem(
-                      value: 'excluir',
-                      child: Text('Excluir'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
+                      ),
+                    );
                   },
                 ),
         ),

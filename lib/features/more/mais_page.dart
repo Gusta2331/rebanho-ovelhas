@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/contextual_help.dart';
+import '../admin/pages/admin_producers_page.dart';
 import '../farmacia/pages/farmacia_page.dart';
 import '../financeiro/pages/financeiro_page.dart';
 import 'configuracoes_page.dart';
@@ -34,7 +36,7 @@ class MaisPage extends StatelessWidget {
       _Item(
         icon: Icons.attach_money_rounded,
         titulo: 'Despesas e lucro',
-        descricao: 'Receitas, despesas e saldo do lote',
+        descricao: 'Receitas, despesas e saldo da fazenda ou por lote',
         onTap: () => _abrir(context, const FinanceiroPage()),
       ),
       _Item(
@@ -43,10 +45,44 @@ class MaisPage extends StatelessWidget {
         descricao: 'Dados da fazenda, conta e sincronização',
         onTap: () => _abrir(context, const ConfiguracoesPage()),
       ),
+      _Item(
+        icon: Icons.admin_panel_settings_outlined,
+        titulo: 'Administração',
+        descricao: 'Contas de produtores e planos (acesso restrito)',
+        onTap: () => _abrir(context, const AdminProducersPage()),
+      ),
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mais')),
+      appBar: AppBar(
+        title: const Text('Mais'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Mais',
+            introduction:
+                'Esta área reúne módulos complementares de gestão da fazenda.',
+            topics: [
+              HelpTopic(
+                title: 'Agenda de manejo',
+                description: 'Planeje atividades futuras e consulte os lembretes cadastrados.',
+              ),
+              HelpTopic(
+                title: 'Reprodução',
+                description:
+                    'Registre montas, coberturas, gestações e nascimentos.',
+              ),
+              HelpTopic(
+                title: 'Farmácia e financeiro',
+                description: 'Acompanhe estoque de produtos e movimentações financeiras.',
+              ),
+              HelpTopic(
+                title: 'Configurações',
+                description: 'Consulte os dados da conta e da fazenda e acompanhe a sincronização.',
+              ),
+            ],
+          ),
+        ],
+      ),
       body: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         itemCount: itens.length,

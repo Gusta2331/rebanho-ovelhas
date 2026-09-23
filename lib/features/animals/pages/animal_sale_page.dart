@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/contextual_help.dart';
 import '../../../core/offline/connectivity_service.dart';
 import '../../manejo/services/manejo_service.dart';
 import '../models/animal.dart';
@@ -224,6 +225,27 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
           'Vender animal',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Venda de animal',
+            introduction: 'Registre a saída de um animal vendido para manter o cadastro e o histórico da fazenda coerentes.',
+            topics: [
+              HelpTopic(
+                title: 'Animal selecionado',
+                description:
+                    'Confira o brinco e o nome antes de confirmar a venda.',
+              ),
+              HelpTopic(
+                title: 'Dados da venda',
+                description: 'Informe data, valor e observações disponíveis para documentar a movimentação.',
+              ),
+              HelpTopic(
+                title: 'Histórico',
+                description: 'A venda altera a situação do animal para inativo e mantém o registro para consulta.',
+              ),
+            ],
+          ),
+        ],
       ),
       body: SafeArea(
         child: Form(

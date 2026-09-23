@@ -67,18 +67,11 @@ class AnimalService {
     }
 
     try {
-      var consulta = _client
-          .from('animais')
-          .select('*, racas(nome)')
-          .eq('fazenda_id', fazendaId)
-          .eq('status', 'ativo');
-
-      if (rebanhoId != null) {
-        consulta = consulta.eq('rebanho_id', rebanhoId);
-      }
-
-      final animais = await consulta.order('brinco');
-      final lista = List<Map<String, dynamic>>.from(animais);
+      final lista = await _buscarAnimaisPaginados(
+        fazendaId: fazendaId,
+        rebanhoId: rebanhoId,
+        somenteAtivos: true,
+      );
 
       await _offlineStore.salvarCache(chaveCache, lista);
       return lista;
@@ -104,17 +97,10 @@ class AnimalService {
     }
 
     try {
-      var consulta = _client
-          .from('animais')
-          .select('*, racas(nome)')
-          .eq('fazenda_id', fazendaId);
-
-      if (rebanhoId != null) {
-        consulta = consulta.eq('rebanho_id', rebanhoId);
-      }
-
-      final animais = await consulta.order('brinco');
-      final lista = List<Map<String, dynamic>>.from(animais);
+      final lista = await _buscarAnimaisPaginados(
+        fazendaId: fazendaId,
+        rebanhoId: rebanhoId,
+      );
 
       await _offlineStore.salvarCache(chaveCache, lista);
       return lista;
@@ -123,9 +109,40 @@ class AnimalService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getAnimaisPorIds(
-    List<String> ids,
-  ) async {
+  Future<List<Map<String, dynamic>>> _buscarAnimaisPaginados({
+    required String fazendaId,
+    String? rebanhoId,
+    bool somenteAtivos = false,
+  }) async {
+    const tamanhoPagina = 500;
+    final todos = <Map<String, dynamic>>[];
+    var inicio = 0;
+
+    while (true) {
+      var consulta = _client
+          .from('animais')
+          .select('*, racas(nome)')
+          .eq('fazenda_id', fazendaId);
+      if (somenteAtivos) consulta = consulta.eq('status', 'ativo');
+      if (rebanhoId != null) {
+        consulta = consulta.eq('rebanho_id', rebanhoId);
+      }
+
+      final pagina = await consulta
+          .order('brinco')
+          .order('id')
+          .range(inicio, inicio + tamanhoPagina - 1);
+      final registros = List<Map<String, dynamic>>.from(pagina);
+      todos.addAll(registros);
+
+      if (registros.length < tamanhoPagina) break;
+      inicio += tamanhoPagina;
+    }
+
+    return todos;
+  }
+
+  Future<List<Map<String, dynamic>>> getAnimaisPorIds(List<String> ids) async {
     if (ids.isEmpty) {
       return [];
     }
@@ -367,30 +384,37 @@ class AnimalService {
       'mae_id': maeId,
       'pai_id': paiId,
       'origem': origem,
-      'data_aquisicao': origem == 'comprado' ? dataAquisicao!.toIso8601String().split('T').first : null,
+      'data_aquisicao': origem == 'comprado'
+          ? dataAquisicao!.toIso8601String().split('T').first
+          : null,
       'valor_aquisicao': origem == 'comprado' ? valorAquisicao : null,
-      'vendedor': origem == 'comprado' && vendedor?.trim().isNotEmpty == true ? vendedor!.trim() : null,
+      'vendedor': origem == 'comprado' && vendedor?.trim().isNotEmpty == true
+          ? vendedor!.trim()
+          : null,
     };
 
     if (origem == 'comprado') {
-      await _client.rpc('criar_animal_com_compra', params: {
-        'p_animal_id': animalId,
-        'p_rebanho_id': rebanhoId,
-        'p_brinco': brinco,
-        'p_nome': nome?.trim(),
-        'p_sexo': sexo,
-        'p_raca_id': racaId,
-        'p_data_nascimento': dataNascimento?.toIso8601String(),
-        'p_status': status,
-        'p_data_entrada': dataEntrada?.toIso8601String(),
-        'p_observacoes': observacoes?.trim(),
-        'p_foto_url': fotoUrlFinal,
-        'p_mae_id': maeId,
-        'p_pai_id': paiId,
-        'p_data_aquisicao': dataAquisicao!.toIso8601String().split('T').first,
-        'p_valor_aquisicao': valorAquisicao,
-        'p_vendedor': vendedor?.trim(),
-      });
+      await _client.rpc(
+        'criar_animal_com_compra',
+        params: {
+          'p_animal_id': animalId,
+          'p_rebanho_id': rebanhoId,
+          'p_brinco': brinco,
+          'p_nome': nome?.trim(),
+          'p_sexo': sexo,
+          'p_raca_id': racaId,
+          'p_data_nascimento': dataNascimento?.toIso8601String(),
+          'p_status': status,
+          'p_data_entrada': dataEntrada?.toIso8601String(),
+          'p_observacoes': observacoes?.trim(),
+          'p_foto_url': fotoUrlFinal,
+          'p_mae_id': maeId,
+          'p_pai_id': paiId,
+          'p_data_aquisicao': dataAquisicao!.toIso8601String().split('T').first,
+          'p_valor_aquisicao': valorAquisicao,
+          'p_vendedor': vendedor?.trim(),
+        },
+      );
     } else {
       await _client.from('animais').insert(dados);
     }

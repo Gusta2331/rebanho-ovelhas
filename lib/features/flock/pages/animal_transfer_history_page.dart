@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../services/animal_transfer_service.dart';
 
@@ -132,6 +133,23 @@ class _AnimalTransferHistoryPageState extends State<AnimalTransferHistoryPage> {
         backgroundColor: Colors.white,
         foregroundColor: AppTheme.textColor,
         elevation: 0,
+        actions: const [
+          ContextualHelpButton(
+            title: 'Histórico de transferências',
+            introduction:
+                'Consulte as mudanças de lote registradas para este animal.',
+            topics: [
+              HelpTopic(
+                title: 'Origem e destino',
+                description: 'Cada item mostra de onde o animal saiu e para qual lote foi transferido.',
+              ),
+              HelpTopic(
+                title: 'Data e observações',
+                description: 'Use os detalhes registrados para entender quando e por que a movimentação aconteceu.',
+              ),
+            ],
+          ),
+        ],
       ),
       body: _buildBody(),
     );

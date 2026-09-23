@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../services/animal_transfer_service.dart';
 
@@ -192,6 +193,26 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
         backgroundColor: Colors.white,
         foregroundColor: AppTheme.textColor,
         elevation: 0,
+        actions: const [
+          ContextualHelpButton(
+            title: 'Transferir animal',
+            introduction: 'Mova o animal selecionado para outro lote da mesma fazenda e mantenha o registro da mudança.',
+            topics: [
+              HelpTopic(
+                title: 'Lote atual',
+                description: 'Confira o lote de origem antes de continuar.',
+              ),
+              HelpTopic(
+                title: 'Lote de destino',
+                description: 'Escolha o lote que receberá o animal. O animal ficará associado ao destino após salvar.',
+              ),
+              HelpTopic(
+                title: 'Histórico',
+                description: 'A transferência é registrada no histórico para consulta posterior.',
+              ),
+            ],
+          ),
+        ],
       ),
       body: _buildBody(),
       bottomNavigationBar: _buildBottomButton(),

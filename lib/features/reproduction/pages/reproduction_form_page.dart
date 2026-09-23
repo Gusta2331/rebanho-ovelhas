@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../models/reproducao.dart';
 import '../services/reproducao_service.dart';
@@ -335,7 +336,29 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nova reprodução')),
+      appBar: AppBar(
+        title: const Text('Nova reprodução'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Registrar reprodução',
+            introduction: 'Use este formulário para registrar eventos reprodutivos e acompanhar o ciclo dos animais.',
+            topics: [
+              HelpTopic(
+                title: 'Fêmea e reprodutor',
+                description: 'Selecione os animais corretos para que o histórico fique associado a cada um.',
+              ),
+              HelpTopic(
+                title: 'Data e tipo de evento',
+                description: 'Informe quando ocorreu e qual evento está sendo registrado.',
+              ),
+              HelpTopic(
+                title: 'Nascimentos',
+                description: 'Registre os dados do parto e dos cordeiros para incluir os novos animais no rebanho.',
+              ),
+            ],
+          ),
+        ],
+      ),
       body: _buildBody(),
       bottomNavigationBar: _buildBotaoSalvar(),
     );

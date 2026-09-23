@@ -3,14 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
+import '../utils/famacha_scale.dart';
+import '../widgets/famacha_score_badge.dart';
 
 class ManejoDetailsPage extends StatefulWidget {
   final String manejoId;
 
-  const ManejoDetailsPage({
-    super.key,
-    required this.manejoId,
-  });
+  const ManejoDetailsPage({super.key, required this.manejoId});
 
   @override
   State<ManejoDetailsPage> createState() => _ManejoDetailsPageState();
@@ -104,18 +103,15 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
               child: CircularProgressIndicator(color: AppTheme.primaryColor),
             )
           : _erro != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      _erro!,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                )
-              : registro == null
-                  ? const Center(child: Text('Manejo não encontrado.'))
-                  : _conteudo(registro),
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(_erro!, textAlign: TextAlign.center),
+              ),
+            )
+          : registro == null
+          ? const Center(child: Text('Manejo não encontrado.'))
+          : _conteudo(registro),
     );
   }
 
@@ -151,30 +147,32 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
                 ),
               ),
               const SizedBox(height: 6),
-              Text(
-                _animal(),
-                style: const TextStyle(color: Colors.black54),
-              ),
+              Text(_animal(), style: const TextStyle(color: Colors.black54)),
             ],
           ),
         ),
         const SizedBox(height: 16),
         _item('Data', _data(registro['data']), Icons.calendar_today_outlined),
-        if (manejo.tipo == TipoManejo.famacha &&
-            manejo.famachaEscore != null)
-          _item(
-            'Escore FAMACHA',
-            manejo.famachaEscore.toString(),
-            Icons.visibility_outlined,
+        if (manejo.tipo == TipoManejo.famacha && manejo.famachaEscore != null)
+          Card(
+            child: ListTile(
+              leading: const Icon(
+                Icons.visibility_outlined,
+                color: AppTheme.primaryColor,
+              ),
+              title: const Text(
+                'Escore FAMACHA',
+                style: TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: FamachaScoreBadge(score: manejo.famachaEscore!),
+              ),
+            ),
           ),
         if (manejo.tipo == TipoManejo.outro && manejo.outroNome != null)
-          _item(
-            'Tipo de manejo',
-            manejo.outroNome!,
-            Icons.edit_note_outlined,
-          ),
-        if (manejo.tipo == TipoManejo.vacinacao &&
-            manejo.vacinaNome != null)
+          _item('Tipo de manejo', manejo.outroNome!, Icons.edit_note_outlined),
+        if (manejo.tipo == TipoManejo.vacinacao && manejo.vacinaNome != null)
           _item(
             'Vacina',
             manejo.vacinaFabricante == null ||
@@ -207,46 +205,50 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
         if (manejo.viaAplicacao != null)
           _item('Via', manejo.viaAplicacao!, Icons.route_outlined),
         if (manejo.carenciaDias != null)
-          _item('Carência', manejo.carenciaDias.toString() + ' dias', Icons.timer_outlined),
+          _item(
+            'Carência',
+            manejo.carenciaDias.toString() + ' dias',
+            Icons.timer_outlined,
+          ),
         if (manejo.validade != null)
-          _item('Validade', _data(manejo.validade!.toIso8601String()), Icons.event_available_outlined),
-        if (manejo.tipo == TipoManejo.vermifugacao && manejo.vermifugoNome != null)
+          _item(
+            'Validade',
+            _data(manejo.validade!.toIso8601String()),
+            Icons.event_available_outlined,
+          ),
+        if (manejo.tipo == TipoManejo.vermifugacao &&
+            manejo.vermifugoNome != null)
           _item(
             'Vermífugo',
             manejo.vermifugoPrincipioAtivo == null
                 ? manejo.vermifugoNome!
-                : manejo.vermifugoNome! + ' • ' + manejo.vermifugoPrincipioAtivo!,
+                : manejo.vermifugoNome! +
+                      ' • ' +
+                      manejo.vermifugoPrincipioAtivo!,
             Icons.medical_services_outlined,
           ),
-        if (manejo.tipo == TipoManejo.tratamento && manejo.medicamentoNome != null)
+        if (manejo.tipo == TipoManejo.tratamento &&
+            manejo.medicamentoNome != null)
           _item(
             'Medicamento',
             manejo.medicamentoPrincipioAtivo == null
                 ? manejo.medicamentoNome!
-                : manejo.medicamentoNome! + ' • ' + manejo.medicamentoPrincipioAtivo!,
+                : manejo.medicamentoNome! +
+                      ' • ' +
+                      manejo.medicamentoPrincipioAtivo!,
             Icons.medication_outlined,
           ),
         if (manejo.tipo == TipoManejo.vacinacao &&
             manejo.vacinaLote != null &&
             manejo.vacinaLote!.trim().isNotEmpty)
-          _item(
-            'Lote',
-            manejo.vacinaLote!,
-            Icons.qr_code_2_outlined,
-          ),
+          _item('Lote', manejo.vacinaLote!, Icons.qr_code_2_outlined),
         if (manejo.observacoes != null)
-          _item(
-            'Observações',
-            manejo.observacoes!,
-            Icons.notes_outlined,
-          ),
-        if (manejo.tipo == TipoManejo.famacha &&
-            _historicoFamacha.isNotEmpty)
+          _item('Observações', manejo.observacoes!, Icons.notes_outlined),
+        if (manejo.tipo == TipoManejo.famacha && _historicoFamacha.isNotEmpty)
           _historicoFamachaWidget(),
       ],
     );
   }
-
 
   Widget _historicoFamachaWidget() {
     return Card(
@@ -258,41 +260,39 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
           children: [
             const Row(
               children: [
-                Icon(
-                  Icons.history,
-                  color: AppTheme.primaryColor,
-                ),
+                Icon(Icons.history, color: AppTheme.primaryColor),
                 SizedBox(width: 8),
                 Text(
                   'Histórico FAMACHA do animal',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 10),
             ..._historicoFamacha.take(8).map((registro) {
               final manejo = Manejo.fromMap(registro);
+              final escore = manejo.famachaEscore ?? 0;
               return ListTile(
                 contentPadding: EdgeInsets.zero,
                 dense: true,
                 leading: CircleAvatar(
-                  backgroundColor:
-                      AppTheme.primaryColor.withValues(alpha: 0.10),
+                  backgroundColor: FamachaScale.color(escore),
                   child: Text(
                     'F' + (manejo.famachaEscore?.toString() ?? '-'),
-                    style: const TextStyle(
-                      color: AppTheme.primaryColor,
+                    style: TextStyle(
+                      color: FamachaScale.onColor(escore),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
                 title: Text(_data(registro['data'])),
-                subtitle: manejo.observacoes == null
-                    ? null
-                    : Text(manejo.observacoes!),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(FamachaScale.description(escore)),
+                    if (manejo.observacoes != null) Text(manejo.observacoes!),
+                  ],
+                ),
               );
             }),
           ],
@@ -313,10 +313,7 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
           padding: const EdgeInsets.only(top: 4),
           child: Text(
             valor,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
           ),
         ),
       ),

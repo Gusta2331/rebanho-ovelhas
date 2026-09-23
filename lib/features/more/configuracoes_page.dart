@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/offline/connectivity_service.dart';
 import '../../core/offline/offline_sync_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/contextual_help.dart';
 import '../auth/services/auth_service.dart';
 import '../farm/models/farm.dart';
 import '../farm/services/farm_service.dart';
@@ -88,7 +89,33 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Configurações')),
+      appBar: AppBar(
+        title: const Text('Configurações'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Configurações',
+            introduction: 'Consulte a conta conectada, os dados principais da fazenda e o estado da sincronização.',
+            topics: [
+              HelpTopic(
+                title: 'Conta',
+                description: 'Mostra qual conta está conectada ao aplicativo.',
+              ),
+              HelpTopic(
+                title: 'Fazenda',
+                description: 'Revise os dados cadastrados para manter a identificação da propriedade atualizada.',
+              ),
+              HelpTopic(
+                title: 'Sincronização',
+                description: 'Quando há operações pendentes, mantenha a internet disponível e tente sincronizar novamente.',
+              ),
+              HelpTopic(
+                title: 'Uso sem internet',
+                description: 'Alguns registros podem ficar aguardando sincronização. Confira esta tela para ver se ainda há itens pendentes.',
+              ),
+            ],
+          ),
+        ],
+      ),
       body: _carregando
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(

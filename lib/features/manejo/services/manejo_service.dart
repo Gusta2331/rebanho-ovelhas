@@ -28,7 +28,9 @@ class ManejoService {
         _fazendaIdCache = id;
         return id;
       }
-      throw Exception('Sem internet e a fazenda ainda não foi salva neste aparelho.');
+      throw Exception(
+        'Sem internet e a fazenda ainda não foi salva neste aparelho.',
+      );
     }
 
     try {
@@ -93,8 +95,11 @@ class ManejoService {
       await _client.from('vacinas').insert(faltantes);
     }
 
-    final resultado = await _client.from('vacinas')
-        .select('id, nome, fabricante, ativo, dose, dose_unidade, peso_referencia_kg, via_aplicacao, carencia_dias, observacoes')
+    final resultado = await _client
+        .from('vacinas')
+        .select(
+          'id, nome, fabricante, ativo, dose, dose_unidade, peso_referencia_kg, via_aplicacao, carencia_dias, observacoes',
+        )
         .eq('fazenda_id', fazendaId)
         .eq('ativo', true)
         .order('nome');
@@ -115,26 +120,34 @@ class ManejoService {
     final fazendaId = await _getMinhaFazendaId();
     if (nome.trim().isEmpty) throw Exception('Informe o nome da vacina.');
 
-    final resultado = await _client.from('vacinas').insert({
-      'id': const Uuid().v4(),
-      'fazenda_id': fazendaId,
-      'nome': nome.trim(),
-      'fabricante': _text(fabricante),
-      'dose': dose,
-      'dose_unidade': _text(doseUnidade),
-      'peso_referencia_kg': pesoReferenciaKg,
-      'via_aplicacao': _text(viaAplicacao),
-      'carencia_dias': carenciaDias,
-      'observacoes': _text(observacoes),
-    }).select('*').single();
+    final resultado = await _client
+        .from('vacinas')
+        .insert({
+          'id': const Uuid().v4(),
+          'fazenda_id': fazendaId,
+          'nome': nome.trim(),
+          'fabricante': _text(fabricante),
+          'dose': dose,
+          'dose_unidade': _text(doseUnidade),
+          'peso_referencia_kg': pesoReferenciaKg,
+          'via_aplicacao': _text(viaAplicacao),
+          'carencia_dias': carenciaDias,
+          'observacoes': _text(observacoes),
+        })
+        .select('*')
+        .single();
 
     return Map<String, dynamic>.from(resultado);
   }
 
   Future<List<Map<String, dynamic>>> getVermifugos() async {
     final fazendaId = await _getMinhaFazendaId();
-    var resultado = await _client.from('vermifugos').select('*')
-        .eq('fazenda_id', fazendaId).eq('ativo', true).order('nome');
+    var resultado = await _client
+        .from('vermifugos')
+        .select('*')
+        .eq('fazenda_id', fazendaId)
+        .eq('ativo', true)
+        .order('nome');
     if (resultado.isEmpty) {
       const padroes = ['Albendazol', 'Ivermectina', 'Levamisol', 'Moxidectina'];
       final novos = padroes
@@ -173,26 +186,34 @@ class ManejoService {
     final fazendaId = await _getMinhaFazendaId();
     if (nome.trim().isEmpty) throw Exception('Informe o nome do vermífugo.');
 
-    final resultado = await _client.from('vermifugos').insert({
-      'id': const Uuid().v4(),
-      'fazenda_id': fazendaId,
-      'nome': nome.trim(),
-      'principio_ativo': _text(principioAtivo),
-      'concentracao': _text(concentracao),
-      'dose': dose,
-      'dose_unidade': _text(doseUnidade),
-      'peso_referencia_kg': pesoReferenciaKg,
-      'via_aplicacao': _text(viaAplicacao),
-      'carencia_dias': carenciaDias,
-    }).select('*').single();
+    final resultado = await _client
+        .from('vermifugos')
+        .insert({
+          'id': const Uuid().v4(),
+          'fazenda_id': fazendaId,
+          'nome': nome.trim(),
+          'principio_ativo': _text(principioAtivo),
+          'concentracao': _text(concentracao),
+          'dose': dose,
+          'dose_unidade': _text(doseUnidade),
+          'peso_referencia_kg': pesoReferenciaKg,
+          'via_aplicacao': _text(viaAplicacao),
+          'carencia_dias': carenciaDias,
+        })
+        .select('*')
+        .single();
 
     return Map<String, dynamic>.from(resultado);
   }
 
   Future<List<Map<String, dynamic>>> getMedicamentos() async {
     final fazendaId = await _getMinhaFazendaId();
-    final resultado = await _client.from('medicamentos').select('*')
-        .eq('fazenda_id', fazendaId).eq('ativo', true).order('nome');
+    final resultado = await _client
+        .from('medicamentos')
+        .select('*')
+        .eq('fazenda_id', fazendaId)
+        .eq('ativo', true)
+        .order('nome');
     return List<Map<String, dynamic>>.from(resultado);
   }
 
@@ -209,18 +230,22 @@ class ManejoService {
     final fazendaId = await _getMinhaFazendaId();
     if (nome.trim().isEmpty) throw Exception('Informe o nome do medicamento.');
 
-    final resultado = await _client.from('medicamentos').insert({
-      'id': const Uuid().v4(),
-      'fazenda_id': fazendaId,
-      'nome': nome.trim(),
-      'principio_ativo': _text(principioAtivo),
-      'concentracao': _text(concentracao),
-      'dose': dose,
-      'dose_unidade': _text(doseUnidade),
-      'peso_referencia_kg': pesoReferenciaKg,
-      'via_aplicacao': _text(viaAplicacao),
-      'carencia_dias': carenciaDias,
-    }).select('*').single();
+    final resultado = await _client
+        .from('medicamentos')
+        .insert({
+          'id': const Uuid().v4(),
+          'fazenda_id': fazendaId,
+          'nome': nome.trim(),
+          'principio_ativo': _text(principioAtivo),
+          'concentracao': _text(concentracao),
+          'dose': dose,
+          'dose_unidade': _text(doseUnidade),
+          'peso_referencia_kg': pesoReferenciaKg,
+          'via_aplicacao': _text(viaAplicacao),
+          'carencia_dias': carenciaDias,
+        })
+        .select('*')
+        .single();
 
     return Map<String, dynamic>.from(resultado);
   }
@@ -266,11 +291,16 @@ class ManejoService {
     final fazendaId = await _getMinhaFazendaId();
     if (!_connectivity.isOnline) {
       final cache = await _offlineStore.lerCache('manejos');
-      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      if (cache is List)
+        return cache
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       return [];
     }
     try {
-      final resultado = await _client.from('manejos')
+      final resultado = await _client
+          .from('manejos')
           .select('*, animais(brinco, nome)')
           .eq('fazenda_id', fazendaId)
           .order('data', ascending: false);
@@ -279,7 +309,11 @@ class ManejoService {
       return lista;
     } catch (_) {
       final cache = await _offlineStore.lerCache('manejos');
-      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      if (cache is List)
+        return cache
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       rethrow;
     }
   }
@@ -312,12 +346,20 @@ class ManejoService {
     final fazendaId = await _getMinhaFazendaId();
 
     _validarDados(
-      tipo: tipo, famachaEscore: famachaEscore, vacinaId: vacinaId,
-      vacinaNome: vacinaNome, vacinaFabricante: vacinaFabricante,
-      vacinaLote: vacinaLote, outroNome: outroNome, pesoKg: pesoKg,
-      dose: dose, pesoReferenciaKg: pesoReferenciaKg,
-      vermifugoId: vermifugoId, vermifugoNome: vermifugoNome,
-      medicamentoId: medicamentoId, medicamentoNome: medicamentoNome,
+      tipo: tipo,
+      famachaEscore: famachaEscore,
+      vacinaId: vacinaId,
+      vacinaNome: vacinaNome,
+      vacinaFabricante: vacinaFabricante,
+      vacinaLote: vacinaLote,
+      outroNome: outroNome,
+      pesoKg: pesoKg,
+      dose: dose,
+      pesoReferenciaKg: pesoReferenciaKg,
+      vermifugoId: vermifugoId,
+      vermifugoNome: vermifugoNome,
+      medicamentoId: medicamentoId,
+      medicamentoNome: medicamentoNome,
     );
 
     if (_connectivity.isOnline) {
@@ -325,28 +367,45 @@ class ManejoService {
     }
 
     final dados = _dadosManejo(
-      fazendaId: fazendaId, animalId: animalId, tipo: tipo, data: data,
-      famachaEscore: famachaEscore, observacoes: observacoes,
-      vacinaId: vacinaId, vacinaNome: vacinaNome,
-      vacinaFabricante: vacinaFabricante, vacinaLote: vacinaLote,
-      outroNome: outroNome, pesoKg: pesoKg, dose: dose,
-      doseUnidade: doseUnidade, pesoReferenciaKg: pesoReferenciaKg,
-      viaAplicacao: viaAplicacao, validade: validade,
-      carenciaDias: carenciaDias, vermifugoId: vermifugoId,
-      vermifugoNome: vermifugoNome, vermifugoPrincipioAtivo: vermifugoPrincipioAtivo,
-      medicamentoId: medicamentoId, medicamentoNome: medicamentoNome,
+      fazendaId: fazendaId,
+      animalId: animalId,
+      tipo: tipo,
+      data: data,
+      famachaEscore: famachaEscore,
+      observacoes: observacoes,
+      vacinaId: vacinaId,
+      vacinaNome: vacinaNome,
+      vacinaFabricante: vacinaFabricante,
+      vacinaLote: vacinaLote,
+      outroNome: outroNome,
+      pesoKg: pesoKg,
+      dose: dose,
+      doseUnidade: doseUnidade,
+      pesoReferenciaKg: pesoReferenciaKg,
+      viaAplicacao: viaAplicacao,
+      validade: validade,
+      carenciaDias: carenciaDias,
+      vermifugoId: vermifugoId,
+      vermifugoNome: vermifugoNome,
+      vermifugoPrincipioAtivo: vermifugoPrincipioAtivo,
+      medicamentoId: medicamentoId,
+      medicamentoNome: medicamentoNome,
       medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
     );
 
     if (!_connectivity.isOnline) {
       await OfflineSyncService.instance.enfileirar(
-        tipo: 'manejo.criar', dados: dados,
+        tipo: 'manejo.criar',
+        dados: dados,
       );
       return dados;
     }
 
-    final resultado = await _client.from('manejos').insert(dados)
-        .select('*, animais(brinco, nome)').single();
+    final resultado = await _client
+        .from('manejos')
+        .insert(dados)
+        .select('*, animais(brinco, nome)')
+        .single();
 
     return Map<String, dynamic>.from(resultado);
   }
@@ -384,7 +443,9 @@ class ManejoService {
       for (final id in animalIds) {
         final escore = famachaPorAnimal[id];
         if (escore == null || escore < 1 || escore > 5) {
-          throw Exception('Informe o FAMACHA de todos os animais selecionados.');
+          throw Exception(
+            'Informe o FAMACHA de todos os animais selecionados.',
+          );
         }
       }
     }
@@ -412,32 +473,60 @@ class ManejoService {
       medicamentoId: medicamentoId,
       medicamentoNome: medicamentoNome,
       validarFamacha: false,
+      validarPeso: false,
     );
 
     if (_connectivity.isOnline) {
-      final animais = await _client.from('animais').select('id')
-          .eq('fazenda_id', fazendaId).eq('status', 'ativo').inFilter('id', animalIds);
+      final animais = await _client
+          .from('animais')
+          .select('id')
+          .eq('fazenda_id', fazendaId)
+          .eq('status', 'ativo')
+          .inFilter('id', animalIds);
       final idsValidos = List<Map<String, dynamic>>.from(animais)
-          .map((a) => a['id'].toString()).toSet();
+          .map((a) => a['id'].toString())
+          .toSet();
 
       if (idsValidos.length != animalIds.length ||
           animalIds.any((id) => !idsValidos.contains(id))) {
-        throw Exception('Um ou mais animais não estão ativos ou não pertencem à fazenda.');
+        throw Exception(
+          'Um ou mais animais não estão ativos ou não pertencem à fazenda.',
+        );
       }
     }
 
-    final dados = animalIds.map((animalId) => _dadosManejo(
-      fazendaId: fazendaId, animalId: animalId, tipo: tipo, data: data,
-      famachaEscore: tipo == TipoManejo.famacha ? famachaPorAnimal[animalId] : null,
-      observacoes: observacoes, vacinaId: vacinaId, vacinaNome: vacinaNome,
-      vacinaFabricante: vacinaFabricante, vacinaLote: vacinaLote,
-      outroNome: outroNome, pesoKg: pesoPorAnimal[animalId],
-      dose: dosePorAnimal[animalId] ?? dose, doseUnidade: doseUnidade, pesoReferenciaKg: pesoReferenciaKg,
-      viaAplicacao: viaAplicacao, validade: validade, carenciaDias: carenciaDias,
-      vermifugoId: vermifugoId, vermifugoNome: vermifugoNome,
-      vermifugoPrincipioAtivo: vermifugoPrincipioAtivo, medicamentoId: medicamentoId,
-      medicamentoNome: medicamentoNome, medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
-    )).toList();
+    final dados = animalIds
+        .map(
+          (animalId) => _dadosManejo(
+            fazendaId: fazendaId,
+            animalId: animalId,
+            tipo: tipo,
+            data: data,
+            famachaEscore: tipo == TipoManejo.famacha
+                ? famachaPorAnimal[animalId]
+                : null,
+            observacoes: observacoes,
+            vacinaId: vacinaId,
+            vacinaNome: vacinaNome,
+            vacinaFabricante: vacinaFabricante,
+            vacinaLote: vacinaLote,
+            outroNome: outroNome,
+            pesoKg: pesoPorAnimal[animalId],
+            dose: dosePorAnimal[animalId] ?? dose,
+            doseUnidade: doseUnidade,
+            pesoReferenciaKg: pesoReferenciaKg,
+            viaAplicacao: viaAplicacao,
+            validade: validade,
+            carenciaDias: carenciaDias,
+            vermifugoId: vermifugoId,
+            vermifugoNome: vermifugoNome,
+            vermifugoPrincipioAtivo: vermifugoPrincipioAtivo,
+            medicamentoId: medicamentoId,
+            medicamentoNome: medicamentoNome,
+            medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
+          ),
+        )
+        .toList();
 
     if (!_connectivity.isOnline) {
       await OfflineSyncService.instance.enfileirar(
@@ -447,25 +536,35 @@ class ManejoService {
       return dados;
     }
 
-    final resultado = await _client.from('manejos').insert(dados)
+    final resultado = await _client
+        .from('manejos')
+        .insert(dados)
         .select('*, animais(brinco, nome)');
     return List<Map<String, dynamic>>.from(resultado);
   }
 
-  Future<List<Map<String, dynamic>>> getHistoricoFamacha(String animalId) async {
+  Future<List<Map<String, dynamic>>> getHistoricoFamacha(
+    String animalId,
+  ) async {
     final fazendaId = await _getMinhaFazendaId();
-    final resultado = await _client.from('manejos')
-        .select('*, animais(brinco, nome)').eq('fazenda_id', fazendaId)
-        .eq('animal_id', animalId).eq('tipo', 'famacha')
+    final resultado = await _client
+        .from('manejos')
+        .select('*, animais(brinco, nome)')
+        .eq('fazenda_id', fazendaId)
+        .eq('animal_id', animalId)
+        .eq('tipo', 'famacha')
         .order('data', ascending: false);
     return List<Map<String, dynamic>>.from(resultado);
   }
 
   Future<Map<String, dynamic>> getManejo(String id) async {
     final fazendaId = await _getMinhaFazendaId();
-    final resultado = await _client.from('manejos')
-        .select('*, animais(brinco, nome)').eq('id', id)
-        .eq('fazenda_id', fazendaId).single();
+    final resultado = await _client
+        .from('manejos')
+        .select('*, animais(brinco, nome)')
+        .eq('id', id)
+        .eq('fazenda_id', fazendaId)
+        .single();
     return Map<String, dynamic>.from(resultado);
   }
 
@@ -497,28 +596,54 @@ class ManejoService {
   }) async {
     final fazendaId = await _getMinhaFazendaId();
     _validarDados(
-      tipo: tipo, famachaEscore: famachaEscore, vacinaId: vacinaId,
-      vacinaNome: vacinaNome, vacinaFabricante: vacinaFabricante,
-      vacinaLote: vacinaLote, outroNome: outroNome, pesoKg: pesoKg,
-      dose: dose, pesoReferenciaKg: pesoReferenciaKg,
-      vermifugoId: vermifugoId, vermifugoNome: vermifugoNome,
-      medicamentoId: medicamentoId, medicamentoNome: medicamentoNome,
+      tipo: tipo,
+      famachaEscore: famachaEscore,
+      vacinaId: vacinaId,
+      vacinaNome: vacinaNome,
+      vacinaFabricante: vacinaFabricante,
+      vacinaLote: vacinaLote,
+      outroNome: outroNome,
+      pesoKg: pesoKg,
+      dose: dose,
+      pesoReferenciaKg: pesoReferenciaKg,
+      vermifugoId: vermifugoId,
+      vermifugoNome: vermifugoNome,
+      medicamentoId: medicamentoId,
+      medicamentoNome: medicamentoNome,
     );
     if (_connectivity.isOnline) {
       await _validarAnimal(animalId, fazendaId);
     }
 
-    final dados = _dadosManejo(
-      fazendaId: fazendaId, animalId: animalId, tipo: tipo, data: data,
-      famachaEscore: famachaEscore, observacoes: observacoes,
-      vacinaId: vacinaId, vacinaNome: vacinaNome, vacinaFabricante: vacinaFabricante,
-      vacinaLote: vacinaLote, outroNome: outroNome, pesoKg: pesoKg,
-      dose: dose, doseUnidade: doseUnidade, pesoReferenciaKg: pesoReferenciaKg,
-      viaAplicacao: viaAplicacao, validade: validade, carenciaDias: carenciaDias,
-      vermifugoId: vermifugoId, vermifugoNome: vermifugoNome,
-      vermifugoPrincipioAtivo: vermifugoPrincipioAtivo, medicamentoId: medicamentoId,
-      medicamentoNome: medicamentoNome, medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
-    )..remove('id')..remove('fazenda_id');
+    final dados =
+        _dadosManejo(
+            fazendaId: fazendaId,
+            animalId: animalId,
+            tipo: tipo,
+            data: data,
+            famachaEscore: famachaEscore,
+            observacoes: observacoes,
+            vacinaId: vacinaId,
+            vacinaNome: vacinaNome,
+            vacinaFabricante: vacinaFabricante,
+            vacinaLote: vacinaLote,
+            outroNome: outroNome,
+            pesoKg: pesoKg,
+            dose: dose,
+            doseUnidade: doseUnidade,
+            pesoReferenciaKg: pesoReferenciaKg,
+            viaAplicacao: viaAplicacao,
+            validade: validade,
+            carenciaDias: carenciaDias,
+            vermifugoId: vermifugoId,
+            vermifugoNome: vermifugoNome,
+            vermifugoPrincipioAtivo: vermifugoPrincipioAtivo,
+            medicamentoId: medicamentoId,
+            medicamentoNome: medicamentoNome,
+            medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
+          )
+          ..remove('id')
+          ..remove('fazenda_id');
 
     if (!_connectivity.isOnline) {
       await OfflineSyncService.instance.enfileirar(
@@ -528,8 +653,11 @@ class ManejoService {
       return;
     }
 
-    await _client.from('manejos').update(dados)
-        .eq('id', id).eq('fazenda_id', fazendaId);
+    await _client
+        .from('manejos')
+        .update(dados)
+        .eq('id', id)
+        .eq('fazenda_id', fazendaId);
   }
 
   Future<void> excluirManejo(String id) async {
@@ -541,15 +669,25 @@ class ManejoService {
       );
       return;
     }
-    await _client.from('manejos').delete().eq('id', id).eq('fazenda_id', fazendaId);
+    await _client
+        .from('manejos')
+        .delete()
+        .eq('id', id)
+        .eq('fazenda_id', fazendaId);
   }
 
   Future<void> _validarAnimal(String animalId, String fazendaId) async {
-    final animal = await _client.from('animais').select('id')
-        .eq('id', animalId).eq('fazenda_id', fazendaId).eq('status', 'ativo')
+    final animal = await _client
+        .from('animais')
+        .select('id')
+        .eq('id', animalId)
+        .eq('fazenda_id', fazendaId)
+        .eq('status', 'ativo')
         .maybeSingle();
     if (animal == null) {
-      throw Exception('O animal selecionado não está ativo ou não pertence à fazenda.');
+      throw Exception(
+        'O animal selecionado não está ativo ou não pertence à fazenda.',
+      );
     }
   }
 
@@ -569,11 +707,15 @@ class ManejoService {
     String? medicamentoId,
     String? medicamentoNome,
     bool validarFamacha = true,
+    bool validarPeso = true,
   }) {
-    if (tipo == TipoManejo.pesagem && (pesoKg == null || pesoKg <= 0)) {
+    if (validarPeso &&
+        tipo == TipoManejo.pesagem &&
+        (pesoKg == null || pesoKg <= 0)) {
       throw Exception('Informe um peso válido em kg.');
     }
-    if (dose != null && dose < 0) throw Exception('A dose não pode ser negativa.');
+    if (dose != null && dose < 0)
+      throw Exception('A dose não pode ser negativa.');
     if (dose != null && (pesoReferenciaKg == null || pesoReferenciaKg <= 0)) {
       throw Exception('Informe o peso de referência da dose.');
     }
@@ -583,25 +725,32 @@ class ManejoService {
       throw Exception('Informe uma classificação FAMACHA de 1 a 5.');
     }
     if (tipo != TipoManejo.famacha && famachaEscore != null) {
-      throw Exception('A classificação FAMACHA só pode ser usada em uma avaliação FAMACHA.');
+      throw Exception(
+        'A classificação FAMACHA só pode ser usada em uma avaliação FAMACHA.',
+      );
     }
     if (tipo == TipoManejo.vacinacao &&
-        (vacinaId == null && (vacinaNome == null || vacinaNome.trim().isEmpty))) {
+        (vacinaId == null &&
+            (vacinaNome == null || vacinaNome.trim().isEmpty))) {
       throw Exception('Informe qual vacina foi aplicada.');
     }
     if (tipo == TipoManejo.vermifugacao &&
-        (vermifugoId == null && (vermifugoNome == null || vermifugoNome.trim().isEmpty))) {
+        (vermifugoId == null &&
+            (vermifugoNome == null || vermifugoNome.trim().isEmpty))) {
       throw Exception('Informe qual vermífugo foi aplicado.');
     }
     if (tipo == TipoManejo.tratamento &&
-        (medicamentoId == null && (medicamentoNome == null || medicamentoNome.trim().isEmpty))) {
+        (medicamentoId == null &&
+            (medicamentoNome == null || medicamentoNome.trim().isEmpty))) {
       throw Exception('Informe qual medicamento foi utilizado.');
     }
     if (tipo == TipoManejo.outro &&
         (outroNome == null || outroNome.trim().isEmpty)) {
       throw Exception('Informe o nome do outro manejo.');
     }
-    if (tipo != TipoManejo.outro && outroNome != null && outroNome.trim().isNotEmpty) {
+    if (tipo != TipoManejo.outro &&
+        outroNome != null &&
+        outroNome.trim().isNotEmpty) {
       throw Exception('O nome personalizado só pode ser usado em Outro.');
     }
   }
@@ -642,7 +791,9 @@ class ManejoService {
       'observacoes': _text(observacoes),
       'vacina_id': tipo == TipoManejo.vacinacao ? vacinaId : null,
       'vacina_nome': tipo == TipoManejo.vacinacao ? _text(vacinaNome) : null,
-      'vacina_fabricante': tipo == TipoManejo.vacinacao ? _text(vacinaFabricante) : null,
+      'vacina_fabricante': tipo == TipoManejo.vacinacao
+          ? _text(vacinaFabricante)
+          : null,
       'vacina_lote': tipo == TipoManejo.vacinacao ? _text(vacinaLote) : null,
       'outro_nome': tipo == TipoManejo.outro ? _text(outroNome) : null,
       'peso_kg': pesoKg,
@@ -653,11 +804,19 @@ class ManejoService {
       'validade': validade?.toIso8601String(),
       'carencia_dias': carenciaDias,
       'vermifugo_id': tipo == TipoManejo.vermifugacao ? vermifugoId : null,
-      'vermifugo_nome': tipo == TipoManejo.vermifugacao ? _text(vermifugoNome) : null,
-      'vermifugo_principio_ativo': tipo == TipoManejo.vermifugacao ? _text(vermifugoPrincipioAtivo) : null,
+      'vermifugo_nome': tipo == TipoManejo.vermifugacao
+          ? _text(vermifugoNome)
+          : null,
+      'vermifugo_principio_ativo': tipo == TipoManejo.vermifugacao
+          ? _text(vermifugoPrincipioAtivo)
+          : null,
       'medicamento_id': tipo == TipoManejo.tratamento ? medicamentoId : null,
-      'medicamento_nome': tipo == TipoManejo.tratamento ? _text(medicamentoNome) : null,
-      'medicamento_principio_ativo': tipo == TipoManejo.tratamento ? _text(medicamentoPrincipioAtivo) : null,
+      'medicamento_nome': tipo == TipoManejo.tratamento
+          ? _text(medicamentoNome)
+          : null,
+      'medicamento_principio_ativo': tipo == TipoManejo.tratamento
+          ? _text(medicamentoPrincipioAtivo)
+          : null,
     };
   }
 

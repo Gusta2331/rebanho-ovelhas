@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_selection_service.dart';
 import '../services/farmacia_service.dart';
@@ -114,7 +115,9 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
   String _erro(Object e) => e.toString().replaceFirst('Exception: ', '');
 
   void _mensagem(String texto) {
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texto)));
+    if (mounted)
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(texto)));
   }
 
   @override
@@ -124,71 +127,134 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
       appBar: AppBar(
         title: const Text('Farmácia'),
         actions: [
-          IconButton(onPressed: _carregando ? null : _carregar, icon: const Icon(Icons.refresh)),
+          const ContextualHelpButton(
+            title: 'Farmácia',
+            introduction: 'Acompanhe os produtos usados no manejo e as movimentações de estoque da fazenda.',
+            topics: [
+              HelpTopic(
+                title: 'Cadastrar produto',
+                description: 'Informe nome, categoria e unidade de medida. Use uma unidade consistente nas entradas e aplicações.',
+              ),
+              HelpTopic(
+                title: 'Entrada de estoque',
+                description: 'Registre compras ou outras entradas para manter a quantidade disponível atualizada.',
+              ),
+              HelpTopic(
+                title: 'Aplicar produto',
+                description: 'Registre a quantidade utilizada e os animais ou lote atendidos. Confira a unidade antes de salvar.',
+              ),
+              HelpTopic(
+                title: 'Lote selecionado',
+                description: 'A seleção de lote ajuda a associar o uso do produto ao grupo correto.',
+              ),
+            ],
+          ),
+          IconButton(
+            onPressed: _carregando ? null : _carregar,
+            icon: const Icon(Icons.refresh),
+          ),
         ],
       ),
       body: _carregando
           ? const Center(child: CircularProgressIndicator())
           : lote == null
-              ? const _SelecioneLote()
-              : RefreshIndicator(
-                  onRefresh: _carregar,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                    children: [
-                      Text('Lote: ${lote.nome}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
-                      FilledButton.icon(onPressed: _novoProduto, icon: const Icon(Icons.add), label: const Text('Cadastrar produto')),
-                      const SizedBox(height: 18),
-                      const Text('Estoque da fazenda', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      if (_produtos.isEmpty)
-                        const Text('Nenhum produto cadastrado.', style: TextStyle(color: Colors.black54))
-                      else
-                        ..._produtos.map((produto) => Card(
-                          child: ListTile(
-                            leading: const CircleAvatar(child: Icon(Icons.medical_services_outlined)),
-                            title: Text(produto['nome'].toString()),
-                            subtitle: Text("${produto['categoria']} • ${produto['unidade']}"),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  "${produto['estoque']}",
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                IconButton(
-                                  tooltip: 'Movimentar',
-                                  onPressed: () => _movimentar(produto),
-                                  icon: const Icon(Icons.swap_vert_rounded),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )),
-                      const SizedBox(height: 20),
-                      const Text('Movimentações deste lote', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      if (_movimentacoes.isEmpty)
-                        const Text('Nenhuma movimentação neste lote.', style: TextStyle(color: Colors.black54))
-                      else
-                        ..._movimentacoes.map((item) {
-                          final produto = item['farmacia_produtos'];
-                          final nome = produto is Map ? produto['nome'].toString() : 'Produto';
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: Icon(
-                              item['tipo'] == 'entrada' ? Icons.add_circle : Icons.remove_circle,
-                              color: item['tipo'] == 'entrada' ? Colors.green : Colors.orange,
-                            ),
-                            title: Text(nome),
-                            subtitle: Text("${item['tipo']} • ${item['quantidade']}"),
-                          );
-                        }),
-                    ],
+          ? const _SelecioneLote()
+          : RefreshIndicator(
+              onRefresh: _carregar,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                children: [
+                  Text(
+                    'Lote: ${lote.nome}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: _novoProduto,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Cadastrar produto'),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Estoque da fazenda',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_produtos.isEmpty)
+                    const Text(
+                      'Nenhum produto cadastrado.',
+                      style: TextStyle(color: Colors.black54),
+                    )
+                  else
+                    ..._produtos.map(
+                      (produto) => Card(
+                        child: ListTile(
+                          leading: const CircleAvatar(
+                            child: Icon(Icons.medical_services_outlined),
+                          ),
+                          title: Text(produto['nome'].toString()),
+                          subtitle: Text(
+                            "${produto['categoria']} • ${produto['unidade']}",
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "${produto['estoque']}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Movimentar',
+                                onPressed: () => _movimentar(produto),
+                                icon: const Icon(Icons.swap_vert_rounded),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Movimentações deste lote',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_movimentacoes.isEmpty)
+                    const Text(
+                      'Nenhuma movimentação neste lote.',
+                      style: TextStyle(color: Colors.black54),
+                    )
+                  else
+                    ..._movimentacoes.map((item) {
+                      final produto = item['farmacia_produtos'];
+                      final nome = produto is Map
+                          ? produto['nome'].toString()
+                          : 'Produto';
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          item['tipo'] == 'entrada'
+                              ? Icons.add_circle
+                              : Icons.remove_circle,
+                          color: item['tipo'] == 'entrada'
+                              ? Colors.green
+                              : Colors.orange,
+                        ),
+                        title: Text(nome),
+                        subtitle: Text(
+                          "${item['tipo']} • ${item['quantidade']}",
+                        ),
+                      );
+                    }),
+                ],
+              ),
+            ),
     );
   }
 }
@@ -200,7 +266,10 @@ class _SelecioneLote extends StatelessWidget {
   Widget build(BuildContext context) => const Center(
     child: Padding(
       padding: EdgeInsets.all(24),
-      child: Text('Selecione um lote no início para acessar a farmácia.', textAlign: TextAlign.center),
+      child: Text(
+        'Selecione um lote no início para acessar a farmácia.',
+        textAlign: TextAlign.center,
+      ),
     ),
   );
 }
@@ -235,27 +304,50 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          TextField(controller: nome, decoration: const InputDecoration(labelText: 'Nome')),
+          TextField(
+            controller: nome,
+            decoration: const InputDecoration(labelText: 'Nome'),
+          ),
           DropdownButtonFormField<String>(
             value: categoria,
             items: const [
               DropdownMenuItem(value: 'vacina', child: Text('Vacina')),
               DropdownMenuItem(value: 'vermifugo', child: Text('Vermífugo')),
-              DropdownMenuItem(value: 'medicamento', child: Text('Medicamento')),
+              DropdownMenuItem(
+                value: 'medicamento',
+                child: Text('Medicamento'),
+              ),
               DropdownMenuItem(value: 'outro', child: Text('Outro')),
             ],
             onChanged: (v) => setState(() => categoria = v!),
             decoration: const InputDecoration(labelText: 'Categoria'),
           ),
-          TextField(controller: unidade, decoration: const InputDecoration(labelText: 'Unidade')),
-          TextField(controller: principio, decoration: const InputDecoration(labelText: 'Princípio ativo')),
-          TextField(controller: estoque, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Estoque inicial')),
-          TextField(controller: minimo, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Estoque mínimo')),
+          TextField(
+            controller: unidade,
+            decoration: const InputDecoration(labelText: 'Unidade'),
+          ),
+          TextField(
+            controller: principio,
+            decoration: const InputDecoration(labelText: 'Princípio ativo'),
+          ),
+          TextField(
+            controller: estoque,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Estoque inicial'),
+          ),
+          TextField(
+            controller: minimo,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Estoque mínimo'),
+          ),
         ],
       ),
     ),
     actions: [
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancelar'),
+      ),
       FilledButton(
         onPressed: () {
           final e = double.tryParse(estoque.text.replaceAll(',', '.')) ?? 0;
@@ -311,16 +403,25 @@ class _MovimentoDialogState extends State<_MovimentoDialog> {
           onChanged: (v) => setState(() => tipo = v!),
           decoration: const InputDecoration(labelText: 'Tipo'),
         ),
-        TextField(controller: quantidade, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Quantidade')),
+        TextField(
+          controller: quantidade,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'Quantidade'),
+        ),
         DropdownButtonFormField<String?>(
           value: animalId,
           isExpanded: true,
           items: [
-            const DropdownMenuItem<String?>(value: null, child: Text('Lote inteiro')),
-            ...widget.animais.map((a) => DropdownMenuItem<String?>(
-              value: a['id'].toString(),
-              child: Text('Brinco ${a['brinco']}'),
-            )),
+            const DropdownMenuItem<String?>(
+              value: null,
+              child: Text('Lote inteiro'),
+            ),
+            ...widget.animais.map(
+              (a) => DropdownMenuItem<String?>(
+                value: a['id'].toString(),
+                child: Text('Brinco ${a['brinco']}'),
+              ),
+            ),
           ],
           onChanged: (v) => setState(() => animalId = v),
           decoration: const InputDecoration(labelText: 'Animal (opcional)'),
@@ -328,12 +429,19 @@ class _MovimentoDialogState extends State<_MovimentoDialog> {
       ],
     ),
     actions: [
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancelar'),
+      ),
       FilledButton(
         onPressed: () {
           final q = double.tryParse(quantidade.text.replaceAll(',', '.'));
           if (q == null || q <= 0) return;
-          Navigator.pop(context, {'tipo': tipo, 'quantidade': q, 'animalId': animalId});
+          Navigator.pop(context, {
+            'tipo': tipo,
+            'quantidade': q,
+            'animalId': animalId,
+          });
         },
         child: const Text('Salvar'),
       ),
