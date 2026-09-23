@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import '../core/offline/offline_status_banner.dart';
 import '../core/theme/app_theme.dart';
 import '../features/auth/login_page.dart';
 
@@ -25,7 +26,22 @@ class FazendaBaixinhaApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      home: const LoginPage(),
+      home: const _AppHome(),
+    );
+  }
+}
+
+
+class _AppHome extends StatelessWidget {
+  const _AppHome();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        OfflineStatusBanner(),
+        Expanded(child: LoginPage()),
+      ],
     );
   }
 }
