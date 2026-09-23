@@ -1,15 +1,23 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/offline/connectivity_service.dart';
+import '../../../core/offline/offline_store.dart';
 import '../../../core/services/supabase_service.dart';
 
 class RebanhoService {
   SupabaseClient get _client => SupabaseService.client;
+  final OfflineStore _offlineStore = OfflineStore();
+  final ConnectivityService _connectivity = ConnectivityService.instance;
 
   Future<String?> _getMinhaFazendaId() async {
     final usuario = _client.auth.currentUser;
 
     if (usuario == null) {
       throw Exception('Usuário não autenticado.');
+    }
+
+    if (!_connectivity.isOnline) {
+      return await _offlineStore.lerCache('rebanhos_fazenda_id') as String?;
     }
 
     final fazenda = await _client
@@ -19,7 +27,9 @@ class RebanhoService {
         .eq('ativo', true)
         .maybeSingle();
 
-    return fazenda?['id'] as String?;
+    final id = fazenda?['id'] as String?;
+    if (id != null) await _offlineStore.salvarCache('rebanhos_fazenda_id', id);
+    return id;
   }
 
   Future<List<Map<String, dynamic>>> getRebanhos({
@@ -28,6 +38,12 @@ class RebanhoService {
     final fazendaId = await _getMinhaFazendaId();
 
     if (fazendaId == null) {
+      return [];
+    }
+
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache('rebanhos_' + (somenteAtivos ? 'ativos' : 'todos'));
+      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
       return [];
     }
 
@@ -65,6 +81,7 @@ class RebanhoService {
       rebanhos.add(mapa);
     }
 
+    await _offlineStore.salvarCache('rebanhos_' + (somenteAtivos ? 'ativos' : 'todos'), rebanhos);
     return rebanhos;
   }
 
