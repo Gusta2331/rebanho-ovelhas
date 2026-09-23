@@ -1,10 +1,15 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../../core/offline/connectivity_service.dart';
+import '../../../core/offline/offline_sync_service.dart';
 
 import '../../../core/services/supabase_service.dart';
 import '../models/animal_venda.dart';
 
 class AnimalVendaService {
   SupabaseClient get _client => SupabaseService.client;
+  final ConnectivityService _connectivity = ConnectivityService.instance;
 
   Future<AnimalVenda?> buscarPorAnimal(String animalId) async {
     final resultado = await _client
@@ -31,6 +36,42 @@ class AnimalVendaService {
     String? comprador,
     String? observacoes,
   }) async {
+    final tipoTexto = tipoVenda == TipoVendaAnimal.porKg
+        ? 'por_kg'
+        : 'valor_fechado';
+    final dataTexto = dataVenda.toIso8601String().split('T').first;
+
+    if (!_connectivity.isOnline) {
+      final vendaId = const Uuid().v4();
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'animal.venda',
+        dados: {
+          'animal_id': animalId,
+          'lote_id': loteId,
+          'data_venda': dataTexto,
+          'tipo_venda': tipoTexto,
+          'peso_kg': pesoKg,
+          'preco_por_kg': precoPorKg,
+          'valor_total': valorTotal,
+          'comprador': comprador?.trim(),
+          'observacoes': observacoes?.trim(),
+        },
+      );
+
+      return AnimalVenda(
+        id: vendaId,
+        animalId: animalId,
+        loteId: loteId,
+        dataVenda: dataVenda,
+        tipoVenda: tipoVenda,
+        pesoKg: pesoKg,
+        precoPorKg: precoPorKg,
+        valorTotal: valorTotal,
+        comprador: comprador?.trim(),
+        observacoes: observacoes?.trim(),
+      );
+    }
+
     final resultado = await _client.rpc(
       'vender_animal',
       params: {
