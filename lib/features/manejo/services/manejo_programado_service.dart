@@ -64,13 +64,15 @@ class ManejoProgramadoService {
       String? vacinaId, String? vacinaNome, String? vacinaFabricante}) async {
     final fazendaId = await _getMinhaFazendaId();
     if (animalIds.isEmpty) throw Exception('Selecione pelo menos um animal.');
-    final animais = await _client.from('animais').select('id')
-        .eq('fazenda_id', fazendaId).eq('status', 'ativo').inFilter('id', animalIds);
-    final idsValidos = List<Map<String, dynamic>>.from(animais)
-        .map((a) => a['id'].toString()).toSet();
-    if (idsValidos.length != animalIds.length ||
-        animalIds.any((id) => !idsValidos.contains(id))) {
-      throw Exception('Um ou mais animais não estão ativos ou não pertencem à fazenda.');
+    if (_connectivity.isOnline) {
+      final animais = await _client.from('animais').select('id')
+          .eq('fazenda_id', fazendaId).eq('status', 'ativo').inFilter('id', animalIds);
+      final idsValidos = List<Map<String, dynamic>>.from(animais)
+          .map((a) => a['id'].toString()).toSet();
+      if (idsValidos.length != animalIds.length ||
+          animalIds.any((id) => !idsValidos.contains(id))) {
+        throw Exception('Um ou mais animais não estão ativos ou não pertencem à fazenda.');
+      }
     }
     final id = const Uuid().v4();
 
