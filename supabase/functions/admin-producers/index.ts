@@ -15,8 +15,10 @@ Deno.serve(async (request) => {
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const authorization = request.headers.get('Authorization') ?? ''
-    const caller = createClient(url, anonKey, { global: { headers: { Authorization: authorization } } })
-    const { data: { user }, error: authError } = await caller.auth.getUser()
+    const accessToken = authorization.match(/^Bearer\s+(.+)$/i)?.[1]
+    if (!accessToken) return json({ error: 'Sessão inválida.' }, 401)
+    const caller = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } })
+    const { data: { user }, error: authError } = await caller.auth.getUser(accessToken)
     if (authError || !user?.email) return json({ error: 'Sessão inválida.' }, 401)
 
     const admins = (Deno.env.get('ADMIN_EMAILS') ?? '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean)
