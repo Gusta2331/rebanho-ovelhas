@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/offline/connectivity_service.dart';
 import '../../../core/offline/offline_store.dart';
+import '../../../core/offline/offline_sync_service.dart';
 import '../../../core/services/supabase_service.dart';
 
 class FarmaciaService {
@@ -70,8 +71,9 @@ class FarmaciaService {
       throw Exception('O estoque não pode ser negativo.');
     }
 
-    final result = await _client.from('farmacia_produtos').insert({
-      'id': const Uuid().v4(),
+    final id = const Uuid().v4();
+    final dados = <String, dynamic>{
+      'id': id,
       'fazenda_id': fazendaId,
       'nome': nome.trim(),
       'categoria': categoria,
@@ -81,8 +83,16 @@ class FarmaciaService {
       'validade': validade?.toIso8601String().split('T').first,
       'principio_ativo': _text(principioAtivo),
       'observacoes': _text(observacoes),
-    }).select().single();
+    };
 
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'farmacia.produto.criar', dados: dados,
+      );
+      return dados;
+    }
+
+    final result = await _client.from('farmacia_produtos').insert(dados).select().single();
     return Map<String, dynamic>.from(result);
   }
 
@@ -96,6 +106,25 @@ class FarmaciaService {
   }) async {
     final fazendaId = await _fazendaId();
     if (quantidade <= 0) throw Exception('Informe uma quantidade maior que zero.');
+
+    if (!_connectivity.isOnline) {
+      final id = const Uuid().v4();
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'farmacia.movimentacao',
+        dados: {
+          'id': id,
+          'fazenda_id': fazendaId,
+          'produto_id': produtoId,
+          'tipo': tipo,
+          'quantidade': quantidade,
+          'data': DateTime.now().toIso8601String().split('T').first,
+          'lote_id': loteId,
+          'animal_id': animalId,
+          'observacoes': _text(observacoes),
+        },
+      );
+      return;
+    }
 
     final produto = await _client.from('farmacia_produtos').select('estoque')
         .eq('id', produtoId).eq('fazenda_id', fazendaId).maybeSingle();
