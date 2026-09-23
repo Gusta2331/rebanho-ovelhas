@@ -133,6 +133,7 @@ class FarmService {
         .select()
         .single();
 
+    await _offlineStore.salvarCache('fazenda_atual', fazenda);
     return Farm.fromMap(fazenda);
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../farmacia/pages/farmacia_page.dart';
 import '../financeiro/pages/financeiro_page.dart';
+import 'configuracoes_page.dart';
 import '../manejo/pages/manejo_agenda_page.dart';
 import '../reproduction/pages/reproductions_page.dart';
 
@@ -36,6 +37,12 @@ class MaisPage extends StatelessWidget {
         descricao: 'Receitas, despesas e saldo do lote',
         onTap: () => _abrir(context, const FinanceiroPage()),
       ),
+      _Item(
+        icon: Icons.settings_outlined,
+        titulo: 'Configurações',
+        descricao: 'Dados da fazenda, conta e sincronização',
+        onTap: () => _abrir(context, const ConfiguracoesPage()),
+      ),
     ];
 
     return Scaffold(
@@ -54,7 +61,10 @@ class MaisPage extends StatelessWidget {
                 foregroundColor: AppTheme.primaryColor,
                 child: Icon(item.icon),
               ),
-              title: Text(item.titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                item.titulo,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               subtitle: Text(item.descricao),
               trailing: const Icon(Icons.chevron_right),
               onTap: item.onTap,

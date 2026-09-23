@@ -1,17 +1,43 @@
-# rebanho_app
+# OviGestão
 
-A new Flutter project.
+Aplicativo Flutter para gestão de rebanhos ovinos, desenvolvido para a Fazenda Baixinha.
 
-## Getting Started
+## Recursos
 
-This project is a starting point for a Flutter application.
+- Cadastro e histórico de animais, lotes e transferências.
+- Reprodução, montas, coberturas e nascimentos.
+- Manejos sanitários, agenda, FAMACHA, pesagens e farmácia.
+- Receitas, despesas e vendas de animais.
+- Cache local e fila de sincronização para operações compatíveis com uso offline.
+- Login e persistência de dados no Supabase.
 
-A few resources to get you started if this is your first Flutter project:
+## Requisitos
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Flutter compatível com o SDK definido em `pubspec.yaml`.
+- Projeto Supabase configurado com as tabelas, políticas e funções SQL do diretório `supabase/migrations/`.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Executar
+
+Instale as dependências:
+
+```sh
+flutter pub get
+```
+
+Execute informando a URL e a chave publicável do seu projeto Supabase:
+
+```sh
+flutter run --dart-define=SUPABASE_URL=https://SEU-PROJETO.supabase.co --dart-define=SUPABASE_PUBLISHABLE_KEY=SUA_CHAVE_PUBLICAVEL
+```
+
+Não grave chaves privadas ou `service_role` no aplicativo. O app deve receber somente a chave publicável, com as políticas de acesso do Supabase configuradas.
+
+## Banco de dados
+
+As migrations em `supabase/migrations/` incluem o esquema adicional usado pelos módulos de manejo, vendas, farmácia, financeiro e sincronização offline. Aplique cada migration ao projeto Supabase antes de usar os fluxos correspondentes.
+
+## Verificação estática
+
+```sh
+flutter analyze
+```

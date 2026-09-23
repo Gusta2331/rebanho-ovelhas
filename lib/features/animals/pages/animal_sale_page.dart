@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/offline/connectivity_service.dart';
 import '../../manejo/services/manejo_service.dart';
 import '../models/animal.dart';
 import '../models/animal_venda.dart';
@@ -141,6 +142,8 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
       return;
     }
 
+    final vendaOffline = !ConnectivityService.instance.isOnline;
+
     setState(() {
       _salvando = true;
     });
@@ -165,8 +168,9 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Animal ${widget.animal.brinco} vendido por '
-            '${_formatarMoeda(valorTotal)}.',
+            vendaOffline
+                ? 'Venda salva neste aparelho e aguardando internet para sincronizar.'
+                : 'Animal ${widget.animal.brinco} vendido por ${_formatarMoeda(valorTotal)}.',
           ),
         ),
       );
@@ -189,10 +193,7 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(mensagem),
-          duration: const Duration(seconds: 4),
-        ),
+        SnackBar(content: Text(mensagem), duration: const Duration(seconds: 4)),
       );
     } finally {
       if (mounted) {
@@ -263,7 +264,7 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Brinco $widget.animal.brinco} • $widget.loteNome}',
+                            'Brinco ${widget.animal.brinco} • ${widget.loteNome}',
                             style: const TextStyle(
                               fontSize: 13,
                               color: Colors.black54,
@@ -366,9 +367,7 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
                   ),
                   textInputAction: TextInputAction.next,
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'[0-9,.]'),
-                    ),
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
                   ],
                   decoration: const InputDecoration(
                     labelText: 'Peso na venda (kg) *',
@@ -394,9 +393,7 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
                   ),
                   textInputAction: TextInputAction.next,
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'[0-9,.]'),
-                    ),
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
                   ],
                   decoration: const InputDecoration(
                     labelText: 'Preço por kg *',

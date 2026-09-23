@@ -11,7 +11,7 @@ class FazendaBaixinhaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Fazenda Baixinha',
+      title: 'OviGestão',
       debugShowCheckedModeBanner: false,
 
       theme: AppTheme.lightTheme,
@@ -38,5 +38,3 @@ class FazendaBaixinhaApp extends StatelessWidget {
     );
   }
 }
-
-

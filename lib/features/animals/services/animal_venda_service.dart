@@ -42,6 +42,18 @@ class AnimalVendaService {
     final dataTexto = dataVenda.toIso8601String().split('T').first;
 
     if (!_connectivity.isOnline) {
+      final pendentes = await OfflineSyncService.instance.pendentes();
+      final vendaJaPendente = pendentes.any(
+        (operacao) =>
+            operacao.tipo == 'animal.venda' &&
+            operacao.dados['animal_id']?.toString() == animalId,
+      );
+      if (vendaJaPendente) {
+        throw Exception(
+          'Já existe uma venda deste animal aguardando sincronização.',
+        );
+      }
+
       final vendaId = const Uuid().v4();
       await OfflineSyncService.instance.enfileirar(
         tipo: 'animal.venda',
@@ -97,12 +109,17 @@ class AnimalVendaService {
       );
     }
 
-    final venda = await _client
-        .from('vendas_animais')
-        .select('*')
-        .eq('id', vendaId)
-        .single();
-
-    return AnimalVenda.fromMap(Map<String, dynamic>.from(venda));
+    return AnimalVenda(
+      id: vendaId,
+      animalId: animalId,
+      loteId: loteId,
+      dataVenda: dataVenda,
+      tipoVenda: tipoVenda,
+      pesoKg: pesoKg,
+      precoPorKg: precoPorKg,
+      valorTotal: valorTotal,
+      comprador: comprador?.trim(),
+      observacoes: observacoes?.trim(),
+    );
   }
 }

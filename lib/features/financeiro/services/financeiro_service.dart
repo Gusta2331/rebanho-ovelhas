@@ -21,12 +21,18 @@ class FinanceiroService {
       final cache = await _offlineStore.lerCache(chaveCache);
       final id = cache?.toString();
       if (id != null && id.isNotEmpty) return id;
-      throw Exception('Sem internet e a fazenda ainda não foi salva neste aparelho.');
+      throw Exception(
+        'Sem internet e a fazenda ainda não foi salva neste aparelho.',
+      );
     }
 
     try {
-      final farm = await _client.from('fazendas').select('id')
-          .eq('proprietario_id', user.id).eq('ativo', true).maybeSingle();
+      final farm = await _client
+          .from('fazendas')
+          .select('id')
+          .eq('proprietario_id', user.id)
+          .eq('ativo', true)
+          .maybeSingle();
       final id = farm?['id']?.toString();
       if (id == null || id.isEmpty) {
         throw Exception('Nenhuma fazenda ativa foi encontrada.');
@@ -44,16 +50,61 @@ class FinanceiroService {
   Future<List<Map<String, dynamic>>> listar({required String loteId}) async {
     final fazendaId = await _fazendaId();
     if (!_connectivity.isOnline) {
-      final cache = await _offlineStore.lerCache('financeiro_' + loteId);
-      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
-      return [];
+      return _comOperacoesPendentes(loteId, await _lerCache(loteId));
     }
-    final result = await _client.from('financeiro_lancamentos').select('*')
-        .eq('fazenda_id', fazendaId).eq('lote_id', loteId)
-        .order('data', ascending: false).order('created_at', ascending: false);
-    final lista = List<Map<String, dynamic>>.from(result);
-    await _offlineStore.salvarCache('financeiro_' + loteId, lista);
-    return lista;
+    try {
+      final result = await _client
+          .from('financeiro_lancamentos')
+          .select('*')
+          .eq('fazenda_id', fazendaId)
+          .eq('lote_id', loteId)
+          .order('data', ascending: false)
+          .order('created_at', ascending: false);
+      final lista = List<Map<String, dynamic>>.from(result);
+      await _offlineStore.salvarCache('financeiro_' + loteId, lista);
+      return await _comOperacoesPendentes(loteId, lista);
+    } catch (_) {
+      return _comOperacoesPendentes(loteId, await _lerCache(loteId));
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _lerCache(String loteId) async {
+    final cache = await _offlineStore.lerCache('financeiro_' + loteId);
+    if (cache is! List) return [];
+    return cache
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
+  Future<List<Map<String, dynamic>>> _comOperacoesPendentes(
+    String loteId,
+    List<Map<String, dynamic>> registros,
+  ) async {
+    final resultado = List<Map<String, dynamic>>.from(registros);
+    final pendentes = await OfflineSyncService.instance.pendentes();
+
+    for (final operacao in pendentes) {
+      final dados = operacao.dados;
+      if (operacao.tipo == 'financeiro.criar' &&
+          dados['lote_id']?.toString() == loteId) {
+        final id = dados['id']?.toString();
+        if (id != null &&
+            !resultado.any((item) => item['id']?.toString() == id)) {
+          resultado.add(Map<String, dynamic>.from(dados));
+        }
+      } else if (operacao.tipo == 'financeiro.excluir') {
+        resultado.removeWhere(
+          (item) => item['id']?.toString() == dados['id']?.toString(),
+        );
+      }
+    }
+
+    resultado.sort(
+      (a, b) =>
+          (b['data']?.toString() ?? '').compareTo(a['data']?.toString() ?? ''),
+    );
+    return resultado;
   }
 
   Future<Map<String, double>> resumo({required String loteId}) async {
@@ -101,31 +152,54 @@ class FinanceiroService {
       'data': data.toIso8601String().split('T').first,
       'lote_id': loteId,
       'animal_id': animalId,
-      'observacoes': observacoes?.trim().isEmpty == true ? null : observacoes?.trim(),
+      'observacoes': observacoes?.trim().isEmpty == true
+          ? null
+          : observacoes?.trim(),
     };
 
     if (!_connectivity.isOnline) {
       await OfflineSyncService.instance.enfileirar(
-        tipo: 'financeiro.criar', dados: dados,
+        tipo: 'financeiro.criar',
+        dados: dados,
       );
+      final registros = await _lerCache(loteId);
+      registros.add(dados);
+      await _offlineStore.salvarCache('financeiro_' + loteId, registros);
       return;
     }
 
     await _client.from('financeiro_lancamentos').insert(dados);
+    final registros = await _lerCache(loteId);
+    registros.removeWhere((item) => item['id']?.toString() == id);
+    registros.add(dados);
+    await _offlineStore.salvarCache('financeiro_' + loteId, registros);
   }
 
-  Future<void> excluir(String id) async {
+  Future<void> excluir(String id, {String? loteId}) async {
     final fazendaId = await _fazendaId();
     if (!_connectivity.isOnline) {
       await OfflineSyncService.instance.enfileirar(
         tipo: 'financeiro.excluir',
-        dados: {'id': id, 'fazenda_id': fazendaId},
+        dados: {'id': id, 'fazenda_id': fazendaId, 'lote_id': loteId},
       );
+      if (loteId != null) {
+        final registros = await _lerCache(loteId);
+        registros.removeWhere((item) => item['id']?.toString() == id);
+        await _offlineStore.salvarCache('financeiro_' + loteId, registros);
+      }
       return;
     }
 
-    await _client.from('financeiro_lancamentos').delete()
-        .eq('id', id).eq('fazenda_id', fazendaId);
+    await _client
+        .from('financeiro_lancamentos')
+        .delete()
+        .eq('id', id)
+        .eq('fazenda_id', fazendaId);
+    if (loteId != null) {
+      final registros = await _lerCache(loteId);
+      registros.removeWhere((item) => item['id']?.toString() == id);
+      await _offlineStore.salvarCache('financeiro_' + loteId, registros);
+    }
   }
 
   double _number(dynamic value) {

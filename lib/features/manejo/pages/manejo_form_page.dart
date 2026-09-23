@@ -28,7 +28,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   final TextEditingController _peso = TextEditingController();
   final TextEditingController _doseManual = TextEditingController();
   final TextEditingController _doseBaseController = TextEditingController();
-  final TextEditingController _pesoReferenciaController = TextEditingController();
+  final TextEditingController _pesoReferenciaController =
+      TextEditingController();
   final TextEditingController _viaAplicacaoController = TextEditingController();
   final TextEditingController _carenciaController = TextEditingController();
 
@@ -232,13 +233,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       }
 
       if (unidade != null && unidade.isNotEmpty) {
-        const unidadesPermitidas = {
-          'mL',
-          'mg',
-          'g',
-          'comprimido',
-          'aplicação',
-        };
+        const unidadesPermitidas = {'mL', 'mg', 'g', 'comprimido', 'aplicação'};
         if (unidadesPermitidas.contains(unidade)) {
           _unidadeDose = unidade;
         }
@@ -723,6 +718,19 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       }
     }
 
+    if (_tipo == TipoManejo.pesagem) {
+      final faltandoPeso = _animaisSelecionados.where((id) {
+        final peso = _numero(_pesoTextoPorAnimal[id]) ?? _pesos[id];
+        return peso == null || peso <= 0;
+      });
+      if (faltandoPeso.isNotEmpty) {
+        _mensagem(
+          'Informe um peso maior que zero para cada animal selecionado.',
+        );
+        return;
+      }
+    }
+
     setState(() => _salvando = true);
 
     try {
@@ -809,6 +817,14 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     if (_tipo == TipoManejo.vacinacao && _vacinaSelecionada == null) {
       _mensagem('Selecione a vacina aplicada.');
       return;
+    }
+
+    if (_tipo == TipoManejo.pesagem) {
+      final peso = _numero(_peso.text);
+      if (peso == null || peso <= 0) {
+        _mensagem('Informe um peso maior que zero.');
+        return;
+      }
     }
 
     setState(() => _salvando = true);
@@ -1130,6 +1146,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                       _tipo = value;
                                       _animaisSelecionados.clear();
                                       _famachaPorAnimal.clear();
+                                      _pesos.clear();
+                                      _pesoTextoPorAnimal.clear();
+                                      _doseTextoPorAnimal.clear();
+                                      _peso.clear();
                                       _famacha = null;
                                       if (value != TipoManejo.vacinacao) {
                                         _vacinaSelecionada = null;
@@ -1175,6 +1195,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                   _animaisSelecionados.clear();
                                   _famachaPorAnimal.clear();
                                   _pesos.clear();
+                                  _pesoTextoPorAnimal.clear();
+                                  _doseTextoPorAnimal.clear();
                                   _dosesCalculadas.clear();
                                 });
                                 _carregarAnimais();
@@ -1226,20 +1248,24 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                           ],
                           if (_tipo == TipoManejo.pesagem) ...[
                             const SizedBox(height: 16),
-                            TextField(
-                              controller: _peso,
-                              enabled: !_salvando,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
+                            if (_editando)
+                              TextField(
+                                controller: _peso,
+                                enabled: !_salvando,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                decoration: const InputDecoration(
+                                  labelText: 'Peso do animal (kg)',
+                                  hintText: 'Ex.: 47,5',
+                                  prefixIcon: Icon(
+                                    Icons.monitor_weight_outlined,
                                   ),
-                              decoration: const InputDecoration(
-                                labelText: 'Peso do animal (kg)',
-                                hintText: 'Ex.: 47,5',
-                                prefixIcon: Icon(Icons.monitor_weight_outlined),
-                                border: OutlineInputBorder(),
+                                  border: OutlineInputBorder(),
+                                ),
                               ),
-                            ),
+                            if (!_editando) _pesagemPorAnimalEditor(),
                           ],
                           if (_tipo == TipoManejo.outro) ...[
                             const SizedBox(height: 16),
@@ -1636,6 +1662,52 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
           );
         },
       ),
+    );
+  }
+
+  Widget _pesagemPorAnimalEditor() {
+    if (_animaisSelecionados.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(8),
+        child: Text('Selecione os animais e informe o peso de cada um.'),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Peso de cada animal',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        ..._animaisSelecionados
+            .map(_animalPorId)
+            .whereType<Map<String, dynamic>>()
+            .map((animal) {
+              final id = animal['id']?.toString() ?? '';
+              final peso =
+                  _pesoTextoPorAnimal[id] ?? _pesos[id]?.toString() ?? '';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: TextFormField(
+                  key: ValueKey('pesagem-$id'),
+                  initialValue: peso,
+                  enabled: !_salvando,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  onChanged: (valor) => _atualizarPesoAnimal(id, valor),
+                  decoration: InputDecoration(
+                    labelText: '${_animalTexto(animal)} · Peso (kg)',
+                    hintText: 'Ex.: 47,5',
+                    prefixIcon: const Icon(Icons.monitor_weight_outlined),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              );
+            }),
+      ],
     );
   }
 

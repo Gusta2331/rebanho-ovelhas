@@ -38,7 +38,8 @@ class _DashboardPageState extends State<DashboardPage> {
   final FarmService _farmService = FarmService();
   final AnimalService _animalService = AnimalService();
   final RebanhoService _rebanhoService = RebanhoService();
-  final ManejoProgramadoService _manejoProgramadoService = ManejoProgramadoService();
+  final ManejoProgramadoService _manejoProgramadoService =
+      ManejoProgramadoService();
   final FinanceiroService _financeiroService = FinanceiroService();
 
   final RebanhoSelectionService _rebanhoSelectionService =
@@ -60,6 +61,7 @@ class _DashboardPageState extends State<DashboardPage> {
   List<Map<String, dynamic>> _proximosManejos = [];
   double _receitas = 0;
   double _despesas = 0;
+  bool _financeiroIndisponivel = false;
 
   @override
   void initState() {
@@ -233,7 +235,13 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _loadFinanceiro() async {
     final loteId = _rebanhoSelecionado?.id;
     if (loteId == null) {
-      if (mounted) setState(() { _receitas = 0; _despesas = 0; });
+      if (mounted) {
+        setState(() {
+          _receitas = 0;
+          _despesas = 0;
+          _financeiroIndisponivel = false;
+        });
+      }
       return;
     }
     try {
@@ -242,9 +250,10 @@ class _DashboardPageState extends State<DashboardPage> {
       setState(() {
         _receitas = resumo['receitas'] ?? 0;
         _despesas = resumo['despesas'] ?? 0;
+        _financeiroIndisponivel = false;
       });
     } catch (_) {
-      if (mounted) setState(() { _receitas = 0; _despesas = 0; });
+      if (mounted) setState(() => _financeiroIndisponivel = true);
     }
   }
 
@@ -264,15 +273,20 @@ class _DashboardPageState extends State<DashboardPage> {
       final animais = await _animalService.getTodosAnimais(rebanhoId: loteId);
       final ids = animais.map((animal) => animal['id'].toString()).toSet();
 
-      final filtrados = programados.where((item) {
-        if (item['concluido'] == true) return false;
-        final lista = item['manejos_programados_animais'];
-        if (lista is! List) return false;
-        return lista.any((vinculo) {
-          final id = vinculo is Map ? vinculo['animal_id']?.toString() : null;
-          return id != null && ids.contains(id);
-        });
-      }).take(3).toList();
+      final filtrados = programados
+          .where((item) {
+            if (item['concluido'] == true) return false;
+            final lista = item['manejos_programados_animais'];
+            if (lista is! List) return false;
+            return lista.any((vinculo) {
+              final id = vinculo is Map
+                  ? vinculo['animal_id']?.toString()
+                  : null;
+              return id != null && ids.contains(id);
+            });
+          })
+          .take(3)
+          .toList();
 
       if (mounted) setState(() => _proximosManejos = filtrados);
     } catch (_) {
@@ -302,8 +316,10 @@ class _DashboardPageState extends State<DashboardPage> {
   String _dataManejo(dynamic valor) {
     final data = DateTime.tryParse(valor?.toString() ?? '');
     if (data == null) return 'Data não informada';
-    return data.day.toString().padLeft(2, '0') + '/' +
-        data.month.toString().padLeft(2, '0') + '/' +
+    return data.day.toString().padLeft(2, '0') +
+        '/' +
+        data.month.toString().padLeft(2, '0') +
+        '/' +
         data.year.toString();
   }
 
@@ -430,15 +446,14 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _openManejos() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const ManejosPage()),
-    );
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => const ManejosPage()));
   }
 
   Future<void> _openManejoAgenda() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const ManejoAgendaPage()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const ManejoAgendaPage()));
   }
 
   Future<void> _openReproductions() async {
@@ -448,21 +463,18 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _openFarmacia() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const FarmaciaPage()),
-    );
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => const FarmaciaPage()));
   }
 
   Future<void> _openFinanceiro() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const FinanceiroPage()),
-    );
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => const FinanceiroPage()));
   }
 
   Future<void> _openMais() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const MaisPage()),
-    );
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => const MaisPage()));
   }
 
   Future<void> _openAnimals() async {
@@ -664,23 +676,45 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildFinanceiroResumo() {
     final saldo = _receitas - _despesas;
+    final valorSaldo = _financeiroIndisponivel ? 'Indisponível' : _moeda(saldo);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              const Icon(Icons.account_balance_wallet_outlined),
-              const SizedBox(width: 8),
-              const Expanded(child: Text('Resumo financeiro do lote', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold))),
-              Text(_moeda(saldo), style: TextStyle(fontWeight: FontWeight.bold, color: saldo >= 0 ? Colors.green.shade700 : Colors.red.shade700)),
-            ]),
+            Row(
+              children: [
+                const Icon(Icons.account_balance_wallet_outlined),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Resumo financeiro do lote',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Text(
+                  valorSaldo,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _financeiroIndisponivel
+                        ? Colors.black54
+                        : saldo >= 0
+                        ? Colors.green.shade700
+                        : Colors.red.shade700,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 14),
-            Wrap(spacing: 10, runSpacing: 10, children: [
-              _financeiroMiniCard('Receitas', _receitas, Colors.green),
-              _financeiroMiniCard('Despesas', _despesas, Colors.red),
-            ]),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _financeiroMiniCard('Receitas', _receitas, Colors.green),
+                _financeiroMiniCard('Despesas', _despesas, Colors.red),
+              ],
+            ),
           ],
         ),
       ),
@@ -691,12 +725,24 @@ class _DashboardPageState extends State<DashboardPage> {
     return Container(
       width: 150,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: cor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(titulo, style: const TextStyle(fontSize: 12)),
-        const SizedBox(height: 4),
-        Text(_moeda(valor), style: TextStyle(fontWeight: FontWeight.bold, color: cor)),
-      ]),
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(titulo, style: const TextStyle(fontSize: 12)),
+          const SizedBox(height: 4),
+          Text(
+            _financeiroIndisponivel ? 'Indisponível' : _moeda(valor),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: _financeiroIndisponivel ? Colors.black54 : cor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -784,7 +830,8 @@ class _DashboardPageState extends State<DashboardPage> {
             child: ManagementItem(
               icon: Icons.event_note_outlined,
               title: _tipoManejo(item['tipo']?.toString()),
-              description: item['observacoes']?.toString().trim().isNotEmpty == true
+              description:
+                  item['observacoes']?.toString().trim().isNotEmpty == true
                   ? item['observacoes'].toString()
                   : 'Manejo programado para o lote',
               date: _dataManejo(item['data_programada']),
