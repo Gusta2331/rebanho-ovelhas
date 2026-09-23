@@ -369,6 +369,14 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
                 Text('Data: ' + _dataTexto(_data(item))),
                 const SizedBox(height: 8),
                 Text('Animais: ' + _animais(item)),
+                if (tipo == TipoManejo.outro &&
+                    (item['outro_nome']?.toString().trim().isNotEmpty == true)) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Manejo: ' + item['outro_nome'].toString(),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
                 if (tipo == TipoManejo.vacinacao &&
                     (item['vacina_nome']?.toString().trim().isNotEmpty == true)) ...[
                   const SizedBox(height: 8),
@@ -435,6 +443,7 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
       RebanhoSelectionService.instance;
 
   final TextEditingController _observacoes = TextEditingController();
+  final TextEditingController _outroNome = TextEditingController();
 
   List<Map<String, dynamic>> _rebanhos = [];
   List<Map<String, dynamic>> _animais = [];
@@ -461,6 +470,7 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
   @override
   void dispose() {
     _observacoes.dispose();
+    _outroNome.dispose();
     super.dispose();
   }
 
@@ -585,6 +595,11 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
       return;
     }
 
+    if (_tipo == TipoManejo.outro && _outroNome.text.trim().isEmpty) {
+      _msg('Informe o nome do manejo.');
+      return;
+    }
+
     if (_tipo == TipoManejo.vacinacao && _vacinaSelecionada == null) {
       _msg('Selecione a vacina programada.');
       return;
@@ -607,6 +622,7 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
         vacinaFabricante: _tipo == TipoManejo.vacinacao
             ? _vacinaSelecionada == null ? null : _vacinaSelecionada!['fabricante']?.toString()
             : null,
+        outroNome: _tipo == TipoManejo.outro ? _outroNome.text.trim() : null,
       );
 
       if (mounted) Navigator.of(context).pop(true);
@@ -724,6 +740,20 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
                           });
                         },
                 ),
+                if (_tipo == TipoManejo.outro) ...[
+                  TextField(
+                    controller: _outroNome,
+                    enabled: !_salvando,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Nome do manejo',
+                      hintText: 'Ex.: Revisão de casco',
+                      prefixIcon: Icon(Icons.edit_note_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 const SizedBox(height: 16),
                 InkWell(
                   onTap: _salvando ? null : _dataPicker,
