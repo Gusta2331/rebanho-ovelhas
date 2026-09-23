@@ -252,6 +252,7 @@ class _LancamentoDialog extends StatefulWidget {
 
 class _LancamentoDialogState extends State<_LancamentoDialog> {
   String tipo = 'despesa';
+  DateTime data = DateTime.now();
   final categoria = TextEditingController();
   final descricao = TextEditingController();
   final valor = TextEditingController();
@@ -295,6 +296,26 @@ class _LancamentoDialogState extends State<_LancamentoDialog> {
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(labelText: 'Valor'),
               ),
+              InkWell(
+                onTap: () async {
+                  final selecionada = await showDatePicker(
+                    context: context,
+                    initialDate: data,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                    locale: const Locale('pt', 'BR'),
+                  );
+                  if (selecionada != null) setState(() => data = selecionada);
+                },
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Data',
+                    prefixIcon: Icon(Icons.calendar_today_outlined),
+                  ),
+                  child: Text(data.day.toString().padLeft(2, '0') + '/' + data.month.toString().padLeft(2, '0') + '/' + data.year.toString()),
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: observacoes,
                 decoration: const InputDecoration(labelText: 'Observações'),
@@ -321,7 +342,7 @@ class _LancamentoDialogState extends State<_LancamentoDialog> {
                 'categoria': categoria.text,
                 'descricao': descricao.text,
                 'valor': v,
-                'data': DateTime.now(),
+                'data': data,
                 'observacoes': observacoes.text,
               });
             },
