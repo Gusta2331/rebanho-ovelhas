@@ -414,14 +414,16 @@ class ManejoService {
       validarFamacha: false,
     );
 
-    final animais = await _client.from('animais').select('id')
-        .eq('fazenda_id', fazendaId).eq('status', 'ativo').inFilter('id', animalIds);
-    final idsValidos = List<Map<String, dynamic>>.from(animais)
-        .map((a) => a['id'].toString()).toSet();
+    if (_connectivity.isOnline) {
+      final animais = await _client.from('animais').select('id')
+          .eq('fazenda_id', fazendaId).eq('status', 'ativo').inFilter('id', animalIds);
+      final idsValidos = List<Map<String, dynamic>>.from(animais)
+          .map((a) => a['id'].toString()).toSet();
 
-    if (idsValidos.length != animalIds.length ||
-        animalIds.any((id) => !idsValidos.contains(id))) {
-      throw Exception('Um ou mais animais não estão ativos ou não pertencem à fazenda.');
+      if (idsValidos.length != animalIds.length ||
+          animalIds.any((id) => !idsValidos.contains(id))) {
+        throw Exception('Um ou mais animais não estão ativos ou não pertencem à fazenda.');
+      }
     }
 
     final dados = animalIds.map((animalId) => _dadosManejo(
