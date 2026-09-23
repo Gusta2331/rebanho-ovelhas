@@ -115,6 +115,7 @@ class OfflineSyncService {
     registrarHandler('rebanho.criar', _sincronizarRebanhoCriar);
     registrarHandler('rebanho.atualizar', _sincronizarRebanhoAtualizar);
     registrarHandler('rebanho.status', _sincronizarRebanhoStatus);
+    registrarHandler('animal.venda', _sincronizarVendaAnimal);
   }
 
   SupabaseClient get _client => Supabase.instance.client;
@@ -204,6 +205,40 @@ class OfflineSyncService {
     final d = op.dados;
     await _client.from('manejos_programados').delete()
         .eq('id', d['id']).eq('fazenda_id', d['fazenda_id']);
+  }
+
+  Future<void> _sincronizarVendaAnimal(OfflineOperation op) async {
+    final d = op.dados;
+    try {
+      await _client.rpc('vender_animal', params: {
+        'p_animal_id': d['animal_id'],
+        'p_lote_id': d['lote_id'],
+        'p_data_venda': d['data_venda'],
+        'p_tipo_venda': d['tipo_venda'],
+        'p_peso_kg': d['peso_kg'],
+        'p_preco_por_kg': d['preco_por_kg'],
+        'p_valor_total': d['valor_total'],
+        'p_comprador': d['comprador'],
+        'p_observacoes': d['observacoes'],
+      });
+    } catch (erro) {
+      final existente = await _client.from('vendas_animais').select(
+        'animal_id, lote_id, data_venda, tipo_venda, peso_kg, preco_por_kg, valor_total',
+      ).eq('animal_id', d['animal_id']).maybeSingle();
+
+      if (existente == null) {
+        rethrow;
+      }
+
+      final mesmaVenda = existente['lote_id']?.toString() == d['lote_id']?.toString() &&
+          existente['data_venda']?.toString() == d['data_venda']?.toString() &&
+          existente['tipo_venda']?.toString() == d['tipo_venda']?.toString() &&
+          existente['valor_total'].toString() == d['valor_total'].toString();
+
+      if (!mesmaVenda) {
+        rethrow;
+      }
+    }
   }
 
   Future<void> _sincronizarRebanhoCriar(OfflineOperation op) async {
