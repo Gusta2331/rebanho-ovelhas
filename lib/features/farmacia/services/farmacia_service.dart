@@ -1,10 +1,14 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/offline/connectivity_service.dart';
+import '../../../core/offline/offline_store.dart';
 import '../../../core/services/supabase_service.dart';
 
 class FarmaciaService {
   SupabaseClient get _client => SupabaseService.client;
+  final OfflineStore _offlineStore = OfflineStore();
+  final ConnectivityService _connectivity = ConnectivityService.instance;
 
   Future<String> _fazendaId() async {
     final user = _client.auth.currentUser;
@@ -20,9 +24,16 @@ class FarmaciaService {
 
   Future<List<Map<String, dynamic>>> listarProdutos() async {
     final fazendaId = await _fazendaId();
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache('farmacia_produtos');
+      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      return [];
+    }
     final result = await _client.from('farmacia_produtos').select('*')
         .eq('fazenda_id', fazendaId).eq('ativo', true).order('nome');
-    return List<Map<String, dynamic>>.from(result);
+    final lista = List<Map<String, dynamic>>.from(result);
+    await _offlineStore.salvarCache('farmacia_produtos', lista);
+    return lista;
   }
 
   Future<Map<String, dynamic>> criarProduto({
@@ -98,11 +109,18 @@ class FarmaciaService {
     required String loteId,
   }) async {
     final fazendaId = await _fazendaId();
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache('farmacia_movimentos_' + loteId);
+      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      return [];
+    }
     final result = await _client.from('farmacia_movimentacoes').select(
       '*, farmacia_produtos(nome, unidade, categoria), animais(brinco, nome)',
     ).eq('fazenda_id', fazendaId).eq('lote_id', loteId)
       .order('data', ascending: false).order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(result);
+    final lista = List<Map<String, dynamic>>.from(result);
+    await _offlineStore.salvarCache('farmacia_movimentos_' + loteId, lista);
+    return lista;
   }
 
   double _number(dynamic value) {
