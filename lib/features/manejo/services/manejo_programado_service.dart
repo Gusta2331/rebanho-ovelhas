@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/offline/connectivity_service.dart';
 import '../../../core/offline/offline_store.dart';
+import '../../../core/offline/offline_sync_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../models/manejo.dart';
 
@@ -72,6 +73,28 @@ class ManejoProgramadoService {
       throw Exception('Um ou mais animais não estão ativos ou não pertencem à fazenda.');
     }
     final id = const Uuid().v4();
+
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'manejo_programado.criar',
+        dados: {
+          'id': id, 'fazenda_id': fazendaId,
+          'tipo': Manejo.tipoToString(tipo),
+          'data_programada': dataProgramada.toIso8601String().split('T').first,
+          'observacoes': observacoes?.trim(),
+          'animal_ids': animalIds,
+          'vacina_id': vacinaId,
+          'vacina_nome': vacinaNome,
+          'vacina_fabricante': vacinaFabricante,
+          'dose': null, 'dose_unidade': null, 'peso_referencia_kg': null,
+          'via_aplicacao': null, 'validade': null, 'carencia_dias': null,
+          'vermifugo_id': null, 'vermifugo_nome': null,
+          'medicamento_id': null, 'medicamento_nome': null,
+        },
+      );
+      return;
+    }
+
     await _client.from('manejos_programados').insert({
       'id': id, 'fazenda_id': fazendaId, 'tipo': Manejo.tipoToString(tipo),
       'data_programada': dataProgramada.toIso8601String(),
@@ -89,20 +112,43 @@ class ManejoProgramadoService {
 
   Future<void> concluir(String id) async {
     final fazendaId = await _getMinhaFazendaId();
+    final realizadoEm = DateTime.now().toIso8601String().split('T').first;
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'manejo_programado.concluir',
+        dados: {'id': id, 'fazenda_id': fazendaId, 'realizado_em': realizadoEm},
+      );
+      return;
+    }
     await _client.from('manejos_programados').update({
-      'concluido': true, 'realizado_em': DateTime.now().toIso8601String(),
+      'concluido': true, 'realizado_em': realizadoEm,
     }).eq('id', id).eq('fazenda_id', fazendaId);
   }
 
   Future<void> reprogramar(String id, DateTime data) async {
     final fazendaId = await _getMinhaFazendaId();
+    final dataTexto = data.toIso8601String().split('T').first;
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'manejo_programado.reprogramar',
+        dados: {'id': id, 'fazenda_id': fazendaId, 'data_programada': dataTexto},
+      );
+      return;
+    }
     await _client.from('manejos_programados').update({
-      'data_programada': data.toIso8601String(), 'concluido': false, 'realizado_em': null,
+      'data_programada': dataTexto, 'concluido': false, 'realizado_em': null,
     }).eq('id', id).eq('fazenda_id', fazendaId);
   }
 
   Future<void> excluir(String id) async {
     final fazendaId = await _getMinhaFazendaId();
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'manejo_programado.excluir',
+        dados: {'id': id, 'fazenda_id': fazendaId},
+      );
+      return;
+    }
     await _client.from('manejos_programados').delete()
         .eq('id', id).eq('fazenda_id', fazendaId);
   }
