@@ -61,7 +61,7 @@ class ManejoProgramadoService {
 
   Future<void> criar({required TipoManejo tipo, required DateTime dataProgramada,
       required List<String> animalIds, String? observacoes,
-      String? vacinaId, String? vacinaNome, String? vacinaFabricante}) async {
+      String? vacinaId, String? vacinaNome, String? vacinaFabricante, String? outroNome}) async {
     final fazendaId = await _getMinhaFazendaId();
     if (animalIds.isEmpty) throw Exception('Selecione pelo menos um animal.');
     if (_connectivity.isOnline) {
@@ -84,6 +84,7 @@ class ManejoProgramadoService {
           'tipo': Manejo.tipoToString(tipo),
           'data_programada': dataProgramada.toIso8601String().split('T').first,
           'observacoes': observacoes?.trim(),
+          'outro_nome': tipo == TipoManejo.outro ? outroNome?.trim() : null,
           'animal_ids': animalIds,
           'vacina_id': vacinaId,
           'vacina_nome': vacinaNome,
@@ -101,6 +102,7 @@ class ManejoProgramadoService {
       'id': id, 'fazenda_id': fazendaId, 'tipo': Manejo.tipoToString(tipo),
       'data_programada': dataProgramada.toIso8601String(),
       'observacoes': observacoes?.trim().isEmpty == true ? null : observacoes?.trim(),
+      'outro_nome': tipo == TipoManejo.outro ? outroNome?.trim() : null,
       'vacina_id': tipo == TipoManejo.vacinacao ? vacinaId : null,
       'vacina_nome': tipo == TipoManejo.vacinacao ? vacinaNome?.trim() : null,
       'vacina_fabricante': tipo == TipoManejo.vacinacao ? vacinaFabricante?.trim() : null,
