@@ -1,11 +1,15 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/offline/connectivity_service.dart';
+import '../../../core/offline/offline_store.dart';
 import '../../../core/services/supabase_service.dart';
 import '../models/manejo.dart';
 
 class ManejoProgramadoService {
   SupabaseClient get _client => SupabaseService.client;
+  final OfflineStore _offlineStore = OfflineStore();
+  final ConnectivityService _connectivity = ConnectivityService.instance;
 
   Future<String> _getMinhaFazendaId() async {
     final usuario = _client.auth.currentUser;
@@ -19,12 +23,19 @@ class ManejoProgramadoService {
 
   Future<List<Map<String, dynamic>>> getProgramados() async {
     final fazendaId = await _getMinhaFazendaId();
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache('manejos_programados');
+      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      return [];
+    }
     final dados = await _client.from('manejos_programados')
         .select('*, manejos_programados_animais(animal_id, animais(brinco, nome))')
         .eq('fazenda_id', fazendaId)
         .order('concluido', ascending: true)
         .order('data_programada', ascending: true);
-    return List<Map<String, dynamic>>.from(dados);
+    final lista = List<Map<String, dynamic>>.from(dados);
+    await _offlineStore.salvarCache('manejos_programados', lista);
+    return lista;
   }
 
   Future<void> criar({required TipoManejo tipo, required DateTime dataProgramada,
