@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/offline/connectivity_service.dart';
 import '../../../core/offline/offline_store.dart';
+import '../../../core/offline/offline_sync_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../models/manejo.dart';
 
@@ -319,9 +320,11 @@ class ManejoService {
       medicamentoId: medicamentoId, medicamentoNome: medicamentoNome,
     );
 
-    await _validarAnimal(animalId, fazendaId);
+    if (_connectivity.isOnline) {
+      await _validarAnimal(animalId, fazendaId);
+    }
 
-    final resultado = await _client.from('manejos').insert(_dadosManejo(
+    final dados = _dadosManejo(
       fazendaId: fazendaId, animalId: animalId, tipo: tipo, data: data,
       famachaEscore: famachaEscore, observacoes: observacoes,
       vacinaId: vacinaId, vacinaNome: vacinaNome,
@@ -333,7 +336,17 @@ class ManejoService {
       vermifugoNome: vermifugoNome, vermifugoPrincipioAtivo: vermifugoPrincipioAtivo,
       medicamentoId: medicamentoId, medicamentoNome: medicamentoNome,
       medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
-    )).select('*, animais(brinco, nome)').single();
+    );
+
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'manejo.criar', dados: dados,
+      );
+      return dados;
+    }
+
+    final resultado = await _client.from('manejos').insert(dados)
+        .select('*, animais(brinco, nome)').single();
 
     return Map<String, dynamic>.from(resultado);
   }
@@ -424,6 +437,14 @@ class ManejoService {
       medicamentoNome: medicamentoNome, medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
     )).toList();
 
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'manejo.criar_lote',
+        dados: {'itens': dados},
+      );
+      return dados;
+    }
+
     final resultado = await _client.from('manejos').insert(dados)
         .select('*, animais(brinco, nome)');
     return List<Map<String, dynamic>>.from(resultado);
@@ -481,25 +502,43 @@ class ManejoService {
       vermifugoId: vermifugoId, vermifugoNome: vermifugoNome,
       medicamentoId: medicamentoId, medicamentoNome: medicamentoNome,
     );
-    await _validarAnimal(animalId, fazendaId);
+    if (_connectivity.isOnline) {
+      await _validarAnimal(animalId, fazendaId);
+    }
 
-    await _client.from('manejos').update({
-      ..._dadosManejo(
-        fazendaId: fazendaId, animalId: animalId, tipo: tipo, data: data,
-        famachaEscore: famachaEscore, observacoes: observacoes,
-        vacinaId: vacinaId, vacinaNome: vacinaNome, vacinaFabricante: vacinaFabricante,
-        vacinaLote: vacinaLote, outroNome: outroNome, pesoKg: pesoKg,
-        dose: dose, doseUnidade: doseUnidade, pesoReferenciaKg: pesoReferenciaKg,
-        viaAplicacao: viaAplicacao, validade: validade, carenciaDias: carenciaDias,
-        vermifugoId: vermifugoId, vermifugoNome: vermifugoNome,
-        vermifugoPrincipioAtivo: vermifugoPrincipioAtivo, medicamentoId: medicamentoId,
-        medicamentoNome: medicamentoNome, medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
-      )..remove('id')..remove('fazenda_id'),
-    }).eq('id', id).eq('fazenda_id', fazendaId);
+    final dados = _dadosManejo(
+      fazendaId: fazendaId, animalId: animalId, tipo: tipo, data: data,
+      famachaEscore: famachaEscore, observacoes: observacoes,
+      vacinaId: vacinaId, vacinaNome: vacinaNome, vacinaFabricante: vacinaFabricante,
+      vacinaLote: vacinaLote, outroNome: outroNome, pesoKg: pesoKg,
+      dose: dose, doseUnidade: doseUnidade, pesoReferenciaKg: pesoReferenciaKg,
+      viaAplicacao: viaAplicacao, validade: validade, carenciaDias: carenciaDias,
+      vermifugoId: vermifugoId, vermifugoNome: vermifugoNome,
+      vermifugoPrincipioAtivo: vermifugoPrincipioAtivo, medicamentoId: medicamentoId,
+      medicamentoNome: medicamentoNome, medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
+    )..remove('id')..remove('fazenda_id');
+
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'manejo.atualizar',
+        dados: {'id': id, 'fazenda_id': fazendaId, ...dados},
+      );
+      return;
+    }
+
+    await _client.from('manejos').update(dados)
+        .eq('id', id).eq('fazenda_id', fazendaId);
   }
 
   Future<void> excluirManejo(String id) async {
     final fazendaId = await _getMinhaFazendaId();
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'manejo.excluir',
+        dados: {'id': id, 'fazenda_id': fazendaId},
+      );
+      return;
+    }
     await _client.from('manejos').delete().eq('id', id).eq('fazenda_id', fazendaId);
   }
 
