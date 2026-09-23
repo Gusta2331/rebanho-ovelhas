@@ -26,14 +26,28 @@ class AnimalService {
       throw Exception('Usuário não autenticado.');
     }
 
-    final fazenda = await _client
-        .from('fazendas')
-        .select('id')
-        .eq('proprietario_id', usuario.id)
-        .eq('ativo', true)
-        .maybeSingle();
+    if (!_connectivity.isOnline) {
+      return await _offlineStore.lerCache(_farmCacheKey(usuario.id)) as String?;
+    }
 
-    return fazenda?['id'] as String?;
+    try {
+      final fazenda = await _client
+          .from('fazendas')
+          .select('id')
+          .eq('proprietario_id', usuario.id)
+          .eq('ativo', true)
+          .maybeSingle();
+
+      final id = fazenda?['id'] as String?;
+
+      if (id != null) {
+        await _offlineStore.salvarCache(_farmCacheKey(usuario.id), id);
+      }
+
+      return id;
+    } catch (_) {
+      return await _offlineStore.lerCache(_farmCacheKey(usuario.id)) as String?;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getAnimaisAtivos({
@@ -45,19 +59,32 @@ class AnimalService {
       return [];
     }
 
-    var consulta = _client
-        .from('animais')
-        .select('*, racas(nome)')
-        .eq('fazenda_id', fazendaId)
-        .eq('status', 'ativo');
+    final usuario = _client.auth.currentUser!;
+    final chaveCache = _cacheKey(usuario.id, 'ativos', rebanhoId);
 
-    if (rebanhoId != null) {
-      consulta = consulta.eq('rebanho_id', rebanhoId);
+    if (!_connectivity.isOnline) {
+      return _lerAnimaisDoCache(chaveCache);
     }
 
-    final animais = await consulta.order('brinco');
+    try {
+      var consulta = _client
+          .from('animais')
+          .select('*, racas(nome)')
+          .eq('fazenda_id', fazendaId)
+          .eq('status', 'ativo');
 
-    return List<Map<String, dynamic>>.from(animais);
+      if (rebanhoId != null) {
+        consulta = consulta.eq('rebanho_id', rebanhoId);
+      }
+
+      final animais = await consulta.order('brinco');
+      final lista = List<Map<String, dynamic>>.from(animais);
+
+      await _offlineStore.salvarCache(chaveCache, lista);
+      return lista;
+    } catch (_) {
+      return _lerAnimaisDoCache(chaveCache);
+    }
   }
 
   Future<List<Map<String, dynamic>>> getTodosAnimais({
@@ -69,18 +96,31 @@ class AnimalService {
       return [];
     }
 
-    var consulta = _client
-        .from('animais')
-        .select('*, racas(nome)')
-        .eq('fazenda_id', fazendaId);
+    final usuario = _client.auth.currentUser!;
+    final chaveCache = _cacheKey(usuario.id, 'todos', rebanhoId);
 
-    if (rebanhoId != null) {
-      consulta = consulta.eq('rebanho_id', rebanhoId);
+    if (!_connectivity.isOnline) {
+      return _lerAnimaisDoCache(chaveCache);
     }
 
-    final animais = await consulta.order('brinco');
+    try {
+      var consulta = _client
+          .from('animais')
+          .select('*, racas(nome)')
+          .eq('fazenda_id', fazendaId);
 
-    return List<Map<String, dynamic>>.from(animais);
+      if (rebanhoId != null) {
+        consulta = consulta.eq('rebanho_id', rebanhoId);
+      }
+
+      final animais = await consulta.order('brinco');
+      final lista = List<Map<String, dynamic>>.from(animais);
+
+      await _offlineStore.salvarCache(chaveCache, lista);
+      return lista;
+    } catch (_) {
+      return _lerAnimaisDoCache(chaveCache);
+    }
   }
 
   Future<List<Map<String, dynamic>>> getAnimaisPorIds(
@@ -96,13 +136,40 @@ class AnimalService {
       return [];
     }
 
-    final animais = await _client
-        .from('animais')
-        .select('*, racas(nome)')
-        .eq('fazenda_id', fazendaId)
-        .inFilter('id', ids);
+    if (!_connectivity.isOnline) {
+      final todos = await getTodosAnimais();
+      return todos
+          .where((animal) => ids.contains(animal['id']?.toString()))
+          .toList();
+    }
 
-    return List<Map<String, dynamic>>.from(animais);
+    try {
+      final animais = await _client
+          .from('animais')
+          .select('*, racas(nome)')
+          .eq('fazenda_id', fazendaId)
+          .inFilter('id', ids);
+
+      return List<Map<String, dynamic>>.from(animais);
+    } catch (_) {
+      final todos = await getTodosAnimais();
+      return todos
+          .where((animal) => ids.contains(animal['id']?.toString()))
+          .toList();
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _lerAnimaisDoCache(String chave) async {
+    final valor = await _offlineStore.lerCache(chave);
+
+    if (valor is! List) {
+      return [];
+    }
+
+    return valor
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
   }
 
   Future<int> getTotalAnimaisAtivos({String? rebanhoId}) async {
