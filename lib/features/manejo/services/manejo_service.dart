@@ -18,20 +18,43 @@ class ManejoService {
     final usuario = _client.auth.currentUser;
     if (usuario == null) throw Exception('Usuário não autenticado.');
 
-    final fazenda = await _client
-        .from('fazendas')
-        .select('id')
-        .eq('proprietario_id', usuario.id)
-        .eq('ativo', true)
-        .maybeSingle();
+    const chaveCache = 'manejo_fazenda_id';
 
-    final id = fazenda?['id']?.toString();
-    if (id == null || id.isEmpty) {
-      throw Exception('Nenhuma fazenda ativa foi encontrada.');
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache(chaveCache);
+      final id = cache?.toString();
+      if (id != null && id.isNotEmpty) {
+        _fazendaIdCache = id;
+        return id;
+      }
+      throw Exception('Sem internet e a fazenda ainda não foi salva neste aparelho.');
     }
 
-    _fazendaIdCache = id;
-    return id;
+    try {
+      final fazenda = await _client
+          .from('fazendas')
+          .select('id')
+          .eq('proprietario_id', usuario.id)
+          .eq('ativo', true)
+          .maybeSingle();
+
+      final id = fazenda?['id']?.toString();
+      if (id == null || id.isEmpty) {
+        throw Exception('Nenhuma fazenda ativa foi encontrada.');
+      }
+
+      _fazendaIdCache = id;
+      await _offlineStore.salvarCache(chaveCache, id);
+      return id;
+    } catch (_) {
+      final cache = await _offlineStore.lerCache(chaveCache);
+      final id = cache?.toString();
+      if (id != null && id.isNotEmpty) {
+        _fazendaIdCache = id;
+        return id;
+      }
+      rethrow;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getVacinas() async {
