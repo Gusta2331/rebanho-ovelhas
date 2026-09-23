@@ -26,22 +26,17 @@ class FazendaBaixinhaApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      home: const _AppHome(),
+      builder: (context, child) {
+        return Column(
+          children: [
+            const OfflineStatusBanner(),
+            Expanded(child: child ?? const SizedBox.shrink()),
+          ],
+        );
+      },
+      home: const LoginPage(),
     );
   }
 }
 
 
-class _AppHome extends StatelessWidget {
-  const _AppHome();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        OfflineStatusBanner(),
-        Expanded(child: LoginPage()),
-      ],
-    );
-  }
-}
