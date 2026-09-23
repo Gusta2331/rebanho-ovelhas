@@ -121,7 +121,7 @@ class OfflineSyncService {
   SupabaseClient get _client => Supabase.instance.client;
 
   Future<void> _sincronizarFinanceiroCriar(OfflineOperation op) async {
-    await _client.from('financeiro_lancamentos').insert(op.dados);
+    await _insertIdempotente('financeiro_lancamentos', op.dados);
   }
 
   Future<void> _sincronizarFinanceiroExcluir(OfflineOperation op) async {
@@ -131,7 +131,7 @@ class OfflineSyncService {
   }
 
   Future<void> _sincronizarProdutoCriar(OfflineOperation op) async {
-    await _client.from('farmacia_produtos').insert(op.dados);
+    await _insertIdempotente('farmacia_produtos', op.dados);
   }
 
   Future<void> _sincronizarMovimentacaoFarmacia(OfflineOperation op) async {
@@ -146,14 +146,23 @@ class OfflineSyncService {
   }
 
   Future<void> _sincronizarManejoCriar(OfflineOperation op) async {
-    await _client.from('manejos').insert(op.dados);
+    await _insertIdempotente('manejos', op.dados);
   }
 
   Future<void> _sincronizarManejoLote(OfflineOperation op) async {
     final itens = (op.dados['itens'] as List)
         .map((item) => Map<String, dynamic>.from(item as Map))
         .toList();
-    if (itens.isNotEmpty) await _client.from('manejos').insert(itens);
+    if (itens.isEmpty) return;
+    try {
+      await _client.from('manejos').insert(itens);
+    } catch (erro) {
+      for (final item in itens) {
+        final id = item['id'];
+        final existe = await _client.from('manejos').select('id').eq('id', id).maybeSingle();
+        if (existe == null) rethrow;
+      }
+    }
   }
 
   Future<void> _sincronizarManejoAtualizar(OfflineOperation op) async {
@@ -242,7 +251,23 @@ class OfflineSyncService {
   }
 
   Future<void> _sincronizarRebanhoCriar(OfflineOperation op) async {
-    await _client.from('rebanhos').insert(op.dados);
+    await _insertIdempotente('rebanhos', op.dados);
+  }
+
+  Future<void> _insertIdempotente(
+    String tabela,
+    Map<String, dynamic> dados,
+  ) async {
+    try {
+      await _client.from(tabela).insert(dados);
+    } catch (erro) {
+      final existe = await _client
+          .from(tabela)
+          .select('id')
+          .eq('id', dados['id'])
+          .maybeSingle();
+      if (existe == null) rethrow;
+    }
   }
 
   Future<void> _sincronizarRebanhoAtualizar(OfflineOperation op) async {
