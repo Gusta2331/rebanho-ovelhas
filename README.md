@@ -24,13 +24,18 @@ Instale as dependências:
 flutter pub get
 ```
 
-Execute informando a URL e a chave publicável do seu projeto Supabase:
+O endereço do projeto e a chave pública do Supabase ficam em
+`lib/core/config/supabase_config.dart`. O aplicativo usa somente a chave
+publicável (`sb_publishable_...`) ou a chave pública legada `anon`; nunca use a
+chave `service_role` no aplicativo.
+
+Execute o aplicativo:
 
 ```sh
-flutter run --dart-define=SUPABASE_URL=https://SEU-PROJETO.supabase.co --dart-define=SUPABASE_PUBLISHABLE_KEY=SUA_CHAVE_PUBLICAVEL
+flutter run
 ```
 
-Não grave chaves privadas ou `service_role` no aplicativo. O app deve receber somente a chave publicável, com as políticas de acesso do Supabase configuradas.
+As tabelas e políticas de acesso do Supabase devem estar configuradas para o projeto.
 
 ## Banco de dados
 
