@@ -75,8 +75,8 @@ create or replace function public.sincronizar_manejo_programado(
   p_tipo text,
   p_data_programada date,
   p_observacoes text,
-  p_outro_nome text default null,
   p_animal_ids uuid[],
+  p_outro_nome text default null,
   p_vacina_id uuid default null,
   p_vacina_nome text default null,
   p_vacina_fabricante text default null,
@@ -138,4 +138,4 @@ end;
 $$;
 
 grant execute on function public.sincronizar_movimentacao_farmacia(uuid, uuid, uuid, text, numeric, date, uuid, uuid, text) to authenticated;
-grant execute on function public.sincronizar_manejo_programado(uuid, uuid, text, date, text, uuid[], uuid, text, text, numeric, text, numeric, text, date, integer, uuid, text, uuid, text) to authenticated;
+grant execute on function public.sincronizar_manejo_programado(uuid, uuid, text, date, text, uuid[], text, uuid, text, text, numeric, text, numeric, text, date, integer, uuid, text, uuid, text) to authenticated;
