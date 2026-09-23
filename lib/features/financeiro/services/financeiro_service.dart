@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/offline/connectivity_service.dart';
 import '../../../core/offline/offline_store.dart';
+import '../../../core/offline/offline_sync_service.dart';
 import '../../../core/services/supabase_service.dart';
 
 class FinanceiroService {
@@ -89,8 +90,9 @@ class FinanceiroService {
     if (categoria.trim().isEmpty) throw Exception('Informe a categoria.');
     if (valor <= 0) throw Exception('Informe um valor maior que zero.');
 
-    await _client.from('financeiro_lancamentos').insert({
-      'id': const Uuid().v4(),
+    final id = const Uuid().v4();
+    final dados = <String, dynamic>{
+      'id': id,
       'fazenda_id': fazendaId,
       'tipo': tipo,
       'categoria': categoria.trim(),
@@ -100,11 +102,28 @@ class FinanceiroService {
       'lote_id': loteId,
       'animal_id': animalId,
       'observacoes': observacoes?.trim().isEmpty == true ? null : observacoes?.trim(),
-    });
+    };
+
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'financeiro.criar', dados: dados,
+      );
+      return;
+    }
+
+    await _client.from('financeiro_lancamentos').insert(dados);
   }
 
   Future<void> excluir(String id) async {
     final fazendaId = await _fazendaId();
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'financeiro.excluir',
+        dados: {'id': id, 'fazenda_id': fazendaId},
+      );
+      return;
+    }
+
     await _client.from('financeiro_lancamentos').delete()
         .eq('id', id).eq('fazenda_id', fazendaId);
   }
