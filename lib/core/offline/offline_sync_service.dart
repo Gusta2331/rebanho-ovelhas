@@ -184,7 +184,7 @@ class OfflineSyncService {
     await _client.rpc('sincronizar_manejo_programado', params: {
       'p_id': d['id'], 'p_fazenda_id': d['fazenda_id'],
       'p_tipo': d['tipo'], 'p_data_programada': d['data_programada'],
-      'p_observacoes': d['observacoes'], 'p_animal_ids': d['animal_ids'],
+      'p_observacoes': d['observacoes'], 'p_animal_ids': d['animal_ids'], 'p_outro_nome': d['outro_nome'],
       'p_vacina_id': d['vacina_id'], 'p_vacina_nome': d['vacina_nome'],
       'p_vacina_fabricante': d['vacina_fabricante'], 'p_dose': d['dose'],
       'p_dose_unidade': d['dose_unidade'], 'p_peso_referencia_kg': d['peso_referencia_kg'],
