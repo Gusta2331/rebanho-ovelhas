@@ -18,6 +18,7 @@ import '../manejo/models/manejo.dart';
 import '../manejo/services/manejo_programado_service.dart';
 import '../farmacia/pages/farmacia_page.dart';
 import '../financeiro/pages/financeiro_page.dart';
+import '../financeiro/services/financeiro_service.dart';
 import '../more/mais_page.dart';
 import '../reproduction/pages/reproductions_page.dart';
 import 'widgets/animal_card.dart';
@@ -38,6 +39,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final AnimalService _animalService = AnimalService();
   final RebanhoService _rebanhoService = RebanhoService();
   final ManejoProgramadoService _manejoProgramadoService = ManejoProgramadoService();
+  final FinanceiroService _financeiroService = FinanceiroService();
 
   final RebanhoSelectionService _rebanhoSelectionService =
       RebanhoSelectionService.instance;
@@ -56,6 +58,8 @@ class _DashboardPageState extends State<DashboardPage> {
   int _totalMachos = 0;
   int _totalFemeasNaIdadeReproducao = 0;
   List<Map<String, dynamic>> _proximosManejos = [];
+  double _receitas = 0;
+  double _despesas = 0;
 
   @override
   void initState() {
@@ -135,6 +139,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       await _loadAnimals();
       await _loadProximosManejos();
+      await _loadFinanceiro();
     } catch (error) {
       if (!mounted) {
         return;
@@ -225,6 +230,28 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  Future<void> _loadFinanceiro() async {
+    final loteId = _rebanhoSelecionado?.id;
+    if (loteId == null) {
+      if (mounted) setState(() { _receitas = 0; _despesas = 0; });
+      return;
+    }
+    try {
+      final resumo = await _financeiroService.resumo(loteId: loteId);
+      if (!mounted) return;
+      setState(() {
+        _receitas = resumo['receitas'] ?? 0;
+        _despesas = resumo['despesas'] ?? 0;
+      });
+    } catch (_) {
+      if (mounted) setState(() { _receitas = 0; _despesas = 0; });
+    }
+  }
+
+  String _moeda(double valor) {
+    return 'R\\$ ' + valor.toStringAsFixed(2).replaceAll('.', ',');
+  }
+
   Future<void> _loadProximosManejos() async {
     final loteId = _rebanhoSelecionado?.id;
     if (loteId == null) {
@@ -311,6 +338,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     await _loadAnimals();
     await _loadProximosManejos();
+    await _loadFinanceiro();
   }
 
   Future<void> _abrirGerenciamentoRebanhos() async {
@@ -492,6 +520,8 @@ class _DashboardPageState extends State<DashboardPage> {
               _buildTotalCard(),
               const SizedBox(height: 16),
               _buildAnimalCards(),
+              const SizedBox(height: 16),
+              _buildFinanceiroResumo(),
               const SizedBox(height: 24),
               _buildSectionTitle('Ações rápidas'),
               const SizedBox(height: 12),
@@ -629,6 +659,44 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFinanceiroResumo() {
+    final saldo = _receitas - _despesas;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Icon(Icons.account_balance_wallet_outlined),
+              const SizedBox(width: 8),
+              const Expanded(child: Text('Resumo financeiro do lote', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold))),
+              Text(_moeda(saldo), style: TextStyle(fontWeight: FontWeight.bold, color: saldo >= 0 ? Colors.green.shade700 : Colors.red.shade700)),
+            ]),
+            const SizedBox(height: 14),
+            Wrap(spacing: 10, runSpacing: 10, children: [
+              _financeiroMiniCard('Receitas', _receitas, Colors.green),
+              _financeiroMiniCard('Despesas', _despesas, Colors.red),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _financeiroMiniCard(String titulo, double valor, Color cor) {
+    return Container(
+      width: 150,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: cor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(titulo, style: const TextStyle(fontSize: 12)),
+        const SizedBox(height: 4),
+        Text(_moeda(valor), style: TextStyle(fontWeight: FontWeight.bold, color: cor)),
+      ]),
     );
   }
 
