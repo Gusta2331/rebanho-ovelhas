@@ -2,6 +2,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/offline/connectivity_service.dart';
 import '../../../core/offline/offline_store.dart';
+import '../../../core/offline/offline_sync_service.dart';
+import 'package:uuid/uuid.dart';
 import '../../../core/services/supabase_service.dart';
 
 class RebanhoService {
@@ -154,6 +156,7 @@ class RebanhoService {
     }
 
     final dados = <String, dynamic>{
+      'id': const Uuid().v4(),
       'fazenda_id': fazendaId,
       'nome': nomeNormalizado,
       'descricao': _valorOuNull(descricao),
@@ -161,6 +164,16 @@ class RebanhoService {
       'localizacao': _valorOuNull(localizacao),
       'ativo': true,
     };
+
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'rebanho.criar', dados: dados,
+      );
+      return {
+        ...dados,
+        'quantidade_animais': 0,
+      };
+    }
 
     final resultado = await _client.from('rebanhos').insert(dados).select('''
           id,
@@ -207,6 +220,17 @@ class RebanhoService {
       'atualizado_em': DateTime.now().toUtc().toIso8601String(),
     };
 
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'rebanho.atualizar',
+        dados: {'id': id, 'fazenda_id': fazendaId, ...dados},
+      );
+      return {
+        'id': id, 'fazenda_id': fazendaId, ...dados,
+        'quantidade_animais': 0,
+      };
+    }
+
     final resultado = await _client
         .from('rebanhos')
         .update(dados)
@@ -240,11 +264,23 @@ class RebanhoService {
       throw Exception('Nenhuma fazenda ativa foi encontrada.');
     }
 
+    final atualizadoEm = DateTime.now().toUtc().toIso8601String();
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'rebanho.status',
+        dados: {
+          'id': id, 'fazenda_id': fazendaId,
+          'ativo': ativo, 'atualizado_em': atualizadoEm,
+        },
+      );
+      return;
+    }
+
     await _client
         .from('rebanhos')
         .update({
           'ativo': ativo,
-          'atualizado_em': DateTime.now().toUtc().toIso8601String(),
+          'atualizado_em': atualizadoEm,
         })
         .eq('id', id)
         .eq('fazenda_id', fazendaId);
