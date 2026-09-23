@@ -3,10 +3,21 @@ import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/offline/connectivity_service.dart';
+import '../../../core/offline/offline_store.dart';
 import '../../../core/services/supabase_service.dart';
 
 class AnimalService {
   SupabaseClient get _client => SupabaseService.client;
+  final OfflineStore _offlineStore = OfflineStore();
+  final ConnectivityService _connectivity = ConnectivityService.instance;
+
+  String _cacheKey(String usuarioId, String tipo, String? rebanhoId) {
+    final sufixo = rebanhoId ?? 'todos';
+    return 'animais_' + usuarioId + '_' + tipo + '_' + sufixo;
+  }
+
+  String _farmCacheKey(String usuarioId) => 'fazenda_id_' + usuarioId;
 
   Future<String?> _getMinhaFazendaId() async {
     final usuario = _client.auth.currentUser;
