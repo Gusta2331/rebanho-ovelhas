@@ -61,8 +61,14 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
 
-    _loadFarm();
-    _loadRebanhos();
+    _iniciarDashboard();
+  }
+
+  Future<void> _iniciarDashboard() async {
+    await _rebanhoSelectionService.restaurar();
+    if (!mounted) return;
+    await _loadFarm();
+    await _loadRebanhos();
   }
 
   Future<void> _loadFarm() async {
