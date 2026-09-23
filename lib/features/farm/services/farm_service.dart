@@ -1,10 +1,15 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/offline/connectivity_service.dart';
+import '../../../core/offline/offline_store.dart';
+
 import '../../../core/services/supabase_service.dart';
 import '../models/farm.dart';
 
 class FarmService {
   SupabaseClient get _client => SupabaseService.client;
+  final OfflineStore _offlineStore = OfflineStore();
+  final ConnectivityService _connectivity = ConnectivityService.instance;
 
   Future<Farm?> getMinhaFazenda() async {
     final usuario = _client.auth.currentUser;
@@ -13,18 +18,35 @@ class FarmService {
       return null;
     }
 
-    final resultado = await _client
-        .from('fazendas')
-        .select()
-        .eq('proprietario_id', usuario.id)
-        .eq('ativo', true)
-        .maybeSingle();
+    const chaveCache = 'fazenda_atual';
 
-    if (resultado == null) {
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache(chaveCache);
+      if (cache is Map) {
+        return Farm.fromMap(Map<String, dynamic>.from(cache));
+      }
       return null;
     }
 
-    return Farm.fromMap(resultado);
+    try {
+      final resultado = await _client
+          .from('fazendas')
+          .select()
+          .eq('proprietario_id', usuario.id)
+          .eq('ativo', true)
+          .maybeSingle();
+
+      if (resultado == null) return null;
+
+      await _offlineStore.salvarCache(chaveCache, resultado);
+      return Farm.fromMap(resultado);
+    } catch (_) {
+      final cache = await _offlineStore.lerCache(chaveCache);
+      if (cache is Map) {
+        return Farm.fromMap(Map<String, dynamic>.from(cache));
+      }
+      rethrow;
+    }
   }
 
   Future<Farm> criarFazenda({
