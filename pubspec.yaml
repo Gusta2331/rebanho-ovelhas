@@ -21,6 +21,7 @@ dependencies:
   supabase_flutter: ^2.17.2
   connectivity_plus: ^7.0.0
   flutter_launcher_icons: ^0.14.4
+  share_plus: ^13.3.0
 
 dev_dependencies:
   flutter_test:

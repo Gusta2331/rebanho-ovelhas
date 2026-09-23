@@ -318,6 +318,87 @@ class ManejoService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getManejosPorAnimal(
+    String animalId,
+  ) async {
+    final fazendaId = await _getMinhaFazendaId();
+    final cacheKey = 'manejos_animal_$animalId';
+    List<Map<String, dynamic>> registros = [];
+
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache(cacheKey);
+      if (cache is List) {
+        registros = cache
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
+      } else {
+        final todos = await getManejos();
+        registros = todos
+            .where((item) => item['animal_id']?.toString() == animalId)
+            .toList();
+      }
+    } else {
+      try {
+        const tamanhoPagina = 500;
+        var inicio = 0;
+        while (true) {
+          final pagina = await _client
+              .from('manejos')
+              .select('*')
+              .eq('fazenda_id', fazendaId)
+              .eq('animal_id', animalId)
+              .order('data', ascending: false)
+              .order('created_at', ascending: false)
+              .range(inicio, inicio + tamanhoPagina - 1);
+          final itens = List<Map<String, dynamic>>.from(pagina);
+          registros.addAll(itens);
+          if (itens.length < tamanhoPagina) break;
+          inicio += tamanhoPagina;
+        }
+      } catch (_) {
+        final cache = await _offlineStore.lerCache(cacheKey);
+        if (cache is List) {
+          registros = cache
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
+        } else {
+          rethrow;
+        }
+      }
+    }
+
+    final porId = <String, Map<String, dynamic>>{
+      for (final item in registros)
+        if (item['id'] != null) item['id'].toString(): item,
+    };
+    for (final operacao in await OfflineSyncService.instance.pendentes()) {
+      final itens = switch (operacao.tipo) {
+        'manejo.criar' => [operacao.dados],
+        'manejo.criar_lote' => (operacao.dados['itens'] as List? ?? const []),
+        _ => const <dynamic>[],
+      };
+      for (final item in itens) {
+        if (item is! Map || item['animal_id']?.toString() != animalId) {
+          continue;
+        }
+        final dados = Map<String, dynamic>.from(item);
+        final id = dados['id']?.toString();
+        if (id != null) porId[id] = dados;
+      }
+    }
+
+    registros = porId.values.toList()
+      ..sort(
+        (a, b) => (b['data']?.toString() ?? '').compareTo(
+          a['data']?.toString() ?? '',
+        ),
+      );
+    await _offlineStore.salvarCache(cacheKey, registros);
+    return registros;
+  }
+
   Future<Map<String, dynamic>> criarManejo({
     required String animalId,
     required TipoManejo tipo,

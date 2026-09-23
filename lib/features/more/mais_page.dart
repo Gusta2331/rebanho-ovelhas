@@ -8,6 +8,7 @@ import '../financeiro/pages/financeiro_page.dart';
 import 'configuracoes_page.dart';
 import '../manejo/pages/manejo_agenda_page.dart';
 import '../reproduction/pages/reproductions_page.dart';
+import '../reports/pages/reports_page.dart';
 
 class MaisPage extends StatelessWidget {
   const MaisPage({super.key});
@@ -38,6 +39,12 @@ class MaisPage extends StatelessWidget {
         titulo: 'Despesas e lucro',
         descricao: 'Receitas, despesas e saldo da fazenda ou por lote',
         onTap: () => _abrir(context, const FinanceiroPage()),
+      ),
+      _Item(
+        icon: Icons.assessment_outlined,
+        titulo: 'Relatórios',
+        descricao: 'Consulte o rebanho e exporte uma planilha para Excel',
+        onTap: () => _abrir(context, const ReportsPage()),
       ),
       _Item(
         icon: Icons.settings_outlined,
@@ -78,6 +85,10 @@ class MaisPage extends StatelessWidget {
               HelpTopic(
                 title: 'Configurações',
                 description: 'Consulte os dados da conta e da fazenda e acompanhe a sincronização.',
+              ),
+              HelpTopic(
+                title: 'Relatórios',
+                description: 'Consulte o rebanho, filtre os animais e exporte uma planilha compatível com Excel.',
               ),
             ],
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../services/farm_service.dart';
 
 class FarmSetupPage extends StatefulWidget {
@@ -106,6 +107,23 @@ class _FarmSetupPageState extends State<FarmSetupPage> {
       appBar: AppBar(
         title: const Text('Minha fazenda'),
         automaticallyImplyLeading: false,
+        actions: const [
+          ContextualHelpButton(
+            title: 'Cadastrar fazenda',
+            introduction: 'Cadastre os dados básicos da propriedade para organizar os lotes, animais e registros.',
+            topics: [
+              HelpTopic(
+                title: 'Dados necessários',
+                description: 'Informe o nome da fazenda. Cidade, estado e endereço ajudam a identificar a propriedade.',
+              ),
+              HelpTopic(
+                title: 'Depois do cadastro',
+                description:
+                    'Você poderá criar lotes e começar a cadastrar os animais.',
+              ),
+            ],
+          ),
+        ],
       ),
       body: SafeArea(
         child: Form(

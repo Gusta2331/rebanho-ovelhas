@@ -12,6 +12,43 @@ class AuthService {
     );
   }
 
+  Future<void> solicitarRecuperacaoSenha(String email) async {
+    await _client.auth.resetPasswordForEmail(email.trim());
+  }
+
+  Future<void> concluirRecuperacaoSenha({
+    required String email,
+    required String codigo,
+    required String novaSenha,
+  }) async {
+    final response = await _client.auth.verifyOTP(
+      email: email.trim(),
+      token: codigo.trim(),
+      type: OtpType.recovery,
+    );
+    if (response.session == null) {
+      throw const AuthException(
+        'O código de recuperação é inválido ou expirou.',
+      );
+    }
+    await _client.auth.updateUser(UserAttributes(password: novaSenha));
+    await _client.auth.signOut();
+  }
+
+  Future<void> alterarSenha({
+    required String senhaAtual,
+    required String novaSenha,
+  }) async {
+    final email = _client.auth.currentUser?.email;
+    if (email == null || email.isEmpty) {
+      throw const AuthException(
+        'Entre novamente na sua conta para alterar a senha.',
+      );
+    }
+    await _client.auth.signInWithPassword(email: email, password: senhaAtual);
+    await _client.auth.updateUser(UserAttributes(password: novaSenha));
+  }
+
   Future<bool> isLoggedIn() async {
     return _client.auth.currentSession != null;
   }

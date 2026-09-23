@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/contextual_help.dart';
+import '../../manejo/models/manejo.dart';
+import '../../manejo/services/manejo_service.dart';
+import '../../manejo/widgets/famacha_score_badge.dart';
 import '../../flock/pages/animal_transfer_page.dart';
 import '../../flock/pages/animal_transfer_history_page.dart';
 import '../../flock/services/rebanho_selection_service.dart';
@@ -34,6 +38,11 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
 
   final AnimalService _animalService = AnimalService();
   final AnimalVendaService _vendaService = AnimalVendaService();
+  final ManejoService _manejoService = ManejoService();
+
+  List<Manejo> _historicoManejos = [];
+  bool _carregandoManejos = true;
+  String? _erroManejos;
 
   AnimalVenda? _venda;
 
@@ -51,37 +60,229 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
     _carregarRebanhoAtual();
     _carregarAnimaisRelacionados();
     _carregarVenda();
+    _carregarHistoricoManejos();
+  }
+
+  Future<void> _carregarHistoricoManejos() async {
+    if (mounted) {
+      setState(() {
+        _carregandoManejos = true;
+        _erroManejos = null;
+      });
+    }
+    try {
+      final rows = await _manejoService.getManejosPorAnimal(_animal.id);
+      if (!mounted) return;
+      setState(() {
+        _historicoManejos = rows.map(Manejo.fromMap).toList();
+        _carregandoManejos = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _erroManejos = error.toString().replaceFirst('Exception: ', '');
+        _carregandoManejos = false;
+      });
+    }
+  }
+
+  Future<void> _atualizarFicha() async {
+    try {
+      final registros = await _animalService.getAnimaisPorIds([_animal.id]);
+      if (registros.isNotEmpty && mounted) {
+        final atualizado = Animal.fromMap(registros.first);
+        setState(() {
+          _animal = atualizado;
+          _animaisContexto = [
+            for (final animal in _animaisContexto)
+              if (animal.id != atualizado.id) animal,
+            atualizado,
+          ];
+        });
+      }
+    } catch (_) {
+      // Continue refreshing the history when animal details are unavailable.
+    }
+    await Future.wait([
+      _carregarHistoricoManejos(),
+      _carregarAnimaisRelacionados(),
+      _carregarVenda(),
+    ]);
+  }
+
+  List<Manejo> _manejosDoTipo(Set<TipoManejo> tipos) =>
+      _historicoManejos.where((manejo) => tipos.contains(manejo.tipo)).toList();
+
+  String _detalhesManejo(Manejo manejo) {
+    final partes = <String>[];
+    switch (manejo.tipo) {
+      case TipoManejo.vacinacao:
+        if (manejo.vacinaNome != null) partes.add(manejo.vacinaNome!);
+        if (manejo.vacinaFabricante != null) {
+          partes.add('Fabricante: ${manejo.vacinaFabricante}');
+        }
+        if (manejo.vacinaLote != null) partes.add('Lote: ${manejo.vacinaLote}');
+      case TipoManejo.vermifugacao:
+        if (manejo.vermifugoNome != null) partes.add(manejo.vermifugoNome!);
+        if (manejo.vermifugoPrincipioAtivo != null) {
+          partes.add('Princípio ativo: ${manejo.vermifugoPrincipioAtivo}');
+        }
+      case TipoManejo.tratamento:
+        if (manejo.medicamentoNome != null) partes.add(manejo.medicamentoNome!);
+        if (manejo.medicamentoPrincipioAtivo != null) {
+          partes.add('Princípio ativo: ${manejo.medicamentoPrincipioAtivo}');
+        }
+      case TipoManejo.tosquia:
+      case TipoManejo.outro:
+        if (manejo.outroNome != null) partes.add(manejo.outroNome!);
+      case TipoManejo.pesagem:
+        if (manejo.pesoKg != null) {
+          partes.add('${manejo.pesoKg!.toStringAsFixed(1)} kg');
+        }
+      case TipoManejo.famacha:
+        if (manejo.famachaEscore != null) {
+          partes.add('FAMACHA ${manejo.famachaEscore}');
+        }
+    }
+    if (manejo.dose != null) {
+      partes.add(
+        'Dose: ${manejo.dose}${manejo.doseUnidade == null ? '' : ' ${manejo.doseUnidade}'}',
+      );
+    }
+    if (manejo.observacoes != null) partes.add(manejo.observacoes!);
+    return partes.join(' · ');
+  }
+
+  String _tituloManejo(Manejo manejo) {
+    switch (manejo.tipo) {
+      case TipoManejo.vacinacao:
+        return 'Vacinação';
+      case TipoManejo.vermifugacao:
+        return 'Vermifugação';
+      case TipoManejo.tratamento:
+        return 'Tratamento';
+      case TipoManejo.tosquia:
+        return 'Tosquia';
+      case TipoManejo.pesagem:
+        return 'Pesagem';
+      case TipoManejo.famacha:
+        return 'Avaliação FAMACHA';
+      case TipoManejo.outro:
+        return manejo.outroNome ?? 'Outro manejo';
+    }
+  }
+
+  Widget _buildHistoricoSection({
+    required String title,
+    required IconData icon,
+    required List<Manejo> registros,
+  }) {
+    if (_carregandoManejos) {
+      return _buildSection(
+        title: title,
+        icon: icon,
+        children: const [
+          Padding(
+            padding: EdgeInsets.all(20),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        ],
+      );
+    }
+    if (_erroManejos != null) {
+      return _buildSection(
+        title: title,
+        icon: icon,
+        children: [
+          ListTile(
+            title: Text(_erroManejos!),
+            trailing: IconButton(
+              onPressed: _carregarHistoricoManejos,
+              icon: const Icon(Icons.refresh),
+            ),
+          ),
+        ],
+      );
+    }
+    if (registros.isEmpty) {
+      return _buildSection(
+        title: title,
+        icon: icon,
+        children: const [
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Text('Ainda não há registros para este animal.'),
+          ),
+        ],
+      );
+    }
+    return _buildSection(
+      title: title,
+      icon: icon,
+      children: [
+        for (final manejo in registros)
+          ListTile(
+            leading: CircleAvatar(
+              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.10),
+              child: Icon(icon, color: AppTheme.primaryColor, size: 20),
+            ),
+            title: Text(_tituloManejo(manejo)),
+            subtitle: Text(
+              [
+                _dataTexto(manejo.data),
+                _detalhesManejo(manejo),
+              ].where((text) => text.isNotEmpty).join(' · '),
+            ),
+            trailing:
+                manejo.tipo == TipoManejo.famacha &&
+                    manejo.famachaEscore != null
+                ? FamachaScoreBadge(score: manejo.famachaEscore!)
+                : null,
+          ),
+      ],
+    );
   }
 
   Future<void> _carregarAnimaisRelacionados() async {
-    final ids = <String>{
-      if (_animal.idMae != null && _animal.idMae!.isNotEmpty) _animal.idMae!,
-      if (_animal.idPai != null && _animal.idPai!.isNotEmpty) _animal.idPai!,
-    };
-
-    if (ids.isEmpty) {
-      return;
-    }
-
     try {
-      final registros = await _animalService.getAnimaisPorIds(ids.toList());
-      final relacionados = registros.map(Animal.fromMap).toList();
+      final porId = <String, Animal>{
+        for (final animal in _animaisContexto) animal.id: animal,
+      };
+      var geracao = <Animal>[_animal];
+      final visitados = <String>{_animal.id};
 
-      if (!mounted || relacionados.isEmpty) {
-        return;
+      // Load ancestors generation by generation so the tree can label and
+      // display grandparents and later generations from real records.
+      for (var nivel = 0; nivel < 8 && geracao.isNotEmpty; nivel++) {
+        final idsPais = <String>{};
+        for (final animal in geracao) {
+          final maeId = animal.idMae;
+          final paiId = animal.idPai;
+          if (maeId != null && maeId.isNotEmpty && visitados.add(maeId)) {
+            idsPais.add(maeId);
+          }
+          if (paiId != null && paiId.isNotEmpty && visitados.add(paiId)) {
+            idsPais.add(paiId);
+          }
+        }
+        if (idsPais.isEmpty) break;
+
+        final faltantes = idsPais
+            .where((id) => !porId.containsKey(id))
+            .toList();
+        if (faltantes.isNotEmpty) {
+          final registros = await _animalService.getAnimaisPorIds(faltantes);
+          for (final registro in registros) {
+            final relacionado = Animal.fromMap(registro);
+            porId[relacionado.id] = relacionado;
+          }
+        }
+        geracao = idsPais.map((id) => porId[id]).whereType<Animal>().toList();
+        if (geracao.isEmpty) break;
       }
 
-      setState(() {
-        final porId = <String, Animal>{
-          for (final animal in _animaisContexto) animal.id: animal,
-        };
-
-        for (final animal in relacionados) {
-          porId[animal.id] = animal;
-        }
-
-        _animaisContexto = porId.values.toList();
-      });
+      if (!mounted) return;
+      setState(() => _animaisContexto = porId.values.toList());
     } catch (_) {
       // Mantém os dados já carregados na tela caso a atualização dos
       // animais relacionados não esteja disponível momentaneamente.
@@ -119,11 +320,8 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
 
     final resultado = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (context) => AnimalSalePage(
-          animal: _animal,
-          loteId: loteId,
-          loteNome: loteNome,
-        ),
+        builder: (context) =>
+            AnimalSalePage(animal: _animal, loteId: loteId, loteNome: loteNome),
       ),
     );
 
@@ -131,7 +329,9 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
       return;
     }
 
-    final animaisAtualizados = await _animalService.getAnimaisPorIds([_animal.id]);
+    final animaisAtualizados = await _animalService.getAnimaisPorIds([
+      _animal.id,
+    ]);
 
     if (animaisAtualizados.isNotEmpty && mounted) {
       setState(() {
@@ -142,6 +342,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
     await _carregarVenda();
     _mostrarMensagem('Venda registrada com sucesso e lançada no financeiro.');
   }
+
   void _carregarRebanhoAtual() {
     final rebanho = _rebanhoSelectionService.rebanhoSelecionado;
 
@@ -282,7 +483,10 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
                   color: AppTheme.primaryColor,
                 ),
                 ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
                   leading: Container(
                     width: 44,
                     height: 44,
@@ -299,7 +503,9 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
                       color: AppTheme.textColor,
                     ),
                   ),
-                  subtitle: const Text('Registrar valor e lançar no financeiro'),
+                  subtitle: const Text(
+                    'Registrar valor e lançar no financeiro',
+                  ),
                   trailing: const Icon(
                     Icons.chevron_right_rounded,
                     color: Colors.black38,
@@ -574,6 +780,29 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          const ContextualHelpButton(
+            title: 'Ficha do animal',
+            introduction: 'Veja os dados, a família e os registros de saúde e manejo deste animal.',
+            topics: [
+              HelpTopic(
+                title: 'Histórico',
+                description: 'Vacinas, vermifugações, tratamentos, FAMACHA, pesagens e outros manejos aparecem nas seções abaixo.',
+              ),
+              HelpTopic(
+                title: 'Atualizar',
+                description: 'Use o botão de atualizar ou puxe a tela para baixo para buscar os registros mais recentes.',
+              ),
+              HelpTopic(
+                title: 'Família',
+                description: 'A árvore mostra pais, avós e descendentes conforme os vínculos cadastrados nos animais.',
+              ),
+            ],
+          ),
+          IconButton(
+            onPressed: _atualizarFicha,
+            tooltip: 'Atualizar ficha',
+            icon: const Icon(Icons.refresh),
+          ),
           IconButton(
             onPressed: _alterarStatus,
             tooltip: 'Alterar status',
@@ -592,152 +821,160 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-        children: [
-          _buildHeader(nome),
-          const SizedBox(height: 20),
+      body: RefreshIndicator(
+        onRefresh: _atualizarFicha,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          children: [
+            _buildHeader(nome),
+            const SizedBox(height: 20),
 
-          _buildSection(
-            title: 'Informações',
-            icon: Icons.info_outline,
-            children: [
-              _buildInfoRow(
-                icon: Icons.confirmation_number_outlined,
-                label: 'Brinco',
-                value: _animal.brinco,
-              ),
-              _buildInfoRow(
-                icon: _animal.sexo == SexoAnimal.femea
-                    ? Icons.female
-                    : Icons.male,
-                label: 'Sexo',
-                value: _sexoTexto(),
-              ),
-              _buildInfoRow(
-                icon: Icons.category_outlined,
-                label: 'Raça',
-                value: _animal.raca,
-              ),
-              _buildInfoRow(
-                icon: Icons.calendar_today_outlined,
-                label: 'Data de nascimento',
-                value: _dataTexto(_animal.dataNascimento),
-              ),
-              _buildInfoRow(
-                icon: Icons.cake_outlined,
-                label: 'Idade',
-                value: _idadeTexto(),
-              ),
-              _buildInfoRow(
-                icon: Icons.groups_outlined,
-                label: 'Rebanho atual',
-                value: _rebanhoAtualNome ?? 'Não identificado',
-              ),
-              _buildInfoRow(
-                icon: Icons.flag_outlined,
-                label: 'Status',
-                value: _statusTexto(),
-                valueColor: _statusCor(),
-              ),
-            ],
-          ),
+            _buildSection(
+              title: 'Informações',
+              icon: Icons.info_outline,
+              children: [
+                _buildInfoRow(
+                  icon: Icons.confirmation_number_outlined,
+                  label: 'Brinco',
+                  value: _animal.brinco,
+                ),
+                _buildInfoRow(
+                  icon: _animal.sexo == SexoAnimal.femea
+                      ? Icons.female
+                      : Icons.male,
+                  label: 'Sexo',
+                  value: _sexoTexto(),
+                ),
+                _buildInfoRow(
+                  icon: Icons.category_outlined,
+                  label: 'Raça',
+                  value: _animal.raca,
+                ),
+                _buildInfoRow(
+                  icon: Icons.calendar_today_outlined,
+                  label: 'Data de nascimento',
+                  value: _dataTexto(_animal.dataNascimento),
+                ),
+                _buildInfoRow(
+                  icon: Icons.cake_outlined,
+                  label: 'Idade',
+                  value: _idadeTexto(),
+                ),
+                _buildInfoRow(
+                  icon: Icons.groups_outlined,
+                  label: 'Rebanho atual',
+                  value: _rebanhoAtualNome ?? 'Não identificado',
+                ),
+                _buildInfoRow(
+                  icon: Icons.flag_outlined,
+                  label: 'Status',
+                  value: _statusTexto(),
+                  valueColor: _statusCor(),
+                ),
+              ],
+            ),
 
-          const SizedBox(height: 16),
-
-          _buildTransferCard(),
-
-          const SizedBox(height: 16),
-
-          _buildTransferHistoryCard(),
-
-          if (_venda != null) ...[
             const SizedBox(height: 16),
-            _buildVendaCard(),
-          ],
 
-          const SizedBox(height: 16),
+            _buildTransferCard(),
 
-          _buildSection(
-            title: 'Filiação',
-            icon: Icons.family_restroom_outlined,
-            children: [
-              _buildParentRow(
-                titulo: 'Mãe',
-                animal: _obterMae(),
-                sexo: SexoAnimal.femea,
-              ),
-              _buildParentRow(
-                titulo: 'Pai',
-                animal: _obterPai(),
-                sexo: SexoAnimal.macho,
-              ),
+            const SizedBox(height: 16),
+
+            _buildTransferHistoryCard(),
+
+            if (_venda != null) ...[
+              const SizedBox(height: 16),
+              _buildVendaCard(),
             ],
-          ),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          AnimalFamilyTree(animal: _animal, animais: widget.animais),
+            _buildSection(
+              title: 'Filiação',
+              icon: Icons.family_restroom_outlined,
+              children: [
+                _buildParentRow(
+                  titulo: 'Mãe',
+                  animal: _obterMae(),
+                  sexo: SexoAnimal.femea,
+                ),
+                _buildParentRow(
+                  titulo: 'Pai',
+                  animal: _obterPai(),
+                  sexo: SexoAnimal.macho,
+                ),
+              ],
+            ),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          AnimalDescendants(animal: _animal, animais: widget.animais),
+            AnimalFamilyTree(animal: _animal, animais: _animaisContexto),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-          _buildFutureSection(
-            title: 'Saúde',
-            icon: Icons.medical_services_outlined,
-            description:
-                'Vacinas, medicamentos, doenças, tratamentos e consultas.',
-          ),
+            AnimalDescendants(animal: _animal, animais: widget.animais),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-          _buildFutureSection(
-            title: 'Pesagens',
-            icon: Icons.monitor_weight_outlined,
-            description: 'Histórico de peso e evolução do animal.',
-          ),
+            _buildHistoricoSection(
+              title: 'Saúde',
+              icon: Icons.medical_services_outlined,
+              registros: _manejosDoTipo({
+                TipoManejo.vacinacao,
+                TipoManejo.vermifugacao,
+                TipoManejo.tratamento,
+                TipoManejo.famacha,
+              }),
+            ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-          _buildFutureSection(
-            title: 'Manejo',
-            icon: Icons.agriculture_outlined,
-            description: 'Registros de manejo e atividades realizadas.',
-          ),
+            _buildHistoricoSection(
+              title: 'Pesagens',
+              icon: Icons.monitor_weight_outlined,
+              registros: _manejosDoTipo({TipoManejo.pesagem}),
+            ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-          _buildFutureSection(
-            title: 'Financeiro',
-            icon: Icons.attach_money_rounded,
-            description: 'Custos, vendas, receitas e histórico financeiro.',
-          ),
+            _buildHistoricoSection(
+              title: 'Manejo',
+              icon: Icons.agriculture_outlined,
+              registros: _manejosDoTipo({TipoManejo.tosquia, TipoManejo.outro}),
+            ),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: 12),
 
-          SizedBox(
-            height: 54,
-            child: ElevatedButton.icon(
-              onPressed: _editarAnimal,
-              icon: const Icon(Icons.edit_outlined),
-              label: const Text(
-                'Editar informações',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+            _buildFutureSection(
+              title: 'Financeiro',
+              icon: Icons.attach_money_rounded,
+              description: 'O registro de venda aparece nesta ficha. Consulte “Despesas e lucro” para os demais lançamentos da fazenda.',
+            ),
+
+            const SizedBox(height: 24),
+
+            SizedBox(
+              height: 54,
+              child: ElevatedButton.icon(
+                onPressed: _editarAnimal,
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text(
+                  'Editar informações',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -759,24 +996,29 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
               ? Icons.scale_outlined
               : Icons.payments_outlined,
           label: 'Forma de venda',
-          value: venda.tipoVenda == TipoVendaAnimal.porKg ? 'Por kg' : 'Valor fechado',
+          value: venda.tipoVenda == TipoVendaAnimal.porKg
+              ? 'Por kg'
+              : 'Valor fechado',
         ),
         if (venda.pesoKg != null)
           _buildInfoRow(
             icon: Icons.monitor_weight_outlined,
             label: 'Peso na venda',
-            value: '${venda.pesoKg!.toStringAsFixed(2).replaceAll('.', ',')} kg',
+            value:
+                '${venda.pesoKg!.toStringAsFixed(2).replaceAll('.', ',')} kg',
           ),
         if (venda.precoPorKg != null)
           _buildInfoRow(
             icon: Icons.attach_money_rounded,
             label: 'Preço por kg',
-            value: 'R\$ ${venda.precoPorKg!.toStringAsFixed(2).replaceAll('.', ',')}',
+            value:
+                'R\$ ${venda.precoPorKg!.toStringAsFixed(2).replaceAll('.', ',')}',
           ),
         _buildInfoRow(
           icon: Icons.payments_outlined,
           label: 'Valor total',
-          value: 'R\$ ${venda.valorTotal.toStringAsFixed(2).replaceAll('.', ',')}',
+          value:
+              'R\$ ${venda.valorTotal.toStringAsFixed(2).replaceAll('.', ',')}',
           valueColor: AppTheme.primaryColor,
         ),
         if (venda.comprador != null)
@@ -794,6 +1036,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
       ],
     );
   }
+
   Widget _buildTransferCard() {
     final temRebanho = _rebanhoAtualId != null && _rebanhoAtualNome != null;
 

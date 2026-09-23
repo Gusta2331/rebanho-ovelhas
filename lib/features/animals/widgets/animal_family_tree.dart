@@ -215,9 +215,7 @@ class AnimalFamilyTree extends StatelessWidget {
             for (int i = geracoesAnteriores.length - 1; i >= 0; i--) ...[
               _buildGenerationTitle(
                 icon: Icons.arrow_downward_rounded,
-                title: _tituloGeracaoAnterior(
-                  geracoesAnteriores.length - 1 - i,
-                ),
+                title: _tituloGeracaoAnterior(i),
                 subtitle:
                     '${geracoesAnteriores[i].length} '
                     '${geracoesAnteriores[i].length == 1 ? 'animal' : 'animais'}',

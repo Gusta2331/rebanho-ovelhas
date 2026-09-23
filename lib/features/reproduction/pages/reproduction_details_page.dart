@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../models/monta.dart';
 import '../models/reproducao.dart';
@@ -297,6 +298,20 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
       appBar: AppBar(
         title: const Text('Detalhes da reprodução'),
         actions: [
+          const ContextualHelpButton(
+            title: 'Acompanhamento reprodutivo',
+            introduction: 'Consulte as coberturas, a previsão de parto e os nascimentos registrados.',
+            topics: [
+              HelpTopic(
+                title: 'Montas',
+                description: 'Adicione cada cobertura para manter o histórico dos reprodutores e matrizes.',
+              ),
+              HelpTopic(
+                title: 'Nascimento',
+                description: 'Quando os cordeiros nascerem, registre cada um para atualizar o rebanho e a filiação.',
+              ),
+            ],
+          ),
           IconButton(
             onPressed: _carregando ? null : _editar,
             tooltip: 'Editar',

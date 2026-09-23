@@ -7,6 +7,7 @@ import '../../core/widgets/contextual_help.dart';
 import '../auth/services/auth_service.dart';
 import '../farm/models/farm.dart';
 import '../farm/services/farm_service.dart';
+import 'change_password_dialog.dart';
 
 class ConfiguracoesPage extends StatefulWidget {
   const ConfiguracoesPage({super.key});
@@ -86,6 +87,18 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
     if (resultado != null && mounted) setState(() => _farm = resultado);
   }
 
+  Future<void> _alterarSenha() async {
+    final alterada = await showDialog<bool>(
+      context: context,
+      builder: (_) => const ChangePasswordDialog(),
+    );
+    if (alterada == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Senha alterada com sucesso.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,6 +148,19 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
                         _authService.currentUser?.email ??
                             'Sem e-mail disponível',
                       ),
+                    ),
+                  ),
+                  Card(
+                    child: ListTile(
+                      leading: const CircleAvatar(
+                        child: Icon(Icons.lock_outline),
+                      ),
+                      title: const Text('Alterar senha'),
+                      subtitle: const Text(
+                        'Atualize a senha usada para entrar no aplicativo',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _alterarSenha,
                     ),
                   ),
                   const SizedBox(height: 18),

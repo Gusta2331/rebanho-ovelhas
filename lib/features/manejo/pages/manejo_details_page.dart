@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/contextual_help.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
 import '../utils/famacha_scale.dart';
@@ -97,7 +98,26 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
     final registro = _registro;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalhes do manejo')),
+      appBar: AppBar(
+        title: const Text('Detalhes do manejo'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Detalhes do manejo',
+            introduction:
+                'Consulte o que foi registrado para os animais selecionados.',
+            topics: [
+              HelpTopic(
+                title: 'Registro',
+                description: 'Confira a data, o tipo de manejo, os animais, os produtos e as observações salvas.',
+              ),
+              HelpTopic(
+                title: 'FAMACHA',
+                description: 'A cor mostrada junto ao escore ajuda a localizar a classificação registrada.',
+              ),
+            ],
+          ),
+        ],
+      ),
       body: _carregando
           ? const Center(
               child: CircularProgressIndicator(color: AppTheme.primaryColor),

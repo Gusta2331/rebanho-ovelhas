@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../farm/pages/farm_check_page.dart';
+import 'password_recovery_dialog.dart';
 import 'services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -125,14 +126,16 @@ class _LoginPageState extends State<LoginPage> {
     return 'ERRO SUPABASE: ${error.message}';
   }
 
-  void _forgotPassword() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'A recuperação de senha será implementada posteriormente.',
-        ),
-      ),
+  Future<void> _forgotPassword() async {
+    final emailRecuperado = await showDialog<String>(
+      context: context,
+      builder: (_) =>
+          PasswordRecoveryDialog(initialEmail: _emailController.text.trim()),
     );
+    if (emailRecuperado != null && mounted) {
+      _emailController.text = emailRecuperado;
+      _passwordController.clear();
+    }
   }
 
   @override

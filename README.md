@@ -36,6 +36,19 @@ Não grave chaves privadas ou `service_role` no aplicativo. O app deve receber s
 
 As migrations em `supabase/migrations/` incluem o esquema adicional usado pelos módulos de manejo, vendas, farmácia, financeiro e sincronização offline. Aplique cada migration ao projeto Supabase antes de usar os fluxos correspondentes.
 
+## Recuperação de senha por código
+
+No painel do Supabase, abra **Authentication → Email Templates → Reset Password** e ajuste o conteúdo do e-mail para incluir `{{ .Token }}`. Exemplo:
+
+```html
+<h2>Recuperar senha do OviGestão</h2>
+<p>Use este código no aplicativo para criar uma nova senha:</p>
+<p>{{ .Token }}</p>
+<p>Se você não solicitou a recuperação, ignore este e-mail.</p>
+```
+
+O aplicativo valida o código de recuperação e permite cadastrar uma nova senha. Sem essa configuração, o template padrão pode enviar um link em vez do código numérico esperado pela tela.
+
 ## Verificação estática
 
 ```sh

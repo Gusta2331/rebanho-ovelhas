@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../services/reproducao_service.dart';
 
 class NascimentoFormPage extends StatefulWidget {
@@ -55,7 +56,25 @@ class _NascimentoFormPageState extends State<NascimentoFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Registrar nascimento')),
+      appBar: AppBar(
+        title: const Text('Registrar nascimento'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Registrar nascimento',
+            introduction: 'Adicione um cordeiro nascido nesta reprodução.',
+            topics: [
+              HelpTopic(
+                title: 'Identificação',
+                description: 'Informe o brinco, nome e sexo do cordeiro para incluí-lo no rebanho.',
+              ),
+              HelpTopic(
+                title: 'Data',
+                description: 'Registre a data real do nascimento para manter o histórico correto.',
+              ),
+            ],
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

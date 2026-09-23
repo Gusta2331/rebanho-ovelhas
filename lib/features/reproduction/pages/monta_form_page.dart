@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../models/monta.dart';
 import '../services/reproducao_service.dart';
@@ -111,6 +112,22 @@ class _MontaFormPageState extends State<MontaFormPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.monta == null ? 'Nova monta' : 'Editar monta'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Registrar monta',
+            introduction: 'Registre a cobertura e os animais envolvidos para acompanhar a reprodução.',
+            topics: [
+              HelpTopic(
+                title: 'Carneiro e matriz',
+                description: 'Selecione o reprodutor e a fêmea que participou da cobertura.',
+              ),
+              HelpTopic(
+                title: 'Data e observações',
+                description: 'Informe quando ocorreu e anote observações que ajudem no acompanhamento.',
+              ),
+            ],
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

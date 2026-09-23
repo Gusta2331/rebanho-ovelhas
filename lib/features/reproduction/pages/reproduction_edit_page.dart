@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../models/reproducao.dart';
 import '../services/reproducao_service.dart';
@@ -240,7 +241,25 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Editar reprodução')),
+      appBar: AppBar(
+        title: const Text('Editar reprodução'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Editar reprodução',
+            introduction: 'Atualize os dados da estação reprodutiva sem perder os registros de montas ou nascimentos.',
+            topics: [
+              HelpTopic(
+                title: 'Período e situação',
+                description: 'Revise as datas e a situação para manter a previsão e o acompanhamento em dia.',
+              ),
+              HelpTopic(
+                title: 'Histórico',
+                description: 'As montas e os cordeiros cadastrados continuam associados a esta reprodução.',
+              ),
+            ],
+          ),
+        ],
+      ),
       body: _carregando
           ? const Center(child: CircularProgressIndicator())
           : _erro != null

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/contextual_help.dart';
 import '../models/rebanho.dart';
 import '../services/rebanho_service.dart';
 
@@ -118,6 +119,22 @@ class _RebanhoFormPageState extends State<RebanhoFormPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_editando ? 'Editar lote' : 'Novo lote'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Organizar animais em lotes',
+            introduction: 'Use lotes para separar grupos de animais, como matrizes, cordeiros ou animais em engorda.',
+            topics: [
+              HelpTopic(
+                title: 'Nome e descrição',
+                description: 'Escolha um nome fácil de reconhecer e use a descrição para anotar a finalidade do lote.',
+              ),
+              HelpTopic(
+                title: 'Mover animais',
+                description: 'Após salvar, abra um animal para transferi-lo entre lotes quando necessário.',
+              ),
+            ],
+          ),
+        ],
       ),
       body: SafeArea(
         child: Form(
