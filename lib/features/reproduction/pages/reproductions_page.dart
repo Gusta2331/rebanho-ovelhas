@@ -443,6 +443,14 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
                   valor: _formatarData(reproducao.dataPrevisaoParto),
                 ),
               ],
+              if (reproducao.dataConfirmacaoPrenhez != null) ...[
+                const SizedBox(height: 10),
+                _buildInformacao(
+                  icone: Icons.verified_outlined,
+                  titulo: 'Prenhez confirmada',
+                  valor: _formatarData(reproducao.dataConfirmacaoPrenhez),
+                ),
+              ],
               if (reproducao.dataParto != null) ...[
                 const SizedBox(height: 10),
                 _buildInformacao(
