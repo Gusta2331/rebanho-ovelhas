@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/offline/connectivity_service.dart';
 import '../../../core/offline/offline_store.dart';
+import '../../../core/offline/offline_sync_service.dart';
 import '../../../core/services/supabase_service.dart';
 
 class AnimalService {
@@ -27,7 +28,13 @@ class AnimalService {
     }
 
     if (!_connectivity.isOnline) {
-      return await _offlineStore.lerCache(_farmCacheKey(usuario.id)) as String?;
+      final salva = await _offlineStore.lerCache(_farmCacheKey(usuario.id)) as String?;
+      if (salva != null) return salva;
+      final compartilhada = await _offlineStore.lerCache('rebanhos_fazenda_id') as String?;
+      if (compartilhada != null) {
+        await _offlineStore.salvarCache(_farmCacheKey(usuario.id), compartilhada);
+      }
+      return compartilhada;
     }
 
     try {
@@ -187,6 +194,31 @@ class AnimalService {
         .whereType<Map>()
         .map((item) => Map<String, dynamic>.from(item))
         .toList();
+  }
+
+  Future<void> _atualizarCacheAnimal(
+    Map<String, dynamic> animal, {
+    String? idAnterior,
+    String? rebanhoAnteriorId,
+  }) async {
+    final usuarioId = _client.auth.currentUser?.id;
+    if (usuarioId == null) return;
+    final id = animal['id']?.toString();
+    final rebanhos = <String?>{null, rebanhoAnteriorId, animal['rebanho_id']?.toString()};
+    for (final rebanhoId in rebanhos) {
+      for (final tipo in ['todos', 'ativos']) {
+        final chave = _cacheKey(usuarioId, tipo, rebanhoId);
+        final lista = await _lerAnimaisDoCache(chave);
+        lista.removeWhere((item) =>
+            item['id']?.toString() == id ||
+            (idAnterior != null && item['id']?.toString() == idAnterior));
+        final correspondeAoLote = rebanhoId == null ||
+            animal['rebanho_id']?.toString() == rebanhoId;
+        final correspondeAoTipo = tipo != 'ativos' || animal['status'] == 'ativo';
+        if (correspondeAoLote && correspondeAoTipo) lista.add(animal);
+        await _offlineStore.salvarCache(chave, lista);
+      }
+    }
   }
 
   Future<int> getTotalAnimaisAtivos({String? rebanhoId}) async {
@@ -354,30 +386,40 @@ class AnimalService {
       }
     }
 
-    final rebanhoValido = await _rebanhoPertenceAFazenda(
-      rebanhoId: rebanhoId,
-      fazendaId: fazendaId,
-    );
-
-    if (!rebanhoValido) {
-      throw Exception(
-        'O rebanho selecionado não pertence à fazenda atual ou está inativo.',
+    final online = _connectivity.isOnline;
+    if (online) {
+      final rebanhoValido = await _rebanhoPertenceAFazenda(
+        rebanhoId: rebanhoId,
+        fazendaId: fazendaId,
       );
+      if (!rebanhoValido) {
+        throw Exception('O rebanho selecionado não pertence à fazenda atual ou está inativo.');
+      }
+    } else {
+      final rebanhos = await _offlineStore.lerCache('rebanhos_ativos');
+      final existeRebanho = rebanhos is List && rebanhos.any((item) =>
+          item is Map && item['id']?.toString() == rebanhoId && item['fazenda_id']?.toString() == fazendaId);
+      if (!existeRebanho) {
+        throw Exception('Este lote não está salvo no aparelho. Conecte-se para atualizar os dados antes de cadastrar animais.');
+      }
     }
 
-    final disponivel = await brincoDisponivel(brinco: brinco);
-
+    final animaisCache = online ? const <Map<String, dynamic>>[] : await getTodosAnimais();
+    final disponivel = online
+        ? await brincoDisponivel(brinco: brinco)
+        : !animaisCache.any((item) =>
+            int.tryParse(item['brinco']?.toString() ?? '') == brinco);
     if (!disponivel) {
       throw Exception('O brinco $brinco já foi utilizado por outro animal.');
     }
 
-    final racaId = await _buscarRacaId(nome: raca, fazendaId: fazendaId);
+    final racaId = online ? await _buscarRacaId(nome: raca, fazendaId: fazendaId) : null;
 
     final animalId = const Uuid().v4();
 
     final fotoUrlFinal = await _resolverFotoParaSalvar(
-      fotoUrl: fotoUrl,
-      fotoPath: fotoPath,
+      fotoUrl: online ? fotoUrl : (fotoPath ?? fotoUrl),
+      fotoPath: online ? fotoPath : null,
       fazendaId: fazendaId,
       animalId: animalId,
     );
@@ -412,7 +454,21 @@ class AnimalService {
       'denticao_observacoes': denticaoObservacoes?.trim().isEmpty == true
           ? null
           : denticaoObservacoes?.trim(),
+      'raca': raca.trim(),
     };
+
+    if (!online) {
+      dados['foto_url'] = fotoPath ?? fotoUrl;
+      dados['foto_path'] = fotoPath;
+      dados['raca_nome'] = raca.trim();
+      dados['offline_pendente'] = true;
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'animal.criar',
+        dados: dados,
+      );
+      await _atualizarCacheAnimal(dados);
+      return dados;
+    }
 
     if (origem == 'comprado') {
       await _client.rpc(
@@ -486,6 +542,79 @@ class AnimalService {
       throw Exception('Nenhuma fazenda ativa foi encontrada.');
     }
 
+    if (origem != 'nascido' && origem != 'comprado') {
+      throw Exception('Origem do animal inválida.');
+    }
+    if (origem == 'comprado' &&
+        (dataAquisicao == null || valorAquisicao == null || valorAquisicao <= 0)) {
+      throw Exception('Informe a data e um valor de compra maior que zero.');
+    }
+
+    if (!_connectivity.isOnline) {
+      final animais = await getTodosAnimais();
+      Map<String, dynamic>? atual;
+      for (final item in animais) {
+        if (item['id']?.toString() == id) {
+          atual = item;
+          break;
+        }
+      }
+      if (atual == null) {
+        throw Exception('Este animal não está salvo no aparelho. Conecte-se à internet e tente novamente.');
+      }
+      if (animais.any((item) => item['id']?.toString() != id &&
+          int.tryParse(item['brinco']?.toString() ?? '') == brinco)) {
+        throw Exception('O brinco $brinco já foi utilizado por outro animal neste lote.');
+      }
+      final rebanhos = await _offlineStore.lerCache('rebanhos_ativos');
+      final destinoValido = rebanhos is List && rebanhos.any((item) =>
+          item is Map && item['id']?.toString() == rebanhoId && item['fazenda_id']?.toString() == fazendaId);
+      if (!destinoValido) {
+        throw Exception('O lote escolhido não está salvo no aparelho. Conecte-se para atualizar os dados antes de transferir o animal.');
+      }
+      final racaTexto = raca.trim();
+      final fotoLocal = fotoPath?.trim().isNotEmpty == true ? fotoPath!.trim() : fotoUrl;
+      final dadosLocais = <String, dynamic>{
+        ...atual,
+        'id': id,
+        'fazenda_id': fazendaId,
+        'rebanho_id': rebanhoId,
+        'brinco': brinco,
+        'nome': nome?.trim().isEmpty == true ? null : nome?.trim(),
+        'sexo': sexo,
+        'raca': racaTexto,
+        'raca_nome': racaTexto,
+        'racas': {'nome': racaTexto},
+        'data_nascimento': dataNascimento?.toIso8601String(),
+        'status': status,
+        'data_entrada': dataEntrada?.toIso8601String() ?? atual['data_entrada'],
+        'data_saida': dataSaida?.toIso8601String(),
+        'observacoes': observacoes?.trim().isEmpty == true ? null : observacoes?.trim(),
+        'foto_url': fotoLocal,
+        'foto_path': fotoLocal != null && !fotoLocal.startsWith('http') ? fotoLocal : null,
+        'mae_id': maeId,
+        'pai_id': paiId,
+        'origem': origem,
+        'data_aquisicao': origem == 'comprado' ? dataAquisicao?.toIso8601String().split('T').first : null,
+        'valor_aquisicao': origem == 'comprado' ? valorAquisicao : null,
+        'vendedor': origem == 'comprado' ? vendedor?.trim() : null,
+        'denticao': denticao,
+        'denticao_data': denticaoData?.toIso8601String().split('T').first,
+        'denticao_observacoes': denticaoObservacoes?.trim(),
+        'offline_pendente': true,
+      };
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'animal.atualizar',
+        dados: dadosLocais,
+      );
+      await _atualizarCacheAnimal(
+        dadosLocais,
+        idAnterior: id,
+        rebanhoAnteriorId: atual['rebanho_id']?.toString(),
+      );
+      return dadosLocais;
+    }
+
     final rebanhoValido = await _rebanhoPertenceAFazenda(
       rebanhoId: rebanhoId,
       fazendaId: fazendaId,
@@ -514,14 +643,6 @@ class AnimalService {
       fazendaId: fazendaId,
       animalId: id,
     );
-
-    if (origem != 'nascido' && origem != 'comprado') {
-      throw Exception('Origem do animal inválida.');
-    }
-    if (origem == 'comprado' &&
-        (dataAquisicao == null || valorAquisicao == null || valorAquisicao <= 0)) {
-      throw Exception('Informe a data e um valor de compra maior que zero.');
-    }
 
     final resultado = await _client.rpc(
       'atualizar_animal_com_origem',
@@ -561,11 +682,41 @@ class AnimalService {
     return Map<String, dynamic>.from(animal);
   }
 
-  Future<void> excluirAnimal(String id) async {
+  Future<bool> excluirAnimal(String id) async {
+    final fazendaId = await _getMinhaFazendaId();
+    if (fazendaId == null) throw Exception('Nenhuma fazenda ativa foi encontrada.');
     if (!_connectivity.isOnline) {
-      throw Exception('Conecte-se à internet para excluir o animal com segurança.');
+      final todos = await getTodosAnimais();
+      Map<String, dynamic>? animal;
+      for (final item in todos) {
+        if (item['id']?.toString() == id) {
+          animal = item;
+          break;
+        }
+      }
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'animal.excluir',
+        dados: {'id': id, 'fazenda_id': fazendaId},
+      );
+      await _removerAnimalDosCaches(id, animal?['rebanho_id']?.toString());
+      return false;
     }
     await _client.rpc('excluir_animal_e_historico', params: {'p_animal_id': id});
+    await _removerAnimalDosCaches(id);
+    return true;
+  }
+
+  Future<void> _removerAnimalDosCaches(String id, [String? rebanhoId]) async {
+    final usuarioId = _client.auth.currentUser?.id;
+    if (usuarioId == null) return;
+    for (final loteId in <String?>{null, rebanhoId}) {
+      for (final tipo in ['todos', 'ativos']) {
+        final chave = _cacheKey(usuarioId, tipo, loteId);
+        final lista = await _lerAnimaisDoCache(chave);
+        lista.removeWhere((item) => item['id']?.toString() == id);
+        await _offlineStore.salvarCache(chave, lista);
+      }
+    }
   }
 
   Future<String?> _resolverFotoParaSalvar({

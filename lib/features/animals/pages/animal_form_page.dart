@@ -559,6 +559,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       }
 
       final animalSalvo = Animal.fromMap(dadosSalvos);
+      final pendenteOffline = dadosSalvos['offline_pendente'] == true;
 
       if (!mounted) {
         return;
@@ -566,11 +567,11 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            animalAnterior == null
-                ? 'Animal cadastrado com sucesso.'
-                : 'Animal atualizado com sucesso.',
-          ),
+          content: Text(pendenteOffline
+              ? 'Salvo neste aparelho. Será sincronizado quando a internet voltar.'
+              : animalAnterior == null
+                  ? 'Animal cadastrado com sucesso.'
+                  : 'Animal atualizado com sucesso.'),
         ),
       );
 

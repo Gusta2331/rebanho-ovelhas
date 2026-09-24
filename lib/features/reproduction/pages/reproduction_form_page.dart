@@ -51,6 +51,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
 
   Future<void> _carregarAnimais() async {
     try {
+      await _animalService.getTodosAnimais();
       final animais = await _animalService.getAnimaisAtivos();
 
       if (!mounted) {

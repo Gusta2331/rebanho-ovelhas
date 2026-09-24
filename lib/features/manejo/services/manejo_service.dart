@@ -13,6 +13,10 @@ class ManejoService {
   final OfflineStore _offlineStore = OfflineStore();
   final ConnectivityService _connectivity = ConnectivityService.instance;
 
+  String _cacheManejos(String fazendaId) => 'manejos_$fazendaId';
+  String _cacheManejosAnimal(String fazendaId, String animalId) =>
+      'manejos_${fazendaId}_animal_$animalId';
+
   Future<String> _getMinhaFazendaId() async {
     if (_fazendaIdCache != null) return _fazendaIdCache!;
 
@@ -62,6 +66,12 @@ class ManejoService {
 
   Future<List<Map<String, dynamic>>> getVacinas() async {
     final fazendaId = await _getMinhaFazendaId();
+    final chaveCache = 'manejo_vacinas_$fazendaId';
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache(chaveCache);
+      if (cache is List) return cache.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+      return [];
+    }
 
     const padroes = [
       'Vacina contra clostridioses',
@@ -104,7 +114,9 @@ class ManejoService {
         .eq('ativo', true)
         .order('nome');
 
-    return List<Map<String, dynamic>>.from(resultado);
+    final lista = List<Map<String, dynamic>>.from(resultado);
+    await _offlineStore.salvarCache(chaveCache, lista);
+    return lista;
   }
 
   Future<Map<String, dynamic>> criarVacina({
@@ -142,6 +154,12 @@ class ManejoService {
 
   Future<List<Map<String, dynamic>>> getVermifugos() async {
     final fazendaId = await _getMinhaFazendaId();
+    final chaveCache = 'manejo_vermifugos_$fazendaId';
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache(chaveCache);
+      if (cache is List) return cache.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+      return [];
+    }
     var resultado = await _client
         .from('vermifugos')
         .select('*')
@@ -170,7 +188,9 @@ class ManejoService {
           .order('nome');
     }
 
-    return List<Map<String, dynamic>>.from(resultado);
+    final lista = List<Map<String, dynamic>>.from(resultado);
+    await _offlineStore.salvarCache(chaveCache, lista);
+    return lista;
   }
 
   Future<Map<String, dynamic>> criarVermifugo({
@@ -208,13 +228,21 @@ class ManejoService {
 
   Future<List<Map<String, dynamic>>> getMedicamentos() async {
     final fazendaId = await _getMinhaFazendaId();
+    final chaveCache = 'manejo_medicamentos_$fazendaId';
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache(chaveCache);
+      if (cache is List) return cache.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+      return [];
+    }
     final resultado = await _client
         .from('medicamentos')
         .select('*')
         .eq('fazenda_id', fazendaId)
         .eq('ativo', true)
         .order('nome');
-    return List<Map<String, dynamic>>.from(resultado);
+    final lista = List<Map<String, dynamic>>.from(resultado);
+    await _offlineStore.salvarCache(chaveCache, lista);
+    return lista;
   }
 
   Future<Map<String, dynamic>> criarMedicamento({
@@ -259,18 +287,53 @@ class ManejoService {
     if (animalIds.isEmpty) return {};
 
     final fazendaId = await _getMinhaFazendaId();
-    final resultado = await _client
-        .from('manejos')
-        .select('animal_id, peso_kg, data, created_at')
-        .eq('fazenda_id', fazendaId)
-        .inFilter('animal_id', animalIds)
-        .not('peso_kg', 'is', null)
-        .order('data', ascending: false)
-        .order('created_at', ascending: false);
-
     final pesos = <String, double>{};
+    final registros = <Map<String, dynamic>>[];
+    try {
+      if (_connectivity.isOnline) {
+        final resultado = await _client
+            .from('manejos')
+            .select('animal_id, peso_kg, data, created_at')
+            .eq('fazenda_id', fazendaId)
+            .inFilter('animal_id', animalIds)
+            .not('peso_kg', 'is', null)
+            .order('data', ascending: false)
+            .order('created_at', ascending: false);
+        registros.addAll(List<Map<String, dynamic>>.from(resultado));
+      }
+    } catch (_) {
+      // Usa os registros que já estão salvos localmente.
+    }
+    final cache = await _offlineStore.lerCache(_cacheManejos(fazendaId));
+    if (cache is List) {
+      registros.addAll(cache.whereType<Map>().map((item) => Map<String, dynamic>.from(item)));
+    }
+    final pendentes = await OfflineSyncService.instance.pendentes();
+    final excluidos = pendentes
+        .where((op) => op.tipo == 'manejo.excluir')
+        .map((op) => op.dados['id']?.toString())
+        .whereType<String>()
+        .toSet();
+    for (final op in pendentes) {
+      final itens = switch (op.tipo) {
+        'manejo.criar' => [op.dados],
+        'manejo.criar_lote' => (op.dados['itens'] as List? ?? const []),
+        _ => const <dynamic>[],
+      };
+      registros.addAll(itens.whereType<Map>()
+          .where((item) => !excluidos.contains(item['id']?.toString()))
+          .map((item) => Map<String, dynamic>.from(item)));
+    }
 
-    for (final item in resultado) {
+    registros.sort((a, b) {
+      final data = (b['data']?.toString() ?? '').compareTo(a['data']?.toString() ?? '');
+      if (data != 0) return data;
+      return (b['created_at']?.toString() ?? b['criado_em']?.toString() ?? '')
+          .compareTo(a['created_at']?.toString() ?? a['criado_em']?.toString() ?? '');
+    });
+
+    for (final item in registros) {
+      if (!animalIds.contains(item['animal_id']?.toString())) continue;
       final id = item['animal_id']?.toString();
       if (id == null || pesos.containsKey(id)) continue;
 
@@ -290,7 +353,7 @@ class ManejoService {
   Future<List<Map<String, dynamic>>> getManejos() async {
     final fazendaId = await _getMinhaFazendaId();
     if (!_connectivity.isOnline) {
-      final cache = await _offlineStore.lerCache('manejos');
+      final cache = await _offlineStore.lerCache(_cacheManejos(fazendaId));
       if (cache is List)
         return cache
             .whereType<Map>()
@@ -305,10 +368,10 @@ class ManejoService {
           .eq('fazenda_id', fazendaId)
           .order('data', ascending: false);
       final lista = List<Map<String, dynamic>>.from(resultado);
-      await _offlineStore.salvarCache('manejos', lista);
+      await _offlineStore.salvarCache(_cacheManejos(fazendaId), lista);
       return lista;
     } catch (_) {
-      final cache = await _offlineStore.lerCache('manejos');
+      final cache = await _offlineStore.lerCache(_cacheManejos(fazendaId));
       if (cache is List)
         return cache
             .whereType<Map>()
@@ -322,7 +385,7 @@ class ManejoService {
     String animalId,
   ) async {
     final fazendaId = await _getMinhaFazendaId();
-    final cacheKey = 'manejos_animal_$animalId';
+    final cacheKey = _cacheManejosAnimal(fazendaId, animalId);
     List<Map<String, dynamic>> registros = [];
 
     if (!_connectivity.isOnline) {
@@ -481,6 +544,7 @@ class ManejoService {
         tipo: 'manejo.criar',
         dados: dados,
       );
+      await _atualizarCacheManejo(dados);
       return dados;
     }
 
@@ -618,6 +682,9 @@ class ManejoService {
         tipo: 'manejo.criar_lote',
         dados: {'itens': dados},
       );
+      for (final item in dados) {
+        await _atualizarCacheManejo(item);
+      }
       return dados;
     }
 
@@ -737,6 +804,7 @@ class ManejoService {
         tipo: 'manejo.atualizar',
         dados: {'id': id, 'fazenda_id': fazendaId, ...dados},
       );
+      await _atualizarCacheManejo({'id': id, 'fazenda_id': fazendaId, ...dados});
       return;
     }
 
@@ -754,6 +822,27 @@ class ManejoService {
         tipo: 'manejo.excluir',
         dados: {'id': id, 'fazenda_id': fazendaId},
       );
+      final cache = await _offlineStore.lerCache(_cacheManejos(fazendaId));
+      if (cache is List) {
+        final anteriores = cache.whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .where((item) => item['id']?.toString() == id).toList();
+        final lista = cache.whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .where((item) => item['id']?.toString() != id).toList();
+      await _offlineStore.salvarCache(_cacheManejos(fazendaId), lista);
+        if (anteriores.isNotEmpty) {
+          final animalId = anteriores.first['animal_id']?.toString();
+          if (animalId != null) {
+            final chave = _cacheManejosAnimal(fazendaId, animalId);
+            final animalCache = await _offlineStore.lerCache(chave);
+            if (animalCache is List) {
+              await _offlineStore.salvarCache(chave, animalCache.whereType<Map>()
+                  .where((item) => item['id']?.toString() != id).toList());
+            }
+          }
+        }
+      }
       return;
     }
     await _client
@@ -761,6 +850,49 @@ class ManejoService {
         .delete()
         .eq('id', id)
         .eq('fazenda_id', fazendaId);
+  }
+
+  Future<void> _atualizarCacheManejo(Map<String, dynamic> registro) async {
+    final id = registro['id']?.toString();
+    final animalId = registro['animal_id']?.toString();
+    if (id == null || animalId == null) return;
+    final atualizado = Map<String, dynamic>.from(registro);
+    final usuarioId = _client.auth.currentUser?.id;
+    if (usuarioId != null) {
+      final animais = await _offlineStore.lerCache('animais_${usuarioId}_todos_todos');
+      if (animais is List) {
+        final correspondentes = animais.whereType<Map>()
+            .where((item) => item['id']?.toString() == animalId).toList();
+        if (correspondentes.isNotEmpty) {
+          atualizado['animais'] = {
+            'brinco': correspondentes.first['brinco'],
+            'nome': correspondentes.first['nome'],
+          };
+        }
+      }
+    }
+
+    final fazendaId = registro['fazenda_id']?.toString();
+    if (fazendaId == null) return;
+    final cacheKey = _cacheManejos(fazendaId);
+    final cache = await _offlineStore.lerCache(cacheKey);
+    final lista = cache is List
+        ? cache.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
+        : <Map<String, dynamic>>[];
+    lista.removeWhere((item) => item['id']?.toString() == id);
+    lista.add(atualizado);
+    lista.sort((a, b) => (b['data']?.toString() ?? '').compareTo(a['data']?.toString() ?? ''));
+    await _offlineStore.salvarCache(cacheKey, lista);
+
+    final chaveAnimal = _cacheManejosAnimal(fazendaId, animalId);
+    final cacheAnimal = await _offlineStore.lerCache(chaveAnimal);
+    final listaAnimal = cacheAnimal is List
+        ? cacheAnimal.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
+        : <Map<String, dynamic>>[];
+    listaAnimal.removeWhere((item) => item['id']?.toString() == id);
+    listaAnimal.add(atualizado);
+    listaAnimal.sort((a, b) => (b['data']?.toString() ?? '').compareTo(a['data']?.toString() ?? ''));
+    await _offlineStore.salvarCache(chaveAnimal, listaAnimal);
   }
 
   Future<void> _validarAnimal(String animalId, String fazendaId) async {

@@ -329,11 +329,13 @@ class _AnimalsPageState extends State<AnimalsPage> {
     }
 
     try {
-      await AnimalService().excluirAnimal(animal.id);
+      final excluidoNoServidor = await AnimalService().excluirAnimal(animal.id);
       await _carregarAnimais();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Animal ${animal.brinco} e seus registros vinculados foram excluídos.')),
+          SnackBar(content: Text(excluidoNoServidor
+              ? 'Animal ${animal.brinco} e seus registros vinculados foram excluídos.'
+              : 'Exclusão do animal ${animal.brinco} salva neste aparelho e será concluída quando a internet voltar.')),
         );
       }
     } catch (error) {

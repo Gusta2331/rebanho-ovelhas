@@ -9,6 +9,7 @@ import '../../reproduction/pages/reproduction_form_page.dart';
 import '../../flock/pages/animal_transfer_page.dart';
 import '../../flock/pages/animal_transfer_history_page.dart';
 import '../../flock/services/rebanho_selection_service.dart';
+import '../../flock/services/rebanho_service.dart';
 import '../models/animal.dart';
 import '../services/animal_service.dart';
 import '../models/animal_venda.dart';
@@ -320,14 +321,14 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
       return;
     }
 
-    final resultado = await Navigator.of(context).push<bool>(
+    final resultado = await Navigator.of(context).push<String>(
       MaterialPageRoute(
         builder: (context) =>
             AnimalSalePage(animal: _animal, loteId: loteId, loteNome: loteNome),
       ),
     );
 
-    if (resultado != true || !mounted) {
+    if (resultado == null || !mounted) {
       return;
     }
 
@@ -346,7 +347,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
   }
 
   Future<void> _iniciarReproducao() async {
-    final resultado = await Navigator.of(context).push<bool>(
+    final resultado = await Navigator.of(context).push<String>(
       MaterialPageRoute(
         builder: (_) => ReproductionFormPage(initialMaeId: _animal.id),
       ),
@@ -409,7 +410,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
       return;
     }
 
-    final resultado = await Navigator.of(context).push<bool>(
+    final resultado = await Navigator.of(context).push<String>(
       MaterialPageRoute(
         builder: (context) => AnimalTransferPage(
           animalId: _animal.id,
@@ -420,20 +421,31 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
       ),
     );
 
-    if (resultado != true || !mounted) {
+    if (resultado == null || !mounted) {
       return;
     }
 
+    final resultadoPartes = resultado.split(':');
+    final rebanhoDestinoId = resultadoPartes.length > 1 ? resultadoPartes[1] : null;
     final rebanhoSelecionado = _rebanhoSelectionService.rebanhoSelecionado;
 
-    if (rebanhoSelecionado != null && rebanhoSelecionado.id != rebanhoId) {
+    if (rebanhoDestinoId != null) {
+      final rebanhos = await RebanhoService().getRebanhos(somenteAtivos: true);
+      final destino = rebanhos.where((item) => item['id']?.toString() == rebanhoDestinoId).toList();
+      setState(() {
+        _rebanhoAtualId = rebanhoDestinoId;
+        _rebanhoAtualNome = destino.isNotEmpty ? destino.first['nome']?.toString() : _rebanhoAtualNome;
+      });
+    } else if (rebanhoSelecionado != null && rebanhoSelecionado.id != rebanhoId) {
       setState(() {
         _rebanhoAtualId = rebanhoSelecionado.id;
         _rebanhoAtualNome = rebanhoSelecionado.nome;
       });
     }
 
-    _mostrarMensagem('Animal transferido com sucesso.');
+    _mostrarMensagem(resultado.startsWith('pendente:')
+        ? 'Transferência salva neste aparelho e será sincronizada quando a internet voltar.'
+        : 'Animal transferido com sucesso.');
   }
 
   Future<void> _abrirHistoricoTransferencias() async {

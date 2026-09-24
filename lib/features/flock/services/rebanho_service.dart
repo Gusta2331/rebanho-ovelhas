@@ -169,10 +169,12 @@ class RebanhoService {
       await OfflineSyncService.instance.enfileirar(
         tipo: 'rebanho.criar', dados: dados,
       );
-      return {
+      final local = {
         ...dados,
         'quantidade_animais': 0,
       };
+      await _atualizarCacheRebanho(local);
+      return local;
     }
 
     final resultado = await _client.from('rebanhos').insert(dados).select('''
@@ -225,10 +227,12 @@ class RebanhoService {
         tipo: 'rebanho.atualizar',
         dados: {'id': id, 'fazenda_id': fazendaId, ...dados},
       );
-      return {
+      final local = {
         'id': id, 'fazenda_id': fazendaId, ...dados,
         'quantidade_animais': 0,
       };
+      await _atualizarCacheRebanho(local);
+      return local;
     }
 
     final resultado = await _client
@@ -273,6 +277,17 @@ class RebanhoService {
           'ativo': ativo, 'atualizado_em': atualizadoEm,
         },
       );
+      final rebanhos = await getRebanhos();
+      Map<String, dynamic>? atual;
+      for (final item in rebanhos) {
+        if (item['id']?.toString() == id) {
+          atual = item;
+          break;
+        }
+      }
+      if (atual != null) {
+        await _atualizarCacheRebanho({...atual, 'ativo': ativo, 'atualizado_em': atualizadoEm});
+      }
       return;
     }
 
@@ -298,5 +313,20 @@ class RebanhoService {
     }
 
     return texto;
+  }
+
+  Future<void> _atualizarCacheRebanho(Map<String, dynamic> rebanho) async {
+    final id = rebanho['id']?.toString();
+    for (final chave in ['rebanhos_todos', 'rebanhos_ativos']) {
+      final atual = await _offlineStore.lerCache(chave);
+      final lista = atual is List
+          ? atual.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
+          : <Map<String, dynamic>>[];
+      lista.removeWhere((item) => item['id']?.toString() == id);
+      if (chave == 'rebanhos_todos' || rebanho['ativo'] == true) {
+        lista.add(Map<String, dynamic>.from(rebanho));
+      }
+      await _offlineStore.salvarCache(chave, lista);
+    }
   }
 }

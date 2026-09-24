@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -133,9 +134,150 @@ class OfflineSyncService {
     registrarHandler('rebanho.atualizar', _sincronizarRebanhoAtualizar);
     registrarHandler('rebanho.status', _sincronizarRebanhoStatus);
     registrarHandler('animal.venda', _sincronizarVendaAnimal);
+    registrarHandler('animal.criar', _sincronizarAnimalCriar);
+    registrarHandler('animal.atualizar', _sincronizarAnimalAtualizar);
+    registrarHandler('animal.excluir', _sincronizarAnimalExcluir);
+    registrarHandler('animal.transferir', _sincronizarTransferenciaAnimal);
+    registrarHandler('reproducao.criar', _sincronizarReproducaoCriar);
+    registrarHandler('reproducao.atualizar', _sincronizarReproducaoAtualizar);
+    registrarHandler('reproducao.nascimento', _sincronizarReproducaoNascimento);
+    registrarHandler('reproducao.monta', _sincronizarReproducaoMonta);
   }
 
   SupabaseClient get _client => Supabase.instance.client;
+
+  Future<String?> _enviarFotoAnimal(Map<String, dynamic> dados) async {
+    final caminho = dados['foto_path']?.toString().trim();
+    if (caminho == null || caminho.isEmpty) {
+      final url = dados['foto_url']?.toString().trim();
+      return url == null || url.isEmpty || !url.startsWith('http') ? null : url;
+    }
+    if (caminho.startsWith('http://') || caminho.startsWith('https://')) return caminho;
+    final arquivo = File(caminho);
+    if (!await arquivo.exists()) throw Exception('A foto local do animal não está mais disponível para sincronizar.');
+    final extensao = caminho.split('.').last.toLowerCase();
+    final contentType = switch (extensao) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      'heic' => 'image/heic',
+      _ => 'image/jpeg',
+    };
+    final fazendaId = dados['fazenda_id'].toString();
+    final animalId = dados['id'].toString();
+    final destino = '$fazendaId/$animalId.$extensao';
+    await _client.storage.from('animal-fotos').upload(
+      destino, arquivo,
+      fileOptions: FileOptions(contentType: contentType, upsert: true),
+    );
+    return _client.storage.from('animal-fotos').getPublicUrl(destino);
+  }
+
+  Future<String?> _obterOuCriarRaca(String fazendaId, String? nome) async {
+    final texto = nome?.trim() ?? '';
+    if (texto.isEmpty) return null;
+    final encontrada = await _client.from('racas').select('id')
+        .eq('fazenda_id', fazendaId).eq('nome', texto).eq('ativo', true).maybeSingle();
+    if (encontrada != null) return encontrada['id']?.toString();
+    final criada = await _client.from('racas').insert({
+      'id': const Uuid().v4(), 'fazenda_id': fazendaId, 'nome': texto, 'ativo': true,
+    }).select('id').single();
+    return criada['id']?.toString();
+  }
+
+  Future<void> _sincronizarAnimalCriar(OfflineOperation operation) async {
+    final dados = Map<String, dynamic>.from(operation.dados);
+    dados['foto_url'] = await _enviarFotoAnimal(dados);
+    dados.remove('foto_path');
+    await _client.rpc('sincronizar_animal', params: {'p_dados': dados});
+  }
+
+  Future<void> _sincronizarAnimalAtualizar(OfflineOperation operation) async {
+    final dados = Map<String, dynamic>.from(operation.dados);
+    final fazendaId = dados['fazenda_id'].toString();
+    final racaId = await _obterOuCriarRaca(fazendaId, dados['raca_nome']?.toString());
+    dados['foto_url'] = await _enviarFotoAnimal(dados);
+    await _client.rpc('atualizar_animal_com_origem', params: {
+      'p_animal_id': dados['id'],
+      'p_rebanho_id': dados['rebanho_id'],
+      'p_brinco': dados['brinco'],
+      'p_nome': dados['nome'],
+      'p_sexo': dados['sexo'],
+      'p_raca_id': racaId,
+      'p_data_nascimento': dados['data_nascimento'],
+      'p_status': dados['status'],
+      'p_data_entrada': dados['data_entrada'],
+      'p_data_saida': dados['data_saida'],
+      'p_observacoes': dados['observacoes'],
+      'p_foto_url': dados['foto_url'],
+      'p_mae_id': dados['mae_id'],
+      'p_pai_id': dados['pai_id'],
+      'p_origem': dados['origem'],
+      'p_data_aquisicao': dados['data_aquisicao'],
+      'p_valor_aquisicao': dados['valor_aquisicao'],
+      'p_vendedor': dados['vendedor'],
+      'p_denticao': dados['denticao'],
+      'p_denticao_data': dados['denticao_data'],
+      'p_denticao_observacoes': dados['denticao_observacoes'],
+    });
+  }
+
+  Future<void> _sincronizarAnimalExcluir(OfflineOperation operation) async {
+    await _client.rpc('excluir_animal_e_historico', params: {
+      'p_animal_id': operation.dados['id'],
+    });
+  }
+
+  Future<void> _sincronizarReproducaoCriar(OfflineOperation operation) async {
+    await _insertIdempotente('reproducoes', operation.dados);
+  }
+
+  Future<void> _sincronizarReproducaoAtualizar(OfflineOperation operation) async {
+    final dados = Map<String, dynamic>.from(operation.dados);
+    final id = dados.remove('id');
+    final fazendaId = dados.remove('fazenda_id');
+    await _client.from('reproducoes').update(dados)
+        .eq('id', id).eq('fazenda_id', fazendaId);
+  }
+
+  Future<void> _sincronizarReproducaoNascimento(OfflineOperation operation) async {
+    final dados = Map<String, dynamic>.from(operation.dados);
+    final fazendaId = dados.remove('fazenda_id');
+    await _insertIdempotente('reproducao_nascimentos', dados);
+    await _client.from('reproducoes').update({
+      'data_parto': dados['data_nascimento'],
+      'status': 'parto_realizado',
+      'atualizado_em': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', dados['reproducao_id']).eq('fazenda_id', fazendaId);
+  }
+
+  Future<void> _sincronizarReproducaoMonta(OfflineOperation operation) async {
+    final dados = Map<String, dynamic>.from(operation.dados);
+    final fazendaId = dados.remove('fazenda_id');
+    await _insertIdempotente('reproducao_coberturas', dados);
+    final reproducao = await _client.from('reproducoes')
+        .select('status, data_cobertura, data_previsao_parto')
+        .eq('id', dados['reproducao_id']).eq('fazenda_id', fazendaId).maybeSingle();
+    if (reproducao != null && reproducao['status'] == 'planejada') {
+      await _client.from('reproducoes').update({
+        'status': 'coberta',
+        if (reproducao['data_cobertura'] == null) 'data_cobertura': dados['data_cobertura'],
+        if (reproducao['data_previsao_parto'] == null)
+          'data_previsao_parto': DateTime.parse(dados['data_cobertura'].toString())
+              .add(const Duration(days: 150)).toIso8601String().split('T').first,
+        'atualizado_em': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', dados['reproducao_id']).eq('fazenda_id', fazendaId);
+    }
+  }
+
+  Future<void> _sincronizarTransferenciaAnimal(OfflineOperation operation) async {
+    final dados = Map<String, dynamic>.from(operation.dados);
+    final fazendaId = dados['fazenda_id'];
+    await _insertIdempotente('animal_transferencias', dados);
+    await _client.from('animais').update({
+      'rebanho_id': dados['rebanho_destino_id'],
+      'atualizado_em': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', dados['animal_id']).eq('fazenda_id', fazendaId);
+  }
 
   Future<void> _sincronizarFinanceiroCriar(OfflineOperation op) async {
     await _insertIdempotente('financeiro_lancamentos', op.dados);

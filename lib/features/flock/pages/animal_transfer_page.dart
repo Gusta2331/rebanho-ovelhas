@@ -102,7 +102,7 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
     });
 
     try {
-      await _transferService.transferirAnimal(
+      final pendente = await _transferService.transferirAnimal(
         animalId: widget.animalId,
         rebanhoOrigemId: widget.rebanhoAtualId,
         rebanhoDestinoId: destinoId,
@@ -113,7 +113,8 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
         return;
       }
 
-      Navigator.of(context).pop(true);
+      final status = pendente ? 'pendente' : 'concluida';
+      Navigator.of(context).pop('$status:$destinoId');
     } catch (e) {
       if (!mounted) {
         return;

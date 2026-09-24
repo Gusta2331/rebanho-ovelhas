@@ -1,5 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../../core/offline/connectivity_service.dart';
+import '../../../core/offline/offline_store.dart';
+import '../../../core/offline/offline_sync_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../models/monta.dart';
 import '../models/reproducao.dart';
@@ -8,6 +12,8 @@ import '../../animals/services/animal_service.dart';
 
 class ReproducaoService {
   SupabaseClient get _client => SupabaseService.client;
+  final ConnectivityService _connectivity = ConnectivityService.instance;
+  final OfflineStore _offlineStore = OfflineStore();
 
   Future<String?> _getMinhaFazendaId() async {
     final usuario = _client.auth.currentUser;
@@ -16,6 +22,11 @@ class ReproducaoService {
       throw Exception('Usuário não autenticado.');
     }
 
+    if (!_connectivity.isOnline) {
+      final fazendaSalva = await _offlineStore.lerCache('fazenda_id_${usuario.id}') as String?;
+      if (fazendaSalva != null) return fazendaSalva;
+      return await _offlineStore.lerCache('rebanhos_fazenda_id') as String?;
+    }
     final fazenda = await _client
         .from('fazendas')
         .select('id')
@@ -23,7 +34,9 @@ class ReproducaoService {
         .eq('ativo', true)
         .maybeSingle();
 
-    return fazenda?['id'] as String?;
+    final id = fazenda?['id'] as String?;
+    if (id != null) await _offlineStore.salvarCache('fazenda_id_${usuario.id}', id);
+    return id;
   }
 
   // ============================================================
@@ -35,6 +48,13 @@ class ReproducaoService {
 
     if (fazendaId == null) {
       return [];
+    }
+
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache('reproducoes_$fazendaId');
+      if (cache is! List) return [];
+      return cache.whereType<Map>().map((item) =>
+          Reproducao.fromMap(Map<String, dynamic>.from(item))).toList();
     }
 
     final resultado = await _client
@@ -55,15 +75,28 @@ class ReproducaoService {
         .eq('fazenda_id', fazendaId)
         .order('criado_em', ascending: false);
 
-    return resultado
+    final lista = resultado
         .map((item) => Reproducao.fromMap(Map<String, dynamic>.from(item)))
         .toList();
+    await _offlineStore.salvarCache(
+      'reproducoes_$fazendaId',
+      lista.map((item) => item.toMap()).toList(),
+    );
+    return lista;
   }
 
   Future<Reproducao?> getReproducaoPorId(String reproducaoId) async {
     final fazendaId = await _getMinhaFazendaId();
 
     if (fazendaId == null) {
+      return null;
+    }
+
+    if (!_connectivity.isOnline) {
+      final lista = await getReproducoes();
+      for (final item in lista) {
+        if (item.id == reproducaoId) return item;
+      }
       return null;
     }
 
@@ -109,6 +142,39 @@ class ReproducaoService {
 
     if (paiId != null && maeId == paiId) {
       throw Exception('A mãe e o pai precisam ser animais diferentes.');
+    }
+
+    if (!_connectivity.isOnline) {
+      final animais = await AnimalService().getAnimaisAtivos();
+      Map<String, dynamic>? mae;
+      for (final item in animais) {
+        if (item['id']?.toString() == maeId) {
+          mae = item;
+          break;
+        }
+      }
+      if (mae == null || mae['sexo']?.toString() != 'femea') {
+        throw Exception('A mãe precisa estar salva no aparelho como fêmea.');
+      }
+      if (paiId != null && !animais.any((item) => item['id']?.toString() == paiId && item['sexo']?.toString() == 'macho')) {
+        throw Exception('O pai precisa estar salvo no aparelho como macho.');
+      }
+      final dadosLocais = {
+        'id': const Uuid().v4(),
+        'fazenda_id': fazendaId,
+        'mae_id': maeId,
+        'pai_id': paiId,
+        'data_cobertura': _dateOnlyOrNull(dataCobertura),
+        'data_previsao_parto': _dateOnlyOrNull(dataPrevisaoParto),
+        'data_parto': null,
+        'status': status,
+        'observacoes': _valorOuNull(observacoes),
+        'criado_em': DateTime.now().toUtc().toIso8601String(),
+        'atualizado_em': DateTime.now().toUtc().toIso8601String(),
+      };
+      await OfflineSyncService.instance.enfileirar(tipo: 'reproducao.criar', dados: dadosLocais);
+      await _adicionarReproducaoAoCache(fazendaId, dadosLocais);
+      return Reproducao.fromMap(dadosLocais);
     }
 
     final mae = await _client
@@ -172,6 +238,16 @@ class ReproducaoService {
     return Reproducao.fromMap(Map<String, dynamic>.from(resultado));
   }
 
+  Future<void> _adicionarReproducaoAoCache(String fazendaId, Map<String, dynamic> dados) async {
+    final cache = await _offlineStore.lerCache('reproducoes_$fazendaId');
+    final lista = cache is List
+        ? cache.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
+        : <Map<String, dynamic>>[];
+    lista.removeWhere((item) => item['id']?.toString() == dados['id']?.toString());
+    lista.add(Map<String, dynamic>.from(dados));
+    await _offlineStore.salvarCache('reproducoes_$fazendaId', lista);
+  }
+
   Future<Reproducao> atualizarReproducao({
     required String reproducaoId,
     required String maeId,
@@ -190,6 +266,31 @@ class ReproducaoService {
 
     if (paiId != null && maeId == paiId) {
       throw Exception('A mãe e o pai precisam ser animais diferentes.');
+    }
+
+    if (!_connectivity.isOnline) {
+      final animais = await AnimalService().getAnimaisAtivos();
+      if (!animais.any((item) => item['id']?.toString() == maeId && item['sexo']?.toString() == 'femea')) {
+        throw Exception('A mãe precisa estar salva no aparelho como fêmea.');
+      }
+      if (paiId != null && !animais.any((item) => item['id']?.toString() == paiId && item['sexo']?.toString() == 'macho')) {
+        throw Exception('O pai precisa estar salvo no aparelho como macho.');
+      }
+      final dados = {
+        'id': reproducaoId,
+        'fazenda_id': fazendaId,
+        'mae_id': maeId,
+        'pai_id': paiId,
+        'data_cobertura': _dateOnlyOrNull(dataCobertura),
+        'data_previsao_parto': _dateOnlyOrNull(dataPrevisaoParto),
+        'data_parto': _dateOnlyOrNull(dataParto),
+        'status': status,
+        'observacoes': _valorOuNull(observacoes),
+        'atualizado_em': DateTime.now().toUtc().toIso8601String(),
+      };
+      await OfflineSyncService.instance.enfileirar(tipo: 'reproducao.atualizar', dados: dados);
+      await _adicionarReproducaoAoCache(fazendaId, dados);
+      return Reproducao.fromMap(dados);
     }
 
     await _validarMaeEPai(fazendaId: fazendaId, maeId: maeId, paiId: paiId);
@@ -277,6 +378,12 @@ class ReproducaoService {
       return [];
     }
 
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache('reproducao_montas_${fazendaId}_$reproducaoId');
+      if (cache is! List) return [];
+      return cache.whereType<Map>().map((item) => Monta.fromMap(Map<String, dynamic>.from(item))).toList();
+    }
+
     final reproducao = await _client
         .from('reproducoes')
         .select('id')
@@ -301,9 +408,14 @@ class ReproducaoService {
         .eq('reproducao_id', reproducaoId)
         .order('data_cobertura', ascending: false);
 
-    return resultado
+    final lista = resultado
         .map((item) => Monta.fromMap(Map<String, dynamic>.from(item)))
         .toList();
+    await _offlineStore.salvarCache(
+      'reproducao_montas_${fazendaId}_$reproducaoId',
+      lista.map((item) => item.toMap()).toList(),
+    );
+    return lista;
   }
 
   Future<Monta> criarMonta({
@@ -316,6 +428,53 @@ class ReproducaoService {
 
     if (fazendaId == null) {
       throw Exception('Nenhuma fazenda ativa foi encontrada.');
+    }
+
+    if (!_connectivity.isOnline) {
+      final reproducao = await getReproducaoPorId(reproducaoId);
+      if (reproducao == null) {
+        throw Exception('A reprodução precisa estar carregada no aparelho.');
+      }
+      final animais = await AnimalService().getAnimaisAtivos();
+      if (!animais.any((item) =>
+          item['id']?.toString() == carneiroId &&
+          item['sexo']?.toString() == 'macho')) {
+        throw Exception('O carneiro precisa estar carregado no aparelho como macho ativo.');
+      }
+      final dados = <String, dynamic>{
+        'id': const Uuid().v4(),
+        'reproducao_id': reproducaoId,
+        'carneiro_id': carneiroId,
+        'data_cobertura': _dateOnly(dataMonta),
+        'observacoes': _valorOuNull(observacoes),
+        'criado_em': DateTime.now().toUtc().toIso8601String(),
+      };
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'reproducao.monta',
+        dados: {...dados, 'fazenda_id': fazendaId},
+      );
+      final chave = 'reproducao_montas_${fazendaId}_$reproducaoId';
+      final cache = await _offlineStore.lerCache(chave);
+      final lista = cache is List
+          ? cache.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
+          : <Map<String, dynamic>>[];
+      lista.removeWhere((item) => item['id']?.toString() == dados['id']);
+      lista.insert(0, dados);
+      await _offlineStore.salvarCache(chave, lista);
+      if (reproducao.status == 'planejada') {
+        await atualizarReproducao(
+          reproducaoId: reproducaoId,
+          maeId: reproducao.maeId,
+          paiId: reproducao.paiId,
+          dataCobertura: reproducao.dataCobertura ?? dataMonta,
+          dataPrevisaoParto: reproducao.dataPrevisaoParto ??
+              dataMonta.add(const Duration(days: 150)),
+          dataParto: reproducao.dataParto,
+          status: 'coberta',
+          observacoes: reproducao.observacoes,
+        );
+      }
+      return Monta.fromMap(dados);
     }
 
     final reproducao = await _client
@@ -500,6 +659,13 @@ class ReproducaoService {
       return [];
     }
 
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache('reproducao_nascimentos_${fazendaId}_$reproducaoId');
+      if (cache is! List) return [];
+      return cache.whereType<Map>().map((item) =>
+          ReproducaoNascimento.fromMap(Map<String, dynamic>.from(item))).toList();
+    }
+
     final reproducao = await _client
         .from('reproducoes')
         .select('id')
@@ -525,12 +691,17 @@ class ReproducaoService {
         .eq('reproducao_id', reproducaoId)
         .order('data_nascimento');
 
-    return resultado
+    final lista = resultado
         .map(
           (item) =>
               ReproducaoNascimento.fromMap(Map<String, dynamic>.from(item)),
         )
         .toList();
+    await _offlineStore.salvarCache(
+      'reproducao_nascimentos_${fazendaId}_$reproducaoId',
+      lista.map((item) => item.toMap()).toList(),
+    );
+    return lista;
   }
 
   Future<ReproducaoNascimento> registrarNascimento({
@@ -548,6 +719,35 @@ class ReproducaoService {
 
     if (sexo != 'femea' && sexo != 'macho') {
       throw Exception('Sexo do nascimento inválido.');
+    }
+
+    if (!_connectivity.isOnline) {
+      final reproducao = await getReproducaoPorId(reproducaoId);
+      final animais = await AnimalService().getAnimaisAtivos();
+      if (reproducao == null || !animais.any((item) => item['id']?.toString() == animalId)) {
+        throw Exception('A reprodução e o cordeiro precisam estar salvos no aparelho.');
+      }
+      final dados = {
+        'id': const Uuid().v4(),
+        'reproducao_id': reproducaoId,
+        'animal_id': animalId,
+        'sexo': sexo,
+        'data_nascimento': _dateOnly(dataNascimento),
+        'observacoes': _valorOuNull(observacoes),
+        'criado_em': DateTime.now().toUtc().toIso8601String(),
+      };
+      await OfflineSyncService.instance.enfileirar(tipo: 'reproducao.nascimento', dados: {
+        ...dados,
+        'fazenda_id': fazendaId,
+      });
+      final key = 'reproducao_nascimentos_${fazendaId}_$reproducaoId';
+      final cache = await _offlineStore.lerCache(key);
+      final lista = cache is List
+          ? cache.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
+          : <Map<String, dynamic>>[];
+      lista.add(dados);
+      await _offlineStore.salvarCache(key, lista);
+      return ReproducaoNascimento.fromMap(dados);
     }
 
     final reproducao = await _client
@@ -618,6 +818,55 @@ class ReproducaoService {
 
     if (fazendaId == null) {
       throw Exception('Nenhuma fazenda ativa foi encontrada.');
+    }
+
+    if (!_connectivity.isOnline) {
+      final reproducao = await getReproducaoPorId(reproducaoId);
+      if (reproducao == null) throw Exception('Reprodução não encontrada no aparelho.');
+      final animais = await AnimalService().getAnimaisAtivos();
+      Map<String, dynamic>? mae;
+      for (final item in animais) {
+        if (item['id']?.toString() == reproducao.maeId) {
+          mae = item;
+          break;
+        }
+      }
+      if (mae == null) throw Exception('A ovelha mãe precisa estar salva no aparelho.');
+      final racaDados = mae['racas'];
+      final racaNome = racaDados is Map ? (racaDados['nome']?.toString() ?? '') : (mae['raca']?.toString() ?? '');
+      final animalService = AnimalService();
+      final animalCriado = await animalService.criarAnimal(
+        brinco: await animalService.getMenorBrincoDisponivel(),
+        rebanhoId: mae['rebanho_id'].toString(),
+        nome: nome,
+        sexo: sexo,
+        raca: racaNome,
+        dataNascimento: dataNascimento,
+        status: 'ativo',
+        dataEntrada: dataNascimento,
+        observacoes: observacoes,
+        maeId: reproducao.maeId,
+        paiId: reproducao.paiId,
+        origem: 'nascido',
+      );
+      final nascimento = await registrarNascimento(
+        reproducaoId: reproducaoId,
+        animalId: animalCriado['id'].toString(),
+        sexo: sexo,
+        dataNascimento: dataNascimento,
+        observacoes: observacoes,
+      );
+      await atualizarReproducao(
+        reproducaoId: reproducaoId,
+        maeId: reproducao.maeId,
+        paiId: reproducao.paiId,
+        dataCobertura: reproducao.dataCobertura,
+        dataPrevisaoParto: reproducao.dataPrevisaoParto,
+        dataParto: dataNascimento,
+        status: 'parto_realizado',
+        observacoes: reproducao.observacoes,
+      );
+      return nascimento;
     }
 
     if (sexo != 'femea' && sexo != 'macho') {
