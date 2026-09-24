@@ -40,7 +40,17 @@ class _MontaFormPageState extends State<MontaFormPage> {
     try {
       final a = await _animals.getTodosAnimais();
       if (!mounted) return;
-      setState(() => _machos = a.where((x) => x['sexo'] == 'macho').toList());
+      setState(() {
+        _machos = a.where((x) {
+          if (x['sexo'] != 'macho') return false;
+          final id = x['id']?.toString();
+          final status = x['status']?.toString();
+          // Em uma nova monta, somente carneiros ativos podem ser escolhidos.
+          // Ao editar uma monta antiga, mantemos o carneiro já registrado,
+          // mesmo que ele tenha sido vendido ou baixado posteriormente.
+          return status == 'ativo' || id == _carneiroId;
+        }).toList();
+      });
       setState(() => _loading = false);
     } catch (e) {
       if (mounted) {
