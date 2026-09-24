@@ -4,6 +4,7 @@ import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_service.dart';
+import '../../farmacia/services/farmacia_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
 import '../widgets/famacha_reference_widget.dart';
@@ -24,6 +25,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   final ManejoService _service = ManejoService();
   final AnimalService _animalService = AnimalService();
   final RebanhoService _rebanhoService = RebanhoService();
+  final FarmaciaService _farmaciaService = FarmaciaService();
 
   final TextEditingController _observacoes = TextEditingController();
   final TextEditingController _vacinaLote = TextEditingController();
@@ -42,6 +44,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   List<Map<String, dynamic>> _vacinas = [];
   List<Map<String, dynamic>> _vermifugos = [];
   List<Map<String, dynamic>> _medicamentos = [];
+  List<Map<String, dynamic>> _farmaciaProdutos = [];
 
   String? _rebanhoId;
   String? _animalId;
@@ -67,6 +70,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   Map<String, dynamic>? _vacinaSelecionada;
   Map<String, dynamic>? _vermifugoSelecionado;
   Map<String, dynamic>? _medicamentoSelecionado;
+  Map<String, dynamic>? _farmaciaProdutoSelecionado;
   bool _carregando = true;
   bool _carregandoAnimais = false;
   bool _salvando = false;
@@ -132,6 +136,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         _service.getVacinas(),
         _service.getVermifugos(),
         _service.getMedicamentos(),
+        _farmaciaService.listarProdutos(),
       ]);
 
       if (!mounted) return;
@@ -141,6 +146,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         _vacinas = List<Map<String, dynamic>>.from(resultados[1] as List);
         _vermifugos = List<Map<String, dynamic>>.from(resultados[2] as List);
         _medicamentos = List<Map<String, dynamic>>.from(resultados[3] as List);
+        _farmaciaProdutos = List<Map<String, dynamic>>.from(resultados[4] as List);
         _carregando = false;
       });
 
@@ -160,6 +166,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
           _medicamentoSelecionado = _findItem(
             _medicamentos,
             widget.manejo!.medicamentoId,
+          );
+        if (widget.manejo?.farmaciaProdutoId != null)
+          _farmaciaProdutoSelecionado = _findItem(
+            _farmaciaProdutos,
+            widget.manejo!.farmaciaProdutoId,
           );
         await _carregarPesos();
       } else {
@@ -442,6 +453,96 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     }
   }
 
+  List<Map<String, dynamic>> _produtosFarmaciaDoTipo() {
+    final categoria = switch (_tipo) {
+      TipoManejo.vacinacao => 'vacina',
+      TipoManejo.vermifugacao => 'vermifugo',
+      TipoManejo.tratamento => 'medicamento',
+      _ => null,
+    };
+    if (categoria == null) return [];
+    return _farmaciaProdutos
+        .where((item) => item['categoria']?.toString() == categoria)
+        .toList();
+  }
+
+  Widget _farmaciaProdutoField() {
+    final produtos = _produtosFarmaciaDoTipo();
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.14),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Produto da Farmácia',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'O produto selecionado aqui será usado para registrar o consumo no estoque.',
+            style: TextStyle(color: Colors.black54, height: 1.35),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: _farmaciaProdutoSelecionado?['id']?.toString(),
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Produto em estoque',
+              prefixIcon: Icon(Icons.inventory_2_outlined),
+              border: OutlineInputBorder(),
+            ),
+            items: produtos.map((item) {
+              final id = item['id']?.toString();
+              if (id == null) return null;
+              final nome = item['nome']?.toString() ?? 'Produto';
+              final estoque = item['estoque']?.toString() ?? '0';
+              final unidade = item['unidade']?.toString() ?? '';
+              return DropdownMenuItem<String>(
+                value: id,
+                child: Text(
+                  '$nome • Estoque: $estoque $unidade',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).whereType<DropdownMenuItem<String>>().toList(),
+            onChanged: _salvando
+                ? null
+                : (id) {
+                    final item = id == null
+                        ? null
+                        : produtos.firstWhere(
+                            (x) => x['id']?.toString() == id,
+                          );
+                    setState(() => _farmaciaProdutoSelecionado = item);
+                    _aplicarDadosProduto(item);
+                  },
+          ),
+          if (produtos.isEmpty) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'Nenhum produto desta categoria foi cadastrado na Farmácia ainda. Cadastre o produto primeiro na Farmácia para poder consumi-lo no manejo.',
+              style: TextStyle(color: Colors.black54, height: 1.35),
+            ),
+          ],
+          if (_farmaciaProdutoSelecionado != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Unidade de estoque: ${_farmaciaProdutoSelecionado!['unidade'] ?? 'unidade'}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _produtoField({
     required String titulo,
     required List<Map<String, dynamic>> itens,
@@ -699,8 +800,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       }
     }
 
-    if (_tipo == TipoManejo.vacinacao && _vacinaSelecionada == null) {
-      _mensagem('Selecione a vacina aplicada.');
+    if (_tipo == TipoManejo.vacinacao &&
+        _vacinaSelecionada == null &&
+        _farmaciaProdutoSelecionado == null) {
+      _mensagem('Selecione uma vacina da Farmácia.');
       return;
     }
 
@@ -740,11 +843,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     setState(() => _salvando = true);
 
     try {
-      final vacinaId = _tipo == TipoManejo.vacinacao
+      final vacinaId = _tipo == TipoManejo.vacinacao && _farmaciaProdutoSelecionado == null
           ? _campo(_vacinaSelecionada, 'id')?.toString()
           : null;
       final vacinaNome = _tipo == TipoManejo.vacinacao
-          ? _campo(_vacinaSelecionada, 'nome')?.toString()
+          ? (_campo(_farmaciaProdutoSelecionado, 'nome')?.toString() ??
+              _campo(_vacinaSelecionada, 'nome')?.toString())
           : null;
       final vacinaFabricante = _tipo == TipoManejo.vacinacao
           ? _campo(_vacinaSelecionada, 'fabricante')?.toString()
@@ -759,6 +863,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         if (peso != null) pesosParaSalvar[id] = peso;
         if (dose != null) dosesParaSalvar[id] = dose;
       }
+
+      final farmaciaProdutoId = tipoSanitario
+          ? _campo(_farmaciaProdutoSelecionado, 'id')?.toString()
+          : null;
+      final farmaciaQuantidade = tipoSanitario
+          ? (_numero(_doseBaseTexto) ?? _numero(_doseManual.text))
+          : null;
 
       await _service.criarManejosEmLote(
         animalIds: _animaisSelecionados.toList(),
@@ -823,8 +934,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       return;
     }
 
-    if (_tipo == TipoManejo.vacinacao && _vacinaSelecionada == null) {
-      _mensagem('Selecione a vacina aplicada.');
+    if (_tipo == TipoManejo.vacinacao &&
+        _vacinaSelecionada == null &&
+        _farmaciaProdutoSelecionado == null) {
+      _mensagem('Selecione a vacina aplicada ou um produto da Farmácia.');
       return;
     }
 
@@ -850,6 +963,59 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
           : null;
 
       await _service.atualizarManejo(
+        id: widget.manejo!.id,
+        animalId: _animalId!,
+        tipo: _tipo,
+        data: _data,
+        famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
+        observacoes: _observacoes.text,
+        vacinaId: vacinaId,
+        vacinaNome: vacinaNome,
+        vacinaFabricante: vacinaFabricante,
+        vacinaLote: _tipo == TipoManejo.vacinacao ? _vacinaLote.text : null,
+        outroNome: _tipo == TipoManejo.outro ? _outroNome.text : null,
+        pesoKg: _tipo == TipoManejo.pesagem
+            ? _numero(_peso.text)
+            : _pesos[_animalId],
+        dose: _dosesCalculadas[_animalId] ?? _numero(_doseManual.text),
+        doseUnidade: _unidadeDose,
+        pesoReferenciaKg: _numero(_pesoReferenciaTexto),
+        viaAplicacao: _viaAplicacao.trim().isEmpty
+            ? null
+            : _viaAplicacao.trim(),
+        carenciaDias: int.tryParse(_carenciaTexto.trim()),
+        vermifugoId: _tipo == TipoManejo.vermifugacao
+            ? _campo(_vermifugoSelecionado, 'id')?.toString()
+            : null,
+        vermifugoNome: _tipo == TipoManejo.vermifugacao
+            ? _campo(_vermifugoSelecionado, 'nome')?.toString()
+            : null,
+        vermifugoPrincipioAtivo: _tipo == TipoManejo.vermifugacao
+            ? _campo(_vermifugoSelecionado, 'principio_ativo')?.toString()
+            : null,
+        medicamentoId: _tipo == TipoManejo.tratamento
+            ? _campo(_medicamentoSelecionado, 'id')?.toString()
+            : null,
+        medicamentoNome: _tipo == TipoManejo.tratamento
+            ? _campo(_medicamentoSelecionado, 'nome')?.toString()
+            : null,
+        medicamentoPrincipioAtivo: _tipo == TipoManejo.tratamento
+            ? _campo(_medicamentoSelecionado, 'principio_ativo')?.toString()
+            : null,
+        enfermidade: _tipo == TipoManejo.tratamento
+            ? _enfermidadeController.text
+            : null,
+        farmaciaProdutoId: _tipo == TipoManejo.vacinacao ||
+                _tipo == TipoManejo.vermifugacao ||
+                _tipo == TipoManejo.tratamento
+            ? _campo(_farmaciaProdutoSelecionado, 'id')?.toString()
+            : null,
+        farmaciaQuantidade: _tipo == TipoManejo.vacinacao ||
+                _tipo == TipoManejo.vermifugacao ||
+                _tipo == TipoManejo.tratamento
+            ? (_dosesCalculadas[_animalId] ?? _numero(_doseManual.text))
+            : null,
+      );ait _service.atualizarManejo(
         id: widget.manejo!.id,
         animalId: _animalId!,
         tipo: _tipo,
@@ -1169,6 +1335,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                       if (value != TipoManejo.tratamento) {
                                         _medicamentoSelecionado = null;
                                       }
+                                      if (value != TipoManejo.vacinacao &&
+                                          value != TipoManejo.vermifugacao &&
+                                          value != TipoManejo.tratamento) {
+                                        _farmaciaProdutoSelecionado = null;
+                                      }
                                       _dosesCalculadas.clear();
                                       if (value != TipoManejo.outro) {
                                         _outroNome.clear();
@@ -1215,30 +1386,34 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                             ),
                           if (_tipo == TipoManejo.vacinacao) ...[
                             const SizedBox(height: 16),
-                            _produtoField(
-                              titulo: 'Vacina',
-                              itens: _vacinas,
-                              selecionado: _vacinaSelecionada,
-                              onChanged: (item) {
-                                setState(() => _vacinaSelecionada = item);
-                                _aplicarDadosProduto(item);
-                              },
-                              onAdicionar: _adicionarVacina,
-                            ),
+                            _farmaciaProdutoField(),
+                            if (_editando && _farmaciaProdutoSelecionado == null)
+                              _produtoField(
+                                titulo: 'Vacina (registro antigo)',
+                                itens: _vacinas,
+                                selecionado: _vacinaSelecionada,
+                                onChanged: (item) {
+                                  setState(() => _vacinaSelecionada = item);
+                                  _aplicarDadosProduto(item);
+                                },
+                                onAdicionar: _adicionarVacina,
+                              ),
                             _doseCalculadora(),
                           ],
                           if (_tipo == TipoManejo.vermifugacao) ...[
                             const SizedBox(height: 16),
-                            _produtoField(
-                              titulo: 'Vermífugo',
-                              itens: _vermifugos,
-                              selecionado: _vermifugoSelecionado,
-                              onChanged: (item) {
-                                setState(() => _vermifugoSelecionado = item);
-                                _aplicarDadosProduto(item);
-                              },
-                              onAdicionar: _adicionarVermifugoCompleto,
-                            ),
+                            _farmaciaProdutoField(),
+                            if (_editando && _farmaciaProdutoSelecionado == null)
+                              _produtoField(
+                                titulo: 'Vermífugo (registro antigo)',
+                                itens: _vermifugos,
+                                selecionado: _vermifugoSelecionado,
+                                onChanged: (item) {
+                                  setState(() => _vermifugoSelecionado = item);
+                                  _aplicarDadosProduto(item);
+                                },
+                                onAdicionar: _adicionarVermifugoCompleto,
+                              ),
                             _doseCalculadora(),
                           ],
                           if (_tipo == TipoManejo.tratamento) ...[
@@ -1254,15 +1429,17 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            _produtoField(
-                              titulo: 'Medicamento',
-                              itens: _medicamentos,
-                              selecionado: _medicamentoSelecionado,
-                              onChanged: (item) => setState(
-                                () => _medicamentoSelecionado = item,
+                            _farmaciaProdutoField(),
+                            if (_editando && _farmaciaProdutoSelecionado == null)
+                              _produtoField(
+                                titulo: 'Medicamento (registro antigo)',
+                                itens: _medicamentos,
+                                selecionado: _medicamentoSelecionado,
+                                onChanged: (item) => setState(
+                                  () => _medicamentoSelecionado = item,
+                                ),
+                                onAdicionar: _adicionarMedicamentoCompleto,
                               ),
-                              onAdicionar: _adicionarMedicamentoCompleto,
-                            ),
                             _doseCalculadora(),
                           ],
                           if (_tipo == TipoManejo.pesagem) ...[
