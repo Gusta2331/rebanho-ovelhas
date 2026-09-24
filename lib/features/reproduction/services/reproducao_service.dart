@@ -156,10 +156,6 @@ class ReproducaoService {
     if (status == 'prenhe' && dataCobertura == null) {
       throw Exception('Registre a cobertura antes de confirmar a prenhez.');
     }
-    if (status == 'parto_realizado' && dataParto == null) {
-      throw Exception('Informe a data do parto realizado.');
-    }
-
     if (!_connectivity.isOnline) {
       final animais = await AnimalService().getAnimaisAtivos();
       Map<String, dynamic>? mae;
