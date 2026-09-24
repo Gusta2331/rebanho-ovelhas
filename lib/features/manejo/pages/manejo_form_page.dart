@@ -1333,6 +1333,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                       _doseTextoPorAnimal.clear();
                                       _peso.clear();
                                       _famacha = null;
+                                      _farmaciaProdutoSelecionado = null;
                                       if (value != TipoManejo.vacinacao) {
                                         _vacinaSelecionada = null;
                                         _vacinaLote.clear();
