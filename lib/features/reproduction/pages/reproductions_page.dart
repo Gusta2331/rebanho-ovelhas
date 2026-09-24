@@ -429,17 +429,37 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
               const SizedBox(height: 16),
               const Divider(height: 1),
               const SizedBox(height: 14),
-              _buildInformacao(
-                icone: Icons.calendar_today,
-                titulo: 'Monta',
-                valor: _formatarData(reproducao.dataCobertura),
-              ),
-              const SizedBox(height: 10),
-              _buildInformacao(
-                icone: Icons.event,
-                titulo: 'Previsão de parto',
-                valor: _formatarData(reproducao.dataPrevisaoParto),
-              ),
+              if (reproducao.dataCobertura != null)
+                _buildInformacao(
+                  icone: Icons.calendar_today,
+                  titulo: 'Cobertura',
+                  valor: _formatarData(reproducao.dataCobertura),
+                ),
+              if (reproducao.dataPrevisaoParto != null) ...[
+                const SizedBox(height: 10),
+                _buildInformacao(
+                  icone: Icons.event,
+                  titulo: 'Previsão de parto',
+                  valor: _formatarData(reproducao.dataPrevisaoParto),
+                ),
+              ],
+              if (reproducao.dataParto != null) ...[
+                const SizedBox(height: 10),
+                _buildInformacao(
+                  icone: Icons.child_friendly,
+                  titulo: 'Parto realizado',
+                  valor: _formatarData(reproducao.dataParto),
+                ),
+              ],
+              if (reproducao.dataCobertura == null &&
+                  reproducao.dataPrevisaoParto == null &&
+                  reproducao.dataParto == null) ...[
+                _buildInformacao(
+                  icone: Icons.hourglass_empty,
+                  titulo: 'Próximo passo',
+                  valor: 'Registrar a cobertura',
+                ),
+              ],
               const SizedBox(height: 10),
               _buildInformacao(
                 icone: Icons.male,
