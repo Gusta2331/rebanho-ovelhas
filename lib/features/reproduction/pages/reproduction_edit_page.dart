@@ -132,25 +132,6 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
     return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
   }
 
-  Future<void> _selecionarConfirmacaoPrenhez() async {
-    if (_cobertura == null) {
-      _snack('Registre a cobertura antes de confirmar a prenhez.', true);
-      return;
-    }
-
-    final data = await showDatePicker(
-      context: context,
-      initialDate: _confirmacaoPrenhez ?? DateTime.now(),
-      firstDate: _cobertura!,
-      lastDate: DateTime(2100),
-      locale: const Locale('pt', 'BR'),
-    );
-
-    if (data != null && mounted) {
-      setState(() => _confirmacaoPrenhez = data);
-    }
-  }
-
   Future<void> _salvar() async {
     if (_maeId == null) {
       _snack('Selecione a mãe.', true);
@@ -200,7 +181,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
     final d = await showDatePicker(
       context: context,
       initialDate: atual ?? DateTime.now(),
-      firstDate: campo == 'confirmacao'
+      firstDate: campo == 'confirmacao' && _cobertura != null
           ? _cobertura!
           : DateTime(2000),
       lastDate: DateTime(2100),
@@ -359,13 +340,13 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
                   const SizedBox(height: 16),
                   if (_statusSelecionado == StatusReproducao.prenhe ||
                       _confirmacaoPrenhez != null) ...[
-                  _dateField(
-                    'Data da confirmação da prenhez',
-                    _confirmacaoPrenhez,
-                    'confirmacao',
-                    Icons.verified_outlined,
-                  ),
-                  const SizedBox(height: 16),
+                    _dateField(
+                      'Data da confirmação da prenhez',
+                      _confirmacaoPrenhez,
+                      'confirmacao',
+                      Icons.verified_outlined,
+                    ),
+                    const SizedBox(height: 16),
                   ],
                   DropdownButtonFormField<StatusReproducao>(
                     initialValue: _statusSelecionado,
