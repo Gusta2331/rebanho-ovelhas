@@ -217,6 +217,10 @@ class ReproducaoService {
       throw Exception('A mãe selecionada precisa ser uma fêmea.');
     }
 
+    if (mae['status'] != 'ativo') {
+      throw Exception('A ovelha selecionada não está ativa.');
+    }
+
     Map<String, dynamic>? pai;
 
     if (paiId != null) {
@@ -233,6 +237,10 @@ class ReproducaoService {
 
       if (pai['sexo'] != 'macho') {
         throw Exception('O pai selecionado precisa ser um macho.');
+      }
+
+      if (pai['status'] != 'ativo') {
+        throw Exception('O carneiro selecionado não está ativo.');
       }
     }
 
@@ -377,6 +385,7 @@ class ReproducaoService {
           pai_id,
           data_cobertura,
           data_previsao_parto,
+          data_confirmacao_prenhez,
           data_parto,
           status,
           observacoes,
