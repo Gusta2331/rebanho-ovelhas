@@ -580,14 +580,6 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
                 return;
               }
 
-              if (valor == StatusReproducao.prenhe && _dataCobertura == null) {
-                _mostrarMensagem(
-                  'Registre a cobertura antes de confirmar a prenhez.',
-                  erro: true,
-                );
-                return;
-              }
-
               setState(() {
                 _status = valor;
               });
