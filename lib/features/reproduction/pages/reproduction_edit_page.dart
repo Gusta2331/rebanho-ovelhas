@@ -183,7 +183,10 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
     setState(() {
       if (campo == 'cobertura') {
         _cobertura = d;
-        _previsao ??= d.add(const Duration(days: 150));
+        _previsao ??= d.add(const Duration(days: 146));
+        if (_statusSelecionado == StatusReproducao.planejada) {
+          _statusSelecionado = StatusReproducao.coberta;
+        }
       } else if (campo == 'previsao')
         _previsao = d;
       else
