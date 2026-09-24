@@ -64,6 +64,11 @@ class FarmaciaService {
     DateTime? validade,
     String? principioAtivo,
     String? observacoes,
+    double? dose,
+    String? doseUnidade,
+    double? pesoReferenciaKg,
+    String? viaAplicacao,
+    int? carenciaDias,
   }) async {
     final fazendaId = await _fazendaId();
     if (nome.trim().isEmpty) throw Exception('Informe o nome do produto.');
@@ -83,6 +88,11 @@ class FarmaciaService {
       'validade': validade?.toIso8601String().split('T').first,
       'principio_ativo': _text(principioAtivo),
       'observacoes': _text(observacoes),
+      'dose': dose,
+      'dose_unidade': _text(doseUnidade),
+      'peso_referencia_kg': pesoReferenciaKg,
+      'via_aplicacao': _text(viaAplicacao),
+      'carencia_dias': carenciaDias,
     };
 
     if (!_connectivity.isOnline) {
