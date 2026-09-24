@@ -137,6 +137,7 @@ class ReproducaoService {
     String? paiId,
     DateTime? dataCobertura,
     DateTime? dataPrevisaoParto,
+    DateTime? dataConfirmacaoPrenhez,
     String status = 'planejada',
     String? observacoes,
   }) async {
@@ -148,15 +149,6 @@ class ReproducaoService {
 
     if (paiId != null && maeId == paiId) {
       throw Exception('A mãe e o pai precisam ser animais diferentes.');
-    }
-    if (status == 'prenhe' && dataConfirmacaoPrenhez == null) {
-      throw Exception('Informe a data de confirmação da prenhez.');
-    }
-    if (status == 'prenhe' && dataCobertura == null) {
-      throw Exception('Registre a cobertura antes de confirmar a prenhez.');
-    }
-    if (status == 'parto_realizado' && dataParto == null) {
-      throw Exception('Informe a data do parto realizado.');
     }
     if (status == 'prenhe' && dataConfirmacaoPrenhez == null) {
       throw Exception('Informe a data de confirmação da prenhez.');
@@ -262,6 +254,7 @@ class ReproducaoService {
           pai_id,
           data_cobertura,
           data_previsao_parto,
+          data_confirmacao_prenhez,
           data_parto,
           status,
           observacoes,
@@ -310,6 +303,15 @@ class ReproducaoService {
     if (paiId != null && maeId == paiId) {
       throw Exception('A mãe e o pai precisam ser animais diferentes.');
     }
+    if (status == 'prenhe' && dataConfirmacaoPrenhez == null) {
+      throw Exception('Informe a data de confirmação da prenhez.');
+    }
+    if (status == 'prenhe' && dataCobertura == null) {
+      throw Exception('Registre a cobertura antes de confirmar a prenhez.');
+    }
+    if (status == 'parto_realizado' && dataParto == null) {
+      throw Exception('Informe a data do parto realizado.');
+    }
 
     if (!_connectivity.isOnline) {
       final animais = await AnimalService().getAnimaisAtivos();
@@ -356,6 +358,7 @@ class ReproducaoService {
       'pai_id': paiId,
       'data_cobertura': _dateOnlyOrNull(dataCobertura),
       'data_previsao_parto': _dateOnlyOrNull(dataPrevisaoParto),
+      'data_confirmacao_prenhez': _dateOnlyOrNull(dataConfirmacaoPrenhez),
       'data_parto': _dateOnlyOrNull(dataParto),
       'status': status,
       'observacoes': _valorOuNull(observacoes),
