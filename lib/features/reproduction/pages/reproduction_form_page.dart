@@ -70,7 +70,9 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
         _femeas = femeas;
         _machos = machos;
         if (_maeId == null &&
-            femeas.any((animal) => animal['id']?.toString() == widget.initialMaeId)) {
+            femeas.any(
+              (animal) => animal['id']?.toString() == widget.initialMaeId,
+            )) {
           _maeId = widget.initialMaeId;
         }
         _carregandoAnimais = false;

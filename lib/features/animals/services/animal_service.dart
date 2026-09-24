@@ -28,11 +28,16 @@ class AnimalService {
     }
 
     if (!_connectivity.isOnline) {
-      final salva = await _offlineStore.lerCache(_farmCacheKey(usuario.id)) as String?;
+      final salva =
+          await _offlineStore.lerCache(_farmCacheKey(usuario.id)) as String?;
       if (salva != null) return salva;
-      final compartilhada = await _offlineStore.lerCache('rebanhos_fazenda_id') as String?;
+      final compartilhada =
+          await _offlineStore.lerCache('rebanhos_fazenda_id') as String?;
       if (compartilhada != null) {
-        await _offlineStore.salvarCache(_farmCacheKey(usuario.id), compartilhada);
+        await _offlineStore.salvarCache(
+          _farmCacheKey(usuario.id),
+          compartilhada,
+        );
       }
       return compartilhada;
     }
@@ -204,17 +209,24 @@ class AnimalService {
     final usuarioId = _client.auth.currentUser?.id;
     if (usuarioId == null) return;
     final id = animal['id']?.toString();
-    final rebanhos = <String?>{null, rebanhoAnteriorId, animal['rebanho_id']?.toString()};
+    final rebanhos = <String?>{
+      null,
+      rebanhoAnteriorId,
+      animal['rebanho_id']?.toString(),
+    };
     for (final rebanhoId in rebanhos) {
       for (final tipo in ['todos', 'ativos']) {
         final chave = _cacheKey(usuarioId, tipo, rebanhoId);
         final lista = await _lerAnimaisDoCache(chave);
-        lista.removeWhere((item) =>
-            item['id']?.toString() == id ||
-            (idAnterior != null && item['id']?.toString() == idAnterior));
-        final correspondeAoLote = rebanhoId == null ||
-            animal['rebanho_id']?.toString() == rebanhoId;
-        final correspondeAoTipo = tipo != 'ativos' || animal['status'] == 'ativo';
+        lista.removeWhere(
+          (item) =>
+              item['id']?.toString() == id ||
+              (idAnterior != null && item['id']?.toString() == idAnterior),
+        );
+        final correspondeAoLote =
+            rebanhoId == null || animal['rebanho_id']?.toString() == rebanhoId;
+        final correspondeAoTipo =
+            tipo != 'ativos' || animal['status'] == 'ativo';
         if (correspondeAoLote && correspondeAoTipo) lista.add(animal);
         await _offlineStore.salvarCache(chave, lista);
       }
@@ -393,27 +405,42 @@ class AnimalService {
         fazendaId: fazendaId,
       );
       if (!rebanhoValido) {
-        throw Exception('O rebanho selecionado não pertence à fazenda atual ou está inativo.');
+        throw Exception(
+          'O rebanho selecionado não pertence à fazenda atual ou está inativo.',
+        );
       }
     } else {
       final rebanhos = await _offlineStore.lerCache('rebanhos_ativos');
-      final existeRebanho = rebanhos is List && rebanhos.any((item) =>
-          item is Map && item['id']?.toString() == rebanhoId && item['fazenda_id']?.toString() == fazendaId);
+      final existeRebanho =
+          rebanhos is List &&
+          rebanhos.any(
+            (item) =>
+                item is Map &&
+                item['id']?.toString() == rebanhoId &&
+                item['fazenda_id']?.toString() == fazendaId,
+          );
       if (!existeRebanho) {
-        throw Exception('Este lote não está salvo no aparelho. Conecte-se para atualizar os dados antes de cadastrar animais.');
+        throw Exception(
+          'Este lote não está salvo no aparelho. Conecte-se para atualizar os dados antes de cadastrar animais.',
+        );
       }
     }
 
-    final animaisCache = online ? const <Map<String, dynamic>>[] : await getTodosAnimais();
+    final animaisCache = online
+        ? const <Map<String, dynamic>>[]
+        : await getTodosAnimais();
     final disponivel = online
         ? await brincoDisponivel(brinco: brinco)
-        : !animaisCache.any((item) =>
-            int.tryParse(item['brinco']?.toString() ?? '') == brinco);
+        : !animaisCache.any(
+            (item) => int.tryParse(item['brinco']?.toString() ?? '') == brinco,
+          );
     if (!disponivel) {
       throw Exception('O brinco $brinco já foi utilizado por outro animal.');
     }
 
-    final racaId = online ? await _buscarRacaId(nome: raca, fazendaId: fazendaId) : null;
+    final racaId = online
+        ? await _buscarRacaId(nome: raca, fazendaId: fazendaId)
+        : null;
 
     final animalId = const Uuid().v4();
 
@@ -492,13 +519,17 @@ class AnimalService {
           'p_vendedor': vendedor?.trim(),
         },
       );
-      await _client.from('animais').update({
-        'denticao': denticao,
-        'denticao_data': denticaoData?.toIso8601String().split('T').first,
-        'denticao_observacoes': denticaoObservacoes?.trim().isEmpty == true
-            ? null
-            : denticaoObservacoes?.trim(),
-      }).eq('id', animalId).eq('fazenda_id', fazendaId);
+      await _client
+          .from('animais')
+          .update({
+            'denticao': denticao,
+            'denticao_data': denticaoData?.toIso8601String().split('T').first,
+            'denticao_observacoes': denticaoObservacoes?.trim().isEmpty == true
+                ? null
+                : denticaoObservacoes?.trim(),
+          })
+          .eq('id', animalId)
+          .eq('fazenda_id', fazendaId);
     } else {
       await _client.from('animais').insert(dados);
     }
@@ -546,7 +577,9 @@ class AnimalService {
       throw Exception('Origem do animal inválida.');
     }
     if (origem == 'comprado' &&
-        (dataAquisicao == null || valorAquisicao == null || valorAquisicao <= 0)) {
+        (dataAquisicao == null ||
+            valorAquisicao == null ||
+            valorAquisicao <= 0)) {
       throw Exception('Informe a data e um valor de compra maior que zero.');
     }
 
@@ -560,20 +593,37 @@ class AnimalService {
         }
       }
       if (atual == null) {
-        throw Exception('Este animal não está salvo no aparelho. Conecte-se à internet e tente novamente.');
+        throw Exception(
+          'Este animal não está salvo no aparelho. Conecte-se à internet e tente novamente.',
+        );
       }
-      if (animais.any((item) => item['id']?.toString() != id &&
-          int.tryParse(item['brinco']?.toString() ?? '') == brinco)) {
-        throw Exception('O brinco $brinco já foi utilizado por outro animal neste lote.');
+      if (animais.any(
+        (item) =>
+            item['id']?.toString() != id &&
+            int.tryParse(item['brinco']?.toString() ?? '') == brinco,
+      )) {
+        throw Exception(
+          'O brinco $brinco já foi utilizado por outro animal neste lote.',
+        );
       }
       final rebanhos = await _offlineStore.lerCache('rebanhos_ativos');
-      final destinoValido = rebanhos is List && rebanhos.any((item) =>
-          item is Map && item['id']?.toString() == rebanhoId && item['fazenda_id']?.toString() == fazendaId);
+      final destinoValido =
+          rebanhos is List &&
+          rebanhos.any(
+            (item) =>
+                item is Map &&
+                item['id']?.toString() == rebanhoId &&
+                item['fazenda_id']?.toString() == fazendaId,
+          );
       if (!destinoValido) {
-        throw Exception('O lote escolhido não está salvo no aparelho. Conecte-se para atualizar os dados antes de transferir o animal.');
+        throw Exception(
+          'O lote escolhido não está salvo no aparelho. Conecte-se para atualizar os dados antes de transferir o animal.',
+        );
       }
       final racaTexto = raca.trim();
-      final fotoLocal = fotoPath?.trim().isNotEmpty == true ? fotoPath!.trim() : fotoUrl;
+      final fotoLocal = fotoPath?.trim().isNotEmpty == true
+          ? fotoPath!.trim()
+          : fotoUrl;
       final dadosLocais = <String, dynamic>{
         ...atual,
         'id': id,
@@ -589,13 +639,19 @@ class AnimalService {
         'status': status,
         'data_entrada': dataEntrada?.toIso8601String() ?? atual['data_entrada'],
         'data_saida': dataSaida?.toIso8601String(),
-        'observacoes': observacoes?.trim().isEmpty == true ? null : observacoes?.trim(),
+        'observacoes': observacoes?.trim().isEmpty == true
+            ? null
+            : observacoes?.trim(),
         'foto_url': fotoLocal,
-        'foto_path': fotoLocal != null && !fotoLocal.startsWith('http') ? fotoLocal : null,
+        'foto_path': fotoLocal != null && !fotoLocal.startsWith('http')
+            ? fotoLocal
+            : null,
         'mae_id': maeId,
         'pai_id': paiId,
         'origem': origem,
-        'data_aquisicao': origem == 'comprado' ? dataAquisicao?.toIso8601String().split('T').first : null,
+        'data_aquisicao': origem == 'comprado'
+            ? dataAquisicao?.toIso8601String().split('T').first
+            : null,
         'valor_aquisicao': origem == 'comprado' ? valorAquisicao : null,
         'vendedor': origem == 'comprado' ? vendedor?.trim() : null,
         'denticao': denticao,
@@ -644,7 +700,7 @@ class AnimalService {
       animalId: id,
     );
 
-    final resultado = await _client.rpc(
+    await _client.rpc(
       'atualizar_animal_com_origem',
       params: {
         'p_animal_id': id,
@@ -684,7 +740,8 @@ class AnimalService {
 
   Future<bool> excluirAnimal(String id) async {
     final fazendaId = await _getMinhaFazendaId();
-    if (fazendaId == null) throw Exception('Nenhuma fazenda ativa foi encontrada.');
+    if (fazendaId == null)
+      throw Exception('Nenhuma fazenda ativa foi encontrada.');
     if (!_connectivity.isOnline) {
       final todos = await getTodosAnimais();
       Map<String, dynamic>? animal;
@@ -701,7 +758,10 @@ class AnimalService {
       await _removerAnimalDosCaches(id, animal?['rebanho_id']?.toString());
       return false;
     }
-    await _client.rpc('excluir_animal_e_historico', params: {'p_animal_id': id});
+    await _client.rpc(
+      'excluir_animal_e_historico',
+      params: {'p_animal_id': id},
+    );
     await _removerAnimalDosCaches(id);
     return true;
   }

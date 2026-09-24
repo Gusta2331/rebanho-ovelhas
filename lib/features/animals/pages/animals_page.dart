@@ -333,15 +333,21 @@ class _AnimalsPageState extends State<AnimalsPage> {
       await _carregarAnimais();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(excluidoNoServidor
-              ? 'Animal ${animal.brinco} e seus registros vinculados foram excluídos.'
-              : 'Exclusão do animal ${animal.brinco} salva neste aparelho e será concluída quando a internet voltar.')),
+          SnackBar(
+            content: Text(
+              excluidoNoServidor
+                  ? 'Animal ${animal.brinco} e seus registros vinculados foram excluídos.'
+                  : 'Exclusão do animal ${animal.brinco} salva neste aparelho e será concluída quando a internet voltar.',
+            ),
+          ),
         );
       }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+          SnackBar(
+            content: Text(error.toString().replaceFirst('Exception: ', '')),
+          ),
         );
       }
     }

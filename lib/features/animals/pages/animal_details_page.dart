@@ -130,7 +130,8 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
           partes.add('Princípio ativo: ${manejo.vermifugoPrincipioAtivo}');
         }
       case TipoManejo.tratamento:
-        if (manejo.enfermidade != null) partes.add('Enfermidade: ${manejo.enfermidade}');
+        if (manejo.enfermidade != null)
+          partes.add('Enfermidade: ${manejo.enfermidade}');
         if (manejo.medicamentoNome != null) partes.add(manejo.medicamentoNome!);
         if (manejo.medicamentoPrincipioAtivo != null) {
           partes.add('Princípio ativo: ${manejo.medicamentoPrincipioAtivo}');
@@ -347,13 +348,15 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
   }
 
   Future<void> _iniciarReproducao() async {
-    final resultado = await Navigator.of(context).push<String>(
+    final resultado = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => ReproductionFormPage(initialMaeId: _animal.id),
       ),
     );
     if (resultado == true && mounted) {
-      _mostrarMensagem('Reprodução registrada. Você poderá registrar o parto e os cordeiros nela.');
+      _mostrarMensagem(
+        'Reprodução registrada. Você poderá registrar o parto e os cordeiros nela.',
+      );
     }
   }
 
@@ -426,26 +429,35 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
     }
 
     final resultadoPartes = resultado.split(':');
-    final rebanhoDestinoId = resultadoPartes.length > 1 ? resultadoPartes[1] : null;
+    final rebanhoDestinoId = resultadoPartes.length > 1
+        ? resultadoPartes[1]
+        : null;
     final rebanhoSelecionado = _rebanhoSelectionService.rebanhoSelecionado;
 
     if (rebanhoDestinoId != null) {
       final rebanhos = await RebanhoService().getRebanhos(somenteAtivos: true);
-      final destino = rebanhos.where((item) => item['id']?.toString() == rebanhoDestinoId).toList();
+      final destino = rebanhos
+          .where((item) => item['id']?.toString() == rebanhoDestinoId)
+          .toList();
       setState(() {
         _rebanhoAtualId = rebanhoDestinoId;
-        _rebanhoAtualNome = destino.isNotEmpty ? destino.first['nome']?.toString() : _rebanhoAtualNome;
+        _rebanhoAtualNome = destino.isNotEmpty
+            ? destino.first['nome']?.toString()
+            : _rebanhoAtualNome;
       });
-    } else if (rebanhoSelecionado != null && rebanhoSelecionado.id != rebanhoId) {
+    } else if (rebanhoSelecionado != null &&
+        rebanhoSelecionado.id != rebanhoId) {
       setState(() {
         _rebanhoAtualId = rebanhoSelecionado.id;
         _rebanhoAtualNome = rebanhoSelecionado.nome;
       });
     }
 
-    _mostrarMensagem(resultado.startsWith('pendente:')
-        ? 'Transferência salva neste aparelho e será sincronizada quando a internet voltar.'
-        : 'Animal transferido com sucesso.');
+    _mostrarMensagem(
+      resultado.startsWith('pendente:')
+          ? 'Transferência salva neste aparelho e será sincronizada quando a internet voltar.'
+          : 'Animal transferido com sucesso.',
+    );
   }
 
   Future<void> _abrirHistoricoTransferencias() async {
@@ -966,7 +978,9 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
                 children: [
                   ListTile(
                     title: const Text('Registrar reprodução / futura parição'),
-                    subtitle: const Text('A mãe já ficará selecionada. Depois, registre o parto e os cordeiros.'),
+                    subtitle: const Text(
+                      'A mãe já ficará selecionada. Depois, registre o parto e os cordeiros.',
+                    ),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: _iniciarReproducao,
                   ),

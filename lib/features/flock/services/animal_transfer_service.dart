@@ -20,8 +20,10 @@ class AnimalTransferService {
     }
 
     if (!_connectivity.isOnline) {
-      final cache = await _offlineStore.lerCache('fazenda_id_${usuario.id}') as String?;
-      return cache ?? await _offlineStore.lerCache('rebanhos_fazenda_id') as String?;
+      final cache =
+          await _offlineStore.lerCache('fazenda_id_${usuario.id}') as String?;
+      return cache ??
+          await _offlineStore.lerCache('rebanhos_fazenda_id') as String?;
     }
 
     final fazenda = await _client
@@ -84,7 +86,9 @@ class AnimalTransferService {
     }
 
     if (!_connectivity.isOnline) {
-      final cache = await _offlineStore.lerCache(_historicoCacheKey(fazendaId, animalId));
+      final cache = await _offlineStore.lerCache(
+        _historicoCacheKey(fazendaId, animalId),
+      );
       final rebanhos = await _offlineStore.lerCache('rebanhos_todos');
       final nomes = <String, String>{};
       if (rebanhos is List) {
@@ -95,8 +99,12 @@ class AnimalTransferService {
       if (cache is! List) return [];
       return cache.whereType<Map>().map((item) {
         final linha = Map<String, dynamic>.from(item);
-        linha['rebanho_origem'] = {'nome': nomes[linha['rebanho_origem_id']?.toString()]};
-        linha['rebanho_destino'] = {'nome': nomes[linha['rebanho_destino_id']?.toString()]};
+        linha['rebanho_origem'] = {
+          'nome': nomes[linha['rebanho_origem_id']?.toString()],
+        };
+        linha['rebanho_destino'] = {
+          'nome': nomes[linha['rebanho_destino_id']?.toString()],
+        };
         return linha;
       }).toList();
     }
@@ -126,7 +134,10 @@ class AnimalTransferService {
         .order('data_transferencia', ascending: false);
 
     final lista = List<Map<String, dynamic>>.from(resultado);
-    await _offlineStore.salvarCache(_historicoCacheKey(fazendaId, animalId), lista);
+    await _offlineStore.salvarCache(
+      _historicoCacheKey(fazendaId, animalId),
+      lista,
+    );
     return lista;
   }
 
@@ -148,18 +159,32 @@ class AnimalTransferService {
     }
 
     if (!_connectivity.isOnline) {
-      final todos = await _offlineStore.lerCache('animais_${_client.auth.currentUser!.id}_todos_todos');
+      final todos = await _offlineStore.lerCache(
+        'animais_${_client.auth.currentUser!.id}_todos_todos',
+      );
       final animais = todos is List
-          ? todos.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
+          ? todos
+                .whereType<Map>()
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList()
           : <Map<String, dynamic>>[];
-      final indice = animais.indexWhere((item) => item['id']?.toString() == animalId);
-      if (indice < 0) throw Exception('Carregue o cadastro do animal com internet antes de transferi-lo offline.');
+      final indice = animais.indexWhere(
+        (item) => item['id']?.toString() == animalId,
+      );
+      if (indice < 0)
+        throw Exception(
+          'Carregue o cadastro do animal com internet antes de transferi-lo offline.',
+        );
       if (animais[indice]['rebanho_id']?.toString() != rebanhoOrigemId) {
-        throw Exception('O rebanho atual do animal mudou. Atualize os dados quando houver internet.');
+        throw Exception(
+          'O rebanho atual do animal mudou. Atualize os dados quando houver internet.',
+        );
       }
       final rebanhos = await RebanhoService().getRebanhos(somenteAtivos: true);
       if (!rebanhos.any((item) => item['id']?.toString() == rebanhoDestinoId)) {
-        throw Exception('O lote de destino precisa estar carregado e ativo no aparelho.');
+        throw Exception(
+          'O lote de destino precisa estar carregado e ativo no aparelho.',
+        );
       }
       final registroId = const Uuid().v4();
       final agora = DateTime.now().toUtc().toIso8601String();
@@ -169,11 +194,16 @@ class AnimalTransferService {
         'fazenda_id': fazendaId,
         'rebanho_origem_id': rebanhoOrigemId,
         'rebanho_destino_id': rebanhoDestinoId,
-        'data_transferencia': (dataTransferencia ?? DateTime.now()).toUtc().toIso8601String(),
+        'data_transferencia': (dataTransferencia ?? DateTime.now())
+            .toUtc()
+            .toIso8601String(),
         'observacao': _valorOuNull(observacao),
         'criado_em': agora,
       };
-      await OfflineSyncService.instance.enfileirar(tipo: 'animal.transferir', dados: historico);
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'animal.transferir',
+        dados: historico,
+      );
       await _salvarHistoricoLocal(fazendaId, animalId, historico);
       await _atualizarAnimalLocal(animais[indice], rebanhoDestinoId);
       await _atualizarContagemRebanhos(rebanhoOrigemId, rebanhoDestinoId);
@@ -239,7 +269,9 @@ class AnimalTransferService {
     final salvo = await _client
         .from('animal_transferencias')
         .insert(dadosHistorico)
-        .select('id, animal_id, fazenda_id, rebanho_origem_id, rebanho_destino_id, data_transferencia, observacao, criado_em')
+        .select(
+          'id, animal_id, fazenda_id, rebanho_origem_id, rebanho_destino_id, data_transferencia, observacao, criado_em',
+        )
         .single();
 
     await _client
@@ -250,29 +282,47 @@ class AnimalTransferService {
         })
         .eq('id', animalId)
         .eq('fazenda_id', fazendaId);
-    await _salvarHistoricoLocal(fazendaId, animalId, Map<String, dynamic>.from(salvo));
-    await _atualizarAnimalLocal(
-      {'id': animalId, 'rebanho_id': rebanhoOrigemId, 'status': 'ativo'},
-      rebanhoDestinoId,
+    await _salvarHistoricoLocal(
+      fazendaId,
+      animalId,
+      Map<String, dynamic>.from(salvo),
     );
+    await _atualizarAnimalLocal({
+      'id': animalId,
+      'rebanho_id': rebanhoOrigemId,
+      'status': 'ativo',
+    }, rebanhoDestinoId);
     await _atualizarContagemRebanhos(rebanhoOrigemId, rebanhoDestinoId);
     return false;
   }
 
-  String _historicoCacheKey(String fazendaId, String animalId) => 'animal_transferencias_${fazendaId}_$animalId';
+  String _historicoCacheKey(String fazendaId, String animalId) =>
+      'animal_transferencias_${fazendaId}_$animalId';
 
-  Future<void> _salvarHistoricoLocal(String fazendaId, String animalId, Map<String, dynamic> item) async {
+  Future<void> _salvarHistoricoLocal(
+    String fazendaId,
+    String animalId,
+    Map<String, dynamic> item,
+  ) async {
     final chave = _historicoCacheKey(fazendaId, animalId);
     final cache = await _offlineStore.lerCache(chave);
     final lista = cache is List
-        ? cache.whereType<Map>().map((linha) => Map<String, dynamic>.from(linha)).toList()
+        ? cache
+              .whereType<Map>()
+              .map((linha) => Map<String, dynamic>.from(linha))
+              .toList()
         : <Map<String, dynamic>>[];
-    lista.removeWhere((linha) => linha['id']?.toString() == item['id']?.toString());
+    lista.removeWhere(
+      (linha) => linha['id']?.toString() == item['id']?.toString(),
+    );
     lista.insert(0, Map<String, dynamic>.from(item));
     await _offlineStore.salvarCache(chave, lista);
   }
 
-  Future<void> _atualizarAnimalLocal(Map<String, dynamic> animal, String destinoId) async {
+  Future<void> _atualizarAnimalLocal(
+    Map<String, dynamic> animal,
+    String destinoId,
+  ) async {
     final usuarioId = _client.auth.currentUser!.id;
     final origemId = animal['rebanho_id']?.toString();
     for (final tipo in ['todos', 'ativos']) {
@@ -280,17 +330,27 @@ class AnimalTransferService {
         final chave = 'animais_${usuarioId}_${tipo}_${loteId ?? 'todos'}';
         final cache = await _offlineStore.lerCache(chave);
         if (cache is! List) continue;
-        final lista = cache.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
-        final correspondentes = lista.where((item) => item['id']?.toString() == animal['id']?.toString()).toList();
-        final existente = correspondentes.isEmpty ? null : correspondentes.first;
+        final lista = cache
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
+        final correspondentes = lista
+            .where((item) => item['id']?.toString() == animal['id']?.toString())
+            .toList();
+        final existente = correspondentes.isEmpty
+            ? null
+            : correspondentes.first;
         final atualizado = <String, dynamic>{
           ...animal,
-          if (existente != null) ...existente,
+          ...?existente,
           'rebanho_id': destinoId,
           'atualizado_em': DateTime.now().toUtc().toIso8601String(),
         };
-        lista.removeWhere((item) => item['id']?.toString() == animal['id']?.toString());
-        final pertenceAoTipo = tipo != 'ativos' || atualizado['status'] == 'ativo';
+        lista.removeWhere(
+          (item) => item['id']?.toString() == animal['id']?.toString(),
+        );
+        final pertenceAoTipo =
+            tipo != 'ativos' || atualizado['status'] == 'ativo';
         if ((loteId == null || loteId == destinoId) && pertenceAoTipo) {
           lista.add(atualizado);
         }
@@ -299,16 +359,23 @@ class AnimalTransferService {
     }
   }
 
-  Future<void> _atualizarContagemRebanhos(String origemId, String destinoId) async {
+  Future<void> _atualizarContagemRebanhos(
+    String origemId,
+    String destinoId,
+  ) async {
     for (final chave in ['rebanhos_ativos', 'rebanhos_todos']) {
       final cache = await _offlineStore.lerCache(chave);
       if (cache is! List) continue;
-      final lista = cache.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+      final lista = cache
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
       for (final rebanho in lista) {
         final id = rebanho['id']?.toString();
         final quantidade = (rebanho['quantidade_animais'] as num?)?.toInt();
         if (quantidade == null) continue;
-        if (id == origemId) rebanho['quantidade_animais'] = (quantidade - 1).clamp(0, 1 << 31);
+        if (id == origemId)
+          rebanho['quantidade_animais'] = (quantidade - 1).clamp(0, 1 << 31);
         if (id == destinoId) rebanho['quantidade_animais'] = quantidade + 1;
       }
       await _offlineStore.salvarCache(chave, lista);

@@ -219,7 +219,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     if (data != null && mounted) setState(() => _denticaoData = data);
   }
 
-
   Future<void> _selecionarDataAquisicao() async {
     final hoje = DateTime.now();
 
@@ -455,7 +454,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     }
 
     if (_origemSelecionada == OrigemAnimal.comprado) {
-      final valor = double.tryParse(_valorAquisicaoController.text.trim().replaceAll(',', '.'));
+      final valor = double.tryParse(
+        _valorAquisicaoController.text.trim().replaceAll(',', '.'),
+      );
 
       if (_dataAquisicao == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -466,7 +467,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
 
       if (valor == null || valor <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Informe um valor de compra maior que zero.')),
+          const SnackBar(
+            content: Text('Informe um valor de compra maior que zero.'),
+          ),
         );
         return;
       }
@@ -514,7 +517,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
           // A filiação é salva no Supabase.
           maeId: _maeSelecionada?.id,
           paiId: _paiSelecionado?.id,
-          origem: _origemSelecionada == OrigemAnimal.comprado ? 'comprado' : 'nascido',
+          origem: _origemSelecionada == OrigemAnimal.comprado
+              ? 'comprado'
+              : 'nascido',
           dataAquisicao: _dataAquisicao,
           valorAquisicao: valorAquisicao,
           vendedor: _vendedorController.text,
@@ -548,7 +553,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
           // Mantém a filiação durante a edição.
           maeId: _maeSelecionada?.id,
           paiId: _paiSelecionado?.id,
-          origem: _origemSelecionada == OrigemAnimal.comprado ? 'comprado' : 'nascido',
+          origem: _origemSelecionada == OrigemAnimal.comprado
+              ? 'comprado'
+              : 'nascido',
           dataAquisicao: _dataAquisicao,
           valorAquisicao: valorAquisicao,
           vendedor: _vendedorController.text,
@@ -567,11 +574,13 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(pendenteOffline
-              ? 'Salvo neste aparelho. Será sincronizado quando a internet voltar.'
-              : animalAnterior == null
-                  ? 'Animal cadastrado com sucesso.'
-                  : 'Animal atualizado com sucesso.'),
+          content: Text(
+            pendenteOffline
+                ? 'Salvo neste aparelho. Será sincronizado quando a internet voltar.'
+                : animalAnterior == null
+                ? 'Animal cadastrado com sucesso.'
+                : 'Animal atualizado com sucesso.',
+          ),
         ),
       );
 
@@ -932,7 +941,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 ),
               ),
 
-
               const SizedBox(height: 20),
 
               const Text(
@@ -947,13 +955,34 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                   prefixIcon: Icon(Icons.health_and_safety_outlined),
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'leite', child: Text('Dentes de leite')),
-                  DropdownMenuItem(value: '2 dentes', child: Text('2 dentes permanentes')),
-                  DropdownMenuItem(value: '4 dentes', child: Text('4 dentes permanentes')),
-                  DropdownMenuItem(value: '6 dentes', child: Text('6 dentes permanentes')),
-                  DropdownMenuItem(value: 'boca cheia', child: Text('Boca cheia')),
-                  DropdownMenuItem(value: 'desgastada', child: Text('Desgastada / avaliar')),
-                  DropdownMenuItem(value: 'outro', child: Text('Outra condição')),
+                  DropdownMenuItem(
+                    value: 'leite',
+                    child: Text('Dentes de leite'),
+                  ),
+                  DropdownMenuItem(
+                    value: '2 dentes',
+                    child: Text('2 dentes permanentes'),
+                  ),
+                  DropdownMenuItem(
+                    value: '4 dentes',
+                    child: Text('4 dentes permanentes'),
+                  ),
+                  DropdownMenuItem(
+                    value: '6 dentes',
+                    child: Text('6 dentes permanentes'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'boca cheia',
+                    child: Text('Boca cheia'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'desgastada',
+                    child: Text('Desgastada / avaliar'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'outro',
+                    child: Text('Outra condição'),
+                  ),
                 ],
                 onChanged: _salvando
                     ? null
@@ -967,9 +996,11 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                     labelText: 'Data da avaliação dentária',
                     prefixIcon: Icon(Icons.calendar_month_outlined),
                   ),
-                  child: Text(_denticaoData == null
-                      ? 'Selecionar data'
-                      : _formatarData(_denticaoData!)),
+                  child: Text(
+                    _denticaoData == null
+                        ? 'Selecionar data'
+                        : _formatarData(_denticaoData!),
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -1068,7 +1099,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 TextFormField(
                   controller: _valorAquisicaoController,
                   readOnly: _salvando,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
                     labelText: 'Valor da compra *',
@@ -1176,23 +1209,27 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.flag_outlined),
                 ),
-                items: (modoEdicao && widget.animalParaEditar?.status == StatusAnimal.vendido
-                        ? const [StatusAnimal.vendido]
-                        : StatusAnimal.values.where(
-                            (status) => status != StatusAnimal.vendido,
-                          ))
-                    .map((status) {
-                  return DropdownMenuItem<StatusAnimal>(
-                    value: status,
-                    child: Row(
-                      children: [
-                        Icon(_statusIcon(status), size: 20),
-                        const SizedBox(width: 10),
-                        Text(_statusLabel(status)),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                items:
+                    (modoEdicao &&
+                                widget.animalParaEditar?.status ==
+                                    StatusAnimal.vendido
+                            ? const [StatusAnimal.vendido]
+                            : StatusAnimal.values.where(
+                                (status) => status != StatusAnimal.vendido,
+                              ))
+                        .map((status) {
+                          return DropdownMenuItem<StatusAnimal>(
+                            value: status,
+                            child: Row(
+                              children: [
+                                Icon(_statusIcon(status), size: 20),
+                                const SizedBox(width: 10),
+                                Text(_statusLabel(status)),
+                              ],
+                            ),
+                          );
+                        })
+                        .toList(),
                 onChanged: _salvando
                     ? null
                     : (status) {
@@ -1207,7 +1244,8 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
               ),
 
               if (_statusSelecionado == StatusAnimal.ativo &&
-                  (!modoEdicao || widget.animalParaEditar?.status == StatusAnimal.ativo))
+                  (!modoEdicao ||
+                      widget.animalParaEditar?.status == StatusAnimal.ativo))
                 const Padding(
                   padding: EdgeInsets.only(top: 6, left: 12),
                   child: Text(

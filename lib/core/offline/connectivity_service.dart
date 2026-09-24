@@ -13,8 +13,7 @@ class ConnectivityService {
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<List<ConnectivityResult>>? _subscription;
 
-  final StreamController<bool> _controller =
-      StreamController<bool>.broadcast();
+  final StreamController<bool> _controller = StreamController<bool>.broadcast();
 
   Stream<bool> get statusStream => _controller.stream;
 
@@ -33,9 +32,7 @@ class ConnectivityService {
   }
 
   Future<void> _atualizar(List<ConnectivityResult> resultado) async {
-    final temRede = resultado.any(
-      (item) => item != ConnectivityResult.none,
-    );
+    final temRede = resultado.any((item) => item != ConnectivityResult.none);
 
     final geracao = ++_probeGeneration;
     if (!temRede) {
@@ -49,8 +46,10 @@ class ConnectivityService {
       return;
     }
     try {
-      final socket = await Socket.connect(uri.host, uri.hasPort ? uri.port : 443)
-          .timeout(const Duration(seconds: 4));
+      final socket = await Socket.connect(
+        uri.host,
+        uri.hasPort ? uri.port : 443,
+      ).timeout(const Duration(seconds: 4));
       socket.destroy();
       if (geracao == _probeGeneration) _definirOnline(true);
     } catch (_) {

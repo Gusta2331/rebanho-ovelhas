@@ -3,7 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/offline/connectivity_service.dart';
 import '../../../core/offline/offline_store.dart';
 import '../../../core/offline/offline_sync_service.dart';
+
 import 'package:uuid/uuid.dart';
+
 import '../../../core/services/supabase_service.dart';
 
 class RebanhoService {
@@ -44,8 +46,14 @@ class RebanhoService {
     }
 
     if (!_connectivity.isOnline) {
-      final cache = await _offlineStore.lerCache('rebanhos_' + (somenteAtivos ? 'ativos' : 'todos'));
-      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      final cache = await _offlineStore.lerCache(
+        'rebanhos_' + (somenteAtivos ? 'ativos' : 'todos'),
+      );
+      if (cache is List)
+        return cache
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       return [];
     }
 
@@ -83,7 +91,10 @@ class RebanhoService {
       rebanhos.add(mapa);
     }
 
-    await _offlineStore.salvarCache('rebanhos_' + (somenteAtivos ? 'ativos' : 'todos'), rebanhos);
+    await _offlineStore.salvarCache(
+      'rebanhos_' + (somenteAtivos ? 'ativos' : 'todos'),
+      rebanhos,
+    );
     return rebanhos;
   }
 
@@ -167,12 +178,10 @@ class RebanhoService {
 
     if (!_connectivity.isOnline) {
       await OfflineSyncService.instance.enfileirar(
-        tipo: 'rebanho.criar', dados: dados,
+        tipo: 'rebanho.criar',
+        dados: dados,
       );
-      final local = {
-        ...dados,
-        'quantidade_animais': 0,
-      };
+      final local = {...dados, 'quantidade_animais': 0};
       await _atualizarCacheRebanho(local);
       return local;
     }
@@ -228,7 +237,9 @@ class RebanhoService {
         dados: {'id': id, 'fazenda_id': fazendaId, ...dados},
       );
       final local = {
-        'id': id, 'fazenda_id': fazendaId, ...dados,
+        'id': id,
+        'fazenda_id': fazendaId,
+        ...dados,
         'quantidade_animais': 0,
       };
       await _atualizarCacheRebanho(local);
@@ -273,8 +284,10 @@ class RebanhoService {
       await OfflineSyncService.instance.enfileirar(
         tipo: 'rebanho.status',
         dados: {
-          'id': id, 'fazenda_id': fazendaId,
-          'ativo': ativo, 'atualizado_em': atualizadoEm,
+          'id': id,
+          'fazenda_id': fazendaId,
+          'ativo': ativo,
+          'atualizado_em': atualizadoEm,
         },
       );
       final rebanhos = await getRebanhos();
@@ -286,17 +299,18 @@ class RebanhoService {
         }
       }
       if (atual != null) {
-        await _atualizarCacheRebanho({...atual, 'ativo': ativo, 'atualizado_em': atualizadoEm});
+        await _atualizarCacheRebanho({
+          ...atual,
+          'ativo': ativo,
+          'atualizado_em': atualizadoEm,
+        });
       }
       return;
     }
 
     await _client
         .from('rebanhos')
-        .update({
-          'ativo': ativo,
-          'atualizado_em': atualizadoEm,
-        })
+        .update({'ativo': ativo, 'atualizado_em': atualizadoEm})
         .eq('id', id)
         .eq('fazenda_id', fazendaId);
   }
@@ -320,7 +334,10 @@ class RebanhoService {
     for (final chave in ['rebanhos_todos', 'rebanhos_ativos']) {
       final atual = await _offlineStore.lerCache(chave);
       final lista = atual is List
-          ? atual.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
+          ? atual
+                .whereType<Map>()
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList()
           : <Map<String, dynamic>>[];
       lista.removeWhere((item) => item['id']?.toString() == id);
       if (chave == 'rebanhos_todos' || rebanho['ativo'] == true) {
