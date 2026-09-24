@@ -432,9 +432,16 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
                   ? 'Não definido'
                   : _animal(_reproducao.paiId!),
             ),
-            _info('Data da cobertura', _data(_reproducao.dataCobertura)),
-            _info('Previsão de parto', _data(_reproducao.dataPrevisaoParto)),
-            _info('Data do parto', _data(_reproducao.dataParto)),
+            if (_reproducao.dataCobertura != null)
+              _info('Data da cobertura', _data(_reproducao.dataCobertura)),
+            if (_reproducao.dataPrevisaoParto != null)
+              _info('Previsão de parto', _data(_reproducao.dataPrevisaoParto)),
+            if (_reproducao.dataParto != null)
+              _info('Data do parto', _data(_reproducao.dataParto)),
+            if (_reproducao.dataCobertura == null &&
+                _reproducao.dataPrevisaoParto == null &&
+                _reproducao.dataParto == null)
+              _info('Próximo passo', 'Registrar a cobertura'),
           ],
         ),
       ),
