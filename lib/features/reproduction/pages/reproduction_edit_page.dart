@@ -362,6 +362,8 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
                     Icons.child_friendly,
                   ),
                   const SizedBox(height: 16),
+                  if (_statusSelecionado == StatusReproducao.prenhe ||
+                      _confirmacaoPrenhez != null) ...[
                   _dateField(
                     'Data da confirmação da prenhez',
                     _confirmacaoPrenhez,
@@ -369,6 +371,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
                     Icons.verified_outlined,
                   ),
                   const SizedBox(height: 16),
+                  ],
                   DropdownButtonFormField<StatusReproducao>(
                     initialValue: _statusSelecionado,
                     decoration: const InputDecoration(
