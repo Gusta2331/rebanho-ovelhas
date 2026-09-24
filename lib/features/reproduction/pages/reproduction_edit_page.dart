@@ -186,21 +186,34 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
   }
 
   Future<void> _dataPicker(String campo) async {
+    if (campo == 'confirmacao' && _cobertura == null) {
+      _snack('Registre a cobertura antes de confirmar a prenhez.', true);
+      return;
+    }
+
     DateTime? atual;
     if (campo == 'cobertura') {
       atual = _cobertura;
-    } else if (campo == 'previsao')
+    } else if (campo == 'previsao') {
       atual = _previsao;
-    else
+    } else if (campo == 'confirmacao') {
+      atual = _confirmacaoPrenhez;
+    } else {
       atual = _parto;
+    }
+
     final d = await showDatePicker(
       context: context,
       initialDate: atual ?? DateTime.now(),
-      firstDate: DateTime(2000),
+      firstDate: campo == 'confirmacao'
+          ? _cobertura!
+          : DateTime(2000),
       lastDate: DateTime(2100),
       locale: const Locale('pt', 'BR'),
     );
+
     if (d == null || !mounted) return;
+
     setState(() {
       if (campo == 'cobertura') {
         _cobertura = d;
@@ -208,10 +221,13 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
         if (_statusSelecionado == StatusReproducao.planejada) {
           _statusSelecionado = StatusReproducao.coberta;
         }
-      } else if (campo == 'previsao')
+      } else if (campo == 'previsao') {
         _previsao = d;
-      else
+      } else if (campo == 'confirmacao') {
+        _confirmacaoPrenhez = d;
+      } else {
         _parto = d;
+      }
     });
   }
 
