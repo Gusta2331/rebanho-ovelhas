@@ -508,6 +508,8 @@ class ManejoService {
     String? medicamentoNome,
     String? medicamentoPrincipioAtivo,
     String? enfermidade,
+    String? farmaciaProdutoId,
+    double? farmaciaQuantidade,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
 
@@ -527,6 +529,12 @@ class ManejoService {
       medicamentoId: medicamentoId,
       medicamentoNome: medicamentoNome,
     );
+
+    final quantidadeFarmacia = farmaciaQuantidade ?? dose;
+    if (farmaciaProdutoId != null &&
+        (quantidadeFarmacia == null || quantidadeFarmacia <= 0)) {
+      throw Exception('Informe a quantidade consumida da farmácia.');
+    }
 
     if (_connectivity.isOnline) {
       await _validarAnimal(animalId, fazendaId);
@@ -558,6 +566,8 @@ class ManejoService {
       medicamentoNome: medicamentoNome,
       medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
       enfermidade: enfermidade,
+      farmaciaProdutoId: farmaciaProdutoId,
+      farmaciaQuantidade: quantidadeFarmacia,
     );
 
     if (!_connectivity.isOnline) {
@@ -569,13 +579,21 @@ class ManejoService {
       return dados;
     }
 
-    final resultado = await _client
-        .from('manejos')
-        .insert(dados)
-        .select('*, animais(brinco, nome)')
-        .single();
+    final resultado = farmaciaProdutoId != null
+        ? await _client.rpc(
+            'registrar_manejo_com_estoque',
+            params: {
+              'p_dados': dados,
+              'p_quantidade': quantidadeFarmacia,
+            },
+          )
+        : await _client
+            .from('manejos')
+            .insert(dados)
+            .select('*, animais(brinco, nome)')
+            .single();
 
-    return Map<String, dynamic>.from(resultado);
+    return Map<String, dynamic>.from(resultado as Map);
   }
 
   Future<List<Map<String, dynamic>>> criarManejosEmLote({
@@ -604,6 +622,8 @@ class ManejoService {
     String? medicamentoNome,
     String? medicamentoPrincipioAtivo,
     String? enfermidade,
+    String? farmaciaProdutoId,
+    double? farmaciaQuantidade,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
     if (animalIds.isEmpty) throw Exception('Selecione pelo menos um animal.');
@@ -644,6 +664,12 @@ class ManejoService {
       validarFamacha: false,
       validarPeso: false,
     );
+
+    final quantidadeFarmacia = farmaciaQuantidade ?? dose;
+    if (farmaciaProdutoId != null &&
+        (quantidadeFarmacia == null || quantidadeFarmacia <= 0)) {
+      throw Exception('Informe a quantidade consumida da farmácia.');
+    }
 
     if (_connectivity.isOnline) {
       final animais = await _client
@@ -694,6 +720,8 @@ class ManejoService {
             medicamentoNome: medicamentoNome,
             medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
             enfermidade: enfermidade,
+            farmaciaProdutoId: farmaciaProdutoId,
+            farmaciaQuantidade: dosePorAnimal[animalId] ?? quantidadeFarmacia,
           ),
         )
         .toList();
@@ -709,11 +737,16 @@ class ManejoService {
       return dados;
     }
 
-    final resultado = await _client
-        .from('manejos')
-        .insert(dados)
-        .select('*, animais(brinco, nome)');
-    return List<Map<String, dynamic>>.from(resultado);
+    final resultado = farmaciaProdutoId != null
+        ? await _client.rpc(
+            'registrar_manejos_com_estoque',
+            params: {'p_itens': dados},
+          )
+        : await _client
+            .from('manejos')
+            .insert(dados)
+            .select('*, animais(brinco, nome)');
+    return List<Map<String, dynamic>>.from(resultado as List);
   }
 
   Future<List<Map<String, dynamic>>> getHistoricoFamacha(
@@ -767,6 +800,8 @@ class ManejoService {
     String? medicamentoNome,
     String? medicamentoPrincipioAtivo,
     String? enfermidade,
+    String? farmaciaProdutoId,
+    double? farmaciaQuantidade,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
     _validarDados(
@@ -833,11 +868,14 @@ class ManejoService {
       return;
     }
 
-    await _client
-        .from('manejos')
-        .update(dados)
-        .eq('id', id)
-        .eq('fazenda_id', fazendaId);
+    await _client.rpc(
+      'atualizar_manejo_com_estoque',
+      params: {
+        'p_id': id,
+        'p_fazenda_id': fazendaId,
+        'p_dados': {'id': id, 'fazenda_id': fazendaId, ...dados},
+      },
+    );
   }
 
   Future<void> excluirManejo(String id) async {
@@ -879,11 +917,10 @@ class ManejoService {
       }
       return;
     }
-    await _client
-        .from('manejos')
-        .delete()
-        .eq('id', id)
-        .eq('fazenda_id', fazendaId);
+    await _client.rpc(
+      'excluir_manejo_com_estoque',
+      params: {'p_id': id, 'p_fazenda_id': fazendaId},
+    );
   }
 
   Future<void> _atualizarCacheManejo(Map<String, dynamic> registro) async {
@@ -1050,6 +1087,8 @@ class ManejoService {
     String? medicamentoNome,
     String? medicamentoPrincipioAtivo,
     String? enfermidade,
+    String? farmaciaProdutoId,
+    double? farmaciaQuantidade,
   }) {
     return {
       'id': const Uuid().v4(),
@@ -1088,6 +1127,16 @@ class ManejoService {
           ? _text(medicamentoPrincipioAtivo)
           : null,
       'enfermidade': tipo == TipoManejo.tratamento ? _text(enfermidade) : null,
+      'farmacia_produto_id': tipo == TipoManejo.vacinacao ||
+              tipo == TipoManejo.vermifugacao ||
+              tipo == TipoManejo.tratamento
+          ? farmaciaProdutoId
+          : null,
+      'farmacia_quantidade': tipo == TipoManejo.vacinacao ||
+              tipo == TipoManejo.vermifugacao ||
+              tipo == TipoManejo.tratamento
+          ? farmaciaQuantidade
+          : null,
     };
   }
 
