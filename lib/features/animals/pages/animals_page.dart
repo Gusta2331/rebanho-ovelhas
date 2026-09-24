@@ -329,7 +329,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
     }
 
     try {
-      final excluidoNoServidor = await AnimalService().excluirAnimal(animal.id);
+      final excluidoNoServidor = await AnimalService().excluirAnimal(animal.id, fotoUrl: animal.fotoPath);
       await _carregarAnimais();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
