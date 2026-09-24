@@ -851,6 +851,8 @@ class ManejoService {
             medicamentoNome: medicamentoNome,
             medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
             enfermidade: enfermidade,
+            farmaciaProdutoId: farmaciaProdutoId,
+            farmaciaQuantidade: farmaciaQuantidade ?? dose,
           )
           ..remove('id')
           ..remove('fazenda_id');
