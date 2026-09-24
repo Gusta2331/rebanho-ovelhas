@@ -15,6 +15,7 @@ class Reproducao {
   final String? paiId;
   final DateTime? dataCobertura;
   final DateTime? dataPrevisaoParto;
+  final DateTime? dataConfirmacaoPrenhez;
   final DateTime? dataParto;
   final StatusReproducao status;
   final String? observacoes;
@@ -28,6 +29,7 @@ class Reproducao {
     this.paiId,
     this.dataCobertura,
     this.dataPrevisaoParto,
+    this.dataConfirmacaoPrenhez,
     this.dataParto,
     this.status = StatusReproducao.planejada,
     this.observacoes,
@@ -43,6 +45,7 @@ class Reproducao {
       paiId: _stringOrNull(map['pai_id']),
       dataCobertura: _parseDate(map['data_cobertura']),
       dataPrevisaoParto: _parseDate(map['data_previsao_parto']),
+      dataConfirmacaoPrenhez: _parseDate(map['data_confirmacao_prenhez']),
       dataParto: _parseDate(map['data_parto']),
       status: _statusFromString(map['status']),
       observacoes: _stringOrNull(map['observacoes']),
@@ -62,6 +65,7 @@ class Reproducao {
           ?.toIso8601String()
           .split('T')
           .first,
+      'data_confirmacao_prenhez': dataConfirmacaoPrenhez?.toIso8601String().split('T').first,
       'data_parto': dataParto?.toIso8601String().split('T').first,
       'status': _statusToString(status),
       'observacoes': observacoes,
@@ -77,6 +81,7 @@ class Reproducao {
     String? paiId,
     DateTime? dataCobertura,
     DateTime? dataPrevisaoParto,
+    DateTime? dataConfirmacaoPrenhez,
     DateTime? dataParto,
     StatusReproducao? status,
     String? observacoes,
@@ -90,6 +95,7 @@ class Reproducao {
       paiId: paiId ?? this.paiId,
       dataCobertura: dataCobertura ?? this.dataCobertura,
       dataPrevisaoParto: dataPrevisaoParto ?? this.dataPrevisaoParto,
+      dataConfirmacaoPrenhez: dataConfirmacaoPrenhez ?? this.dataConfirmacaoPrenhez,
       dataParto: dataParto ?? this.dataParto,
       status: status ?? this.status,
       observacoes: observacoes ?? this.observacoes,
