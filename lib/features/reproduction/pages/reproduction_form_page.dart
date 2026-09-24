@@ -30,6 +30,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
 
   DateTime? _dataCobertura;
   DateTime? _dataPrevisaoParto;
+  DateTime? _dataConfirmacaoPrenhez;
 
   StatusReproducao _status = StatusReproducao.planejada;
 
@@ -209,6 +210,26 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
     });
   }
 
+  Future<void> _selecionarConfirmacaoPrenhez() async {
+    if (_dataCobertura == null) {
+      _mostrarMensagem('Registre a cobertura antes de confirmar a prenhez.', erro: true);
+      return;
+    }
+
+    final hoje = DateTime.now();
+    final data = await showDatePicker(
+      context: context,
+      initialDate: _dataConfirmacaoPrenhez ?? hoje,
+      firstDate: _dataCobertura!,
+      lastDate: DateTime(2100),
+      locale: const Locale('pt', 'BR'),
+    );
+
+    if (data != null && mounted) {
+      setState(() => _dataConfirmacaoPrenhez = data);
+    }
+  }
+
   Future<void> _selecionarPrevisaoParto() async {
     final hoje = DateTime.now();
 
@@ -248,6 +269,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
         paiId: _paiId,
         dataCobertura: _dataCobertura,
         dataPrevisaoParto: _dataPrevisaoParto,
+        dataConfirmacaoPrenhez: _dataConfirmacaoPrenhez,
         status: _statusParaBanco(_status),
         observacoes: _observacoesController.text,
       );
@@ -527,6 +549,15 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
 
           const SizedBox(height: 16),
 
+          _buildDataCampo(
+            titulo: 'Data da confirmação da prenhez',
+            valor: _dataConfirmacaoPrenhez,
+            onTap: _selecionarConfirmacaoPrenhez,
+            icone: Icons.verified_outlined,
+          ),
+
+          const SizedBox(height: 16),
+
           DropdownButtonFormField<StatusReproducao>(
             initialValue: _status,
             decoration: const InputDecoration(
@@ -543,6 +574,14 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
                 .toList(),
             onChanged: (valor) {
               if (valor == null) {
+                return;
+              }
+
+              if (valor == StatusReproducao.prenhe && _dataCobertura == null) {
+                _mostrarMensagem(
+                  'Registre a cobertura antes de confirmar a prenhez.',
+                  erro: true,
+                );
                 return;
               }
 
