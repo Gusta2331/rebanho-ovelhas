@@ -917,6 +917,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         enfermidade: _tipo == TipoManejo.tratamento
             ? _enfermidadeController.text
             : null,
+        farmaciaProdutoId: farmaciaProdutoId,
+        farmaciaQuantidade: farmaciaQuantidade,
       );
 
       if (mounted) Navigator.of(context).pop(true);
@@ -1023,50 +1025,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                 _tipo == TipoManejo.tratamento
             ? (_dosesCalculadas[_animalId] ?? _numero(_doseManual.text))
             : null,
-      );ait _service.atualizarManejo(
-        id: widget.manejo!.id,
-        animalId: _animalId!,
-        tipo: _tipo,
-        data: _data,
-        famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
-        observacoes: _observacoes.text,
-        vacinaId: vacinaId,
-        vacinaNome: vacinaNome,
-        vacinaFabricante: vacinaFabricante,
-        vacinaLote: _tipo == TipoManejo.vacinacao ? _vacinaLote.text : null,
-        outroNome: _tipo == TipoManejo.outro ? _outroNome.text : null,
-        pesoKg: _tipo == TipoManejo.pesagem
-            ? _numero(_peso.text)
-            : _pesos[_animalId],
-        dose: _dosesCalculadas[_animalId] ?? _numero(_doseManual.text),
-        doseUnidade: _unidadeDose,
-        pesoReferenciaKg: _numero(_pesoReferenciaTexto),
-        viaAplicacao: _viaAplicacao.trim().isEmpty
-            ? null
-            : _viaAplicacao.trim(),
-        carenciaDias: int.tryParse(_carenciaTexto.trim()),
-        vermifugoId: _tipo == TipoManejo.vermifugacao
-            ? _campo(_vermifugoSelecionado, 'id')?.toString()
-            : null,
-        vermifugoNome: _tipo == TipoManejo.vermifugacao
-            ? _campo(_vermifugoSelecionado, 'nome')?.toString()
-            : null,
-        vermifugoPrincipioAtivo: _tipo == TipoManejo.vermifugacao
-            ? _campo(_vermifugoSelecionado, 'principio_ativo')?.toString()
-            : null,
-        medicamentoId: _tipo == TipoManejo.tratamento
-            ? _campo(_medicamentoSelecionado, 'id')?.toString()
-            : null,
-        medicamentoNome: _tipo == TipoManejo.tratamento
-            ? _campo(_medicamentoSelecionado, 'nome')?.toString()
-            : null,
-        medicamentoPrincipioAtivo: _tipo == TipoManejo.tratamento
-            ? _campo(_medicamentoSelecionado, 'principio_ativo')?.toString()
-            : null,
-        enfermidade: _tipo == TipoManejo.tratamento
-            ? _enfermidadeController.text
-            : null,
-      );
+      );;
 
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
