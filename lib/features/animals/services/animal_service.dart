@@ -279,9 +279,22 @@ class AnimalService {
       return null;
     }
 
-    final raca = await _buscarRacaPorNome(nome, fazendaId);
+    final existente = await _buscarRacaPorNome(nome, fazendaId);
+    if (existente != null) return existente['id'] as String?;
 
-    return raca?['id'] as String?;
+    // A tela de raças historicamente permitia opções locais não cadastradas
+    // no banco. Persista a opção aqui para que o FK raca_id nunca seja perdido.
+    final criada = await _client
+        .from('racas')
+        .insert({
+          'id': const Uuid().v4(),
+          'fazenda_id': fazendaId,
+          'nome': nome.trim(),
+          'ativo': true,
+        })
+        .select('id')
+        .single();
+    return criada['id'] as String?;
   }
 
   Future<bool> _rebanhoPertenceAFazenda({
@@ -317,6 +330,9 @@ class AnimalService {
     DateTime? dataAquisicao,
     double? valorAquisicao,
     String? vendedor,
+    String? denticao,
+    DateTime? denticaoData,
+    String? denticaoObservacoes,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
 
@@ -391,6 +407,11 @@ class AnimalService {
       'vendedor': origem == 'comprado' && vendedor?.trim().isNotEmpty == true
           ? vendedor!.trim()
           : null,
+      'denticao': denticao,
+      'denticao_data': denticaoData?.toIso8601String().split('T').first,
+      'denticao_observacoes': denticaoObservacoes?.trim().isEmpty == true
+          ? null
+          : denticaoObservacoes?.trim(),
     };
 
     if (origem == 'comprado') {
@@ -415,6 +436,13 @@ class AnimalService {
           'p_vendedor': vendedor?.trim(),
         },
       );
+      await _client.from('animais').update({
+        'denticao': denticao,
+        'denticao_data': denticaoData?.toIso8601String().split('T').first,
+        'denticao_observacoes': denticaoObservacoes?.trim().isEmpty == true
+            ? null
+            : denticaoObservacoes?.trim(),
+      }).eq('id', animalId).eq('fazenda_id', fazendaId);
     } else {
       await _client.from('animais').insert(dados);
     }
@@ -444,6 +472,13 @@ class AnimalService {
     String? fotoPath,
     String? maeId,
     String? paiId,
+    String origem = 'nascido',
+    DateTime? dataAquisicao,
+    double? valorAquisicao,
+    String? vendedor,
+    String? denticao,
+    DateTime? denticaoData,
+    String? denticaoObservacoes,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
 
@@ -480,34 +515,57 @@ class AnimalService {
       animalId: id,
     );
 
-    final dados = <String, dynamic>{
-      'rebanho_id': rebanhoId,
-      'brinco': brinco,
-      'nome': nome?.trim().isEmpty == true ? null : nome?.trim(),
-      'sexo': sexo,
-      'raca_id': racaId,
-      'data_nascimento': dataNascimento?.toIso8601String(),
-      'status': status,
-      'data_entrada': dataEntrada?.toIso8601String(),
-      'data_saida': dataSaida?.toIso8601String(),
-      'observacoes': observacoes?.trim().isEmpty == true
-          ? null
-          : observacoes?.trim(),
-      'foto_url': fotoUrlFinal,
-      'mae_id': maeId,
-      'pai_id': paiId,
-      'atualizado_em': DateTime.now().toUtc().toIso8601String(),
-    };
+    if (origem != 'nascido' && origem != 'comprado') {
+      throw Exception('Origem do animal inválida.');
+    }
+    if (origem == 'comprado' &&
+        (dataAquisicao == null || valorAquisicao == null || valorAquisicao <= 0)) {
+      throw Exception('Informe a data e um valor de compra maior que zero.');
+    }
 
-    final resultado = await _client
+    final resultado = await _client.rpc(
+      'atualizar_animal_com_origem',
+      params: {
+        'p_animal_id': id,
+        'p_rebanho_id': rebanhoId,
+        'p_brinco': brinco,
+        'p_nome': nome?.trim(),
+        'p_sexo': sexo,
+        'p_raca_id': racaId,
+        'p_data_nascimento': dataNascimento?.toIso8601String(),
+        'p_status': status,
+        'p_data_entrada': dataEntrada?.toIso8601String(),
+        'p_data_saida': dataSaida?.toIso8601String(),
+        'p_observacoes': observacoes?.trim(),
+        'p_foto_url': fotoUrlFinal,
+        'p_mae_id': maeId,
+        'p_pai_id': paiId,
+        'p_origem': origem,
+        'p_data_aquisicao': origem == 'comprado'
+            ? dataAquisicao!.toIso8601String().split('T').first
+            : null,
+        'p_valor_aquisicao': origem == 'comprado' ? valorAquisicao : null,
+        'p_vendedor': origem == 'comprado' ? vendedor?.trim() : null,
+        'p_denticao': denticao,
+        'p_denticao_data': denticaoData?.toIso8601String().split('T').first,
+        'p_denticao_observacoes': denticaoObservacoes?.trim(),
+      },
+    );
+
+    final animal = await _client
         .from('animais')
-        .update(dados)
+        .select('*, racas(nome)')
         .eq('id', id)
         .eq('fazenda_id', fazendaId)
-        .select('*, racas(nome)')
         .single();
+    return Map<String, dynamic>.from(animal);
+  }
 
-    return Map<String, dynamic>.from(resultado);
+  Future<void> excluirAnimal(String id) async {
+    if (!_connectivity.isOnline) {
+      throw Exception('Conecte-se à internet para excluir o animal com segurança.');
+    }
+    await _client.rpc('excluir_animal_e_historico', params: {'p_animal_id': id});
   }
 
   Future<String?> _resolverFotoParaSalvar({

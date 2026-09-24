@@ -300,10 +300,10 @@ class _AnimalsPageState extends State<AnimalsPage> {
         return AlertDialog(
           title: const Text('Excluir animal?'),
           content: Text(
-            'O animal "${animal.nome ?? 'Sem nome'}" '
-            'com brinco ${animal.brinco} faz parte do histórico da fazenda.\n\n'
-            'Animais não são excluídos do sistema. '
-            'Eles devem ser marcados como vendidos, mortos ou descartados.',
+            'Excluir ${animal.nome ?? 'o animal'} (brinco ${animal.brinco}) apagará permanentemente '
+            'a ficha e os registros ligados somente a ele: saúde, pesagens, venda, despesas/receitas '
+            'vinculadas e registros de reprodução. Cordeiros existentes permanecem, mas perdem esta filiação.\n\n'
+            'Esta ação exige internet e não pode ser desfeita. Deseja continuar?',
           ),
           actions: [
             TextButton(
@@ -316,7 +316,8 @@ class _AnimalsPageState extends State<AnimalsPage> {
               onPressed: () {
                 Navigator.of(dialogContext).pop(true);
               },
-              child: const Text('Entendi'),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Excluir permanentemente'),
             ),
           ],
         );
@@ -327,14 +328,21 @@ class _AnimalsPageState extends State<AnimalsPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'A exclusão de animais não está disponível. '
-          'Use o status do animal para manter o histórico.',
-        ),
-      ),
-    );
+    try {
+      await AnimalService().excluirAnimal(animal.id);
+      await _carregarAnimais();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Animal ${animal.brinco} e seus registros vinculados foram excluídos.')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
+    }
   }
 
   void _mostrarOpcoesAnimal(Animal animal) {

@@ -5,6 +5,7 @@ import '../../../core/widgets/contextual_help.dart';
 import '../../manejo/models/manejo.dart';
 import '../../manejo/services/manejo_service.dart';
 import '../../manejo/widgets/famacha_score_badge.dart';
+import '../../reproduction/pages/reproduction_form_page.dart';
 import '../../flock/pages/animal_transfer_page.dart';
 import '../../flock/pages/animal_transfer_history_page.dart';
 import '../../flock/services/rebanho_selection_service.dart';
@@ -128,6 +129,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
           partes.add('Princípio ativo: ${manejo.vermifugoPrincipioAtivo}');
         }
       case TipoManejo.tratamento:
+        if (manejo.enfermidade != null) partes.add('Enfermidade: ${manejo.enfermidade}');
         if (manejo.medicamentoNome != null) partes.add(manejo.medicamentoNome!);
         if (manejo.medicamentoPrincipioAtivo != null) {
           partes.add('Princípio ativo: ${manejo.medicamentoPrincipioAtivo}');
@@ -341,6 +343,17 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
 
     await _carregarVenda();
     _mostrarMensagem('Venda registrada com sucesso e lançada no financeiro.');
+  }
+
+  Future<void> _iniciarReproducao() async {
+    final resultado = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => ReproductionFormPage(initialMaeId: _animal.id),
+      ),
+    );
+    if (resultado == true && mounted) {
+      _mostrarMensagem('Reprodução registrada. Você poderá registrar o parto e os cordeiros nela.');
+    }
   }
 
   void _carregarRebanhoAtual() {
@@ -852,6 +865,23 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
                   value: _animal.raca,
                 ),
                 _buildInfoRow(
+                  icon: Icons.health_and_safety_outlined,
+                  label: 'Dentição',
+                  value: _animal.denticao ?? 'Não informada',
+                ),
+                if (_animal.denticaoData != null)
+                  _buildInfoRow(
+                    icon: Icons.calendar_month_outlined,
+                    label: 'Avaliação dentária',
+                    value: _dataTexto(_animal.denticaoData),
+                  ),
+                if (_animal.denticaoObservacoes != null)
+                  _buildInfoRow(
+                    icon: Icons.notes_outlined,
+                    label: 'Observação dentária',
+                    value: _animal.denticaoObservacoes!,
+                  ),
+                _buildInfoRow(
                   icon: Icons.calendar_today_outlined,
                   label: 'Data de nascimento',
                   value: _dataTexto(_animal.dataNascimento),
@@ -914,6 +944,23 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
             const SizedBox(height: 16),
 
             AnimalDescendants(animal: _animal, animais: widget.animais),
+
+            if (_animal.sexo == SexoAnimal.femea &&
+                _animal.status == StatusAnimal.ativo) ...[
+              const SizedBox(height: 16),
+              _buildSection(
+                title: 'Reprodução e parição',
+                icon: Icons.child_friendly_outlined,
+                children: [
+                  ListTile(
+                    title: const Text('Registrar reprodução / futura parição'),
+                    subtitle: const Text('A mãe já ficará selecionada. Depois, registre o parto e os cordeiros.'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: _iniciarReproducao,
+                  ),
+                ],
+              ),
+            ],
 
             const SizedBox(height: 12),
 

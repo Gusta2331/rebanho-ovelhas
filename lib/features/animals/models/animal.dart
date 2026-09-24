@@ -13,6 +13,11 @@ class Animal {
   final SexoAnimal sexo;
   final String raca;
   final DateTime? dataNascimento;
+  final DateTime? dataEntrada;
+  final DateTime? dataSaida;
+  final String? denticao;
+  final DateTime? denticaoData;
+  final String? denticaoObservacoes;
   final StatusAnimal status;
   final String? observacoes;
   final String? fotoPath;
@@ -32,6 +37,11 @@ class Animal {
     required this.sexo,
     required this.raca,
     this.dataNascimento,
+    this.dataEntrada,
+    this.dataSaida,
+    this.denticao,
+    this.denticaoData,
+    this.denticaoObservacoes,
     this.status = StatusAnimal.ativo,
     this.observacoes,
     this.fotoPath,
@@ -74,6 +84,11 @@ class Animal {
       sexo: _sexoFromMap(map['sexo']),
       raca: nomeRaca,
       dataNascimento: _dateTimeFromMap(map['data_nascimento']),
+      dataEntrada: _dateTimeFromMap(map['data_entrada']),
+      dataSaida: _dateTimeFromMap(map['data_saida']),
+      denticao: _stringOrNull(map['denticao']),
+      denticaoData: _dateTimeFromMap(map['denticao_data']),
+      denticaoObservacoes: _stringOrNull(map['denticao_observacoes']),
       status: _statusFromMap(map['status']),
       observacoes: _stringOrNull(map['observacoes']),
       fotoPath: _stringOrNull(map['foto_url']),
@@ -200,6 +215,11 @@ class Animal {
     SexoAnimal? sexo,
     String? raca,
     DateTime? dataNascimento,
+    DateTime? dataEntrada,
+    DateTime? dataSaida,
+    String? denticao,
+    DateTime? denticaoData,
+    String? denticaoObservacoes,
     StatusAnimal? status,
     String? observacoes,
     String? fotoPath,
@@ -217,6 +237,11 @@ class Animal {
       sexo: sexo ?? this.sexo,
       raca: raca ?? this.raca,
       dataNascimento: dataNascimento ?? this.dataNascimento,
+      dataEntrada: dataEntrada ?? this.dataEntrada,
+      dataSaida: dataSaida ?? this.dataSaida,
+      denticao: denticao ?? this.denticao,
+      denticaoData: denticaoData ?? this.denticaoData,
+      denticaoObservacoes: denticaoObservacoes ?? this.denticaoObservacoes,
       status: status ?? this.status,
       observacoes: observacoes ?? this.observacoes,
       fotoPath: fotoPath ?? this.fotoPath,

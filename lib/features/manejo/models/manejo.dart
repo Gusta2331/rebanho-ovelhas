@@ -27,6 +27,7 @@ class Manejo {
   final String? medicamentoId;
   final String? medicamentoNome;
   final String? medicamentoPrincipioAtivo;
+  final String? enfermidade;
 
   Manejo({
     String? id,
@@ -53,6 +54,7 @@ class Manejo {
     this.medicamentoId,
     this.medicamentoNome,
     this.medicamentoPrincipioAtivo,
+    this.enfermidade,
   }) : id = id ?? const Uuid().v4();
 
   factory Manejo.fromMap(Map<String, dynamic> map) {
@@ -83,6 +85,7 @@ class Manejo {
       medicamentoId: _stringOrNull(map['medicamento_id']),
       medicamentoNome: _stringOrNull(map['medicamento_nome']),
       medicamentoPrincipioAtivo: _stringOrNull(map['medicamento_principio_ativo']),
+      enfermidade: _stringOrNull(map['enfermidade']),
     );
   }
 

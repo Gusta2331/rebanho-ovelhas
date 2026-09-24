@@ -6,7 +6,9 @@ import '../models/reproducao.dart';
 import '../services/reproducao_service.dart';
 
 class ReproductionFormPage extends StatefulWidget {
-  const ReproductionFormPage({super.key});
+  final String? initialMaeId;
+
+  const ReproductionFormPage({super.key, this.initialMaeId});
 
   @override
   State<ReproductionFormPage> createState() => _ReproductionFormPageState();
@@ -66,6 +68,10 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
       setState(() {
         _femeas = femeas;
         _machos = machos;
+        if (_maeId == null &&
+            femeas.any((animal) => animal['id']?.toString() == widget.initialMaeId)) {
+          _maeId = widget.initialMaeId;
+        }
         _carregandoAnimais = false;
       });
     } catch (e) {

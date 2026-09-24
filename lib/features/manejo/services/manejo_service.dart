@@ -423,6 +423,7 @@ class ManejoService {
     String? medicamentoId,
     String? medicamentoNome,
     String? medicamentoPrincipioAtivo,
+    String? enfermidade,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
 
@@ -472,6 +473,7 @@ class ManejoService {
       medicamentoId: medicamentoId,
       medicamentoNome: medicamentoNome,
       medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
+      enfermidade: enfermidade,
     );
 
     if (!_connectivity.isOnline) {
@@ -516,6 +518,7 @@ class ManejoService {
     String? medicamentoId,
     String? medicamentoNome,
     String? medicamentoPrincipioAtivo,
+    String? enfermidade,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
     if (animalIds.isEmpty) throw Exception('Selecione pelo menos um animal.');
@@ -605,6 +608,7 @@ class ManejoService {
             medicamentoId: medicamentoId,
             medicamentoNome: medicamentoNome,
             medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
+            enfermidade: enfermidade,
           ),
         )
         .toList();
@@ -674,6 +678,7 @@ class ManejoService {
     String? medicamentoId,
     String? medicamentoNome,
     String? medicamentoPrincipioAtivo,
+    String? enfermidade,
   }) async {
     final fazendaId = await _getMinhaFazendaId();
     _validarDados(
@@ -722,6 +727,7 @@ class ManejoService {
             medicamentoId: medicamentoId,
             medicamentoNome: medicamentoNome,
             medicamentoPrincipioAtivo: medicamentoPrincipioAtivo,
+            enfermidade: enfermidade,
           )
           ..remove('id')
           ..remove('fazenda_id');
@@ -861,6 +867,7 @@ class ManejoService {
     String? medicamentoId,
     String? medicamentoNome,
     String? medicamentoPrincipioAtivo,
+    String? enfermidade,
   }) {
     return {
       'id': const Uuid().v4(),
@@ -898,6 +905,7 @@ class ManejoService {
       'medicamento_principio_ativo': tipo == TipoManejo.tratamento
           ? _text(medicamentoPrincipioAtivo)
           : null,
+      'enfermidade': tipo == TipoManejo.tratamento ? _text(enfermidade) : null,
     };
   }
 

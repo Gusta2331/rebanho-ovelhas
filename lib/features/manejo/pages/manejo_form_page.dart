@@ -35,6 +35,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       TextEditingController();
   final TextEditingController _viaAplicacaoController = TextEditingController();
   final TextEditingController _carenciaController = TextEditingController();
+  final TextEditingController _enfermidadeController = TextEditingController();
 
   List<Map<String, dynamic>> _rebanhos = [];
   List<Map<String, dynamic>> _animais = [];
@@ -84,6 +85,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       _data = manejo.data;
       _famacha = manejo.famachaEscore;
       _observacoes.text = manejo.observacoes ?? '';
+      _enfermidadeController.text = manejo.enfermidade ?? '';
       _vacinaLote.text = manejo.vacinaLote ?? '';
       _outroNome.text = manejo.outroNome ?? '';
       if (manejo.pesoKg != null) _peso.text = manejo.pesoKg.toString();
@@ -119,6 +121,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     _pesoReferenciaController.dispose();
     _viaAplicacaoController.dispose();
     _carenciaController.dispose();
+    _enfermidadeController.dispose();
     super.dispose();
   }
 
@@ -796,6 +799,9 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         medicamentoPrincipioAtivo: _tipo == TipoManejo.tratamento
             ? _campo(_medicamentoSelecionado, 'principio_ativo')?.toString()
             : null,
+        enfermidade: _tipo == TipoManejo.tratamento
+            ? _enfermidadeController.text
+            : null,
       );
 
       if (mounted) Navigator.of(context).pop(true);
@@ -882,6 +888,9 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             : null,
         medicamentoPrincipioAtivo: _tipo == TipoManejo.tratamento
             ? _campo(_medicamentoSelecionado, 'principio_ativo')?.toString()
+            : null,
+        enfermidade: _tipo == TipoManejo.tratamento
+            ? _enfermidadeController.text
             : null,
       );
 
@@ -1233,6 +1242,17 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                             _doseCalculadora(),
                           ],
                           if (_tipo == TipoManejo.tratamento) ...[
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: _enfermidadeController,
+                              enabled: !_salvando,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: const InputDecoration(
+                                labelText: 'Enfermidade / motivo do tratamento',
+                                hintText: 'Ex.: manqueira, mastite, parasitose',
+                                prefixIcon: Icon(Icons.health_and_safety_outlined),
+                              ),
+                            ),
                             const SizedBox(height: 16),
                             _produtoField(
                               titulo: 'Medicamento',
