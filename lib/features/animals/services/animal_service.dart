@@ -738,10 +738,11 @@ class AnimalService {
     return Map<String, dynamic>.from(animal);
   }
 
-  Future<bool> excluirAnimal(String id) async {
+  Future<bool> excluirAnimal(String id, {String? fotoUrl}) async {
     final fazendaId = await _getMinhaFazendaId();
     if (fazendaId == null)
       throw Exception('Nenhuma fazenda ativa foi encontrada.');
+
     if (!_connectivity.isOnline) {
       final todos = await getTodosAnimais();
       Map<String, dynamic>? animal;
@@ -753,17 +754,79 @@ class AnimalService {
       }
       await OfflineSyncService.instance.enfileirar(
         tipo: 'animal.excluir',
-        dados: {'id': id, 'fazenda_id': fazendaId},
+        dados: {
+          'id': id,
+          'fazenda_id': fazendaId,
+          'foto_url': fotoUrl ?? animal?['foto_url'],
+        },
       );
       await _removerAnimalDosCaches(id, animal?['rebanho_id']?.toString());
       return false;
     }
+
+    // O Supabase não permite apagar diretamente de storage.objects.
+    // A foto precisa ser removida pela API oficial do Storage antes da
+    // exclusão dos registros do animal.
+    await _excluirFotoDoStorage(
+      animalId: id,
+      fazendaId: fazendaId,
+      fotoUrl: fotoUrl,
+    );
+
     await _client.rpc(
       'excluir_animal_e_historico',
       params: {'p_animal_id': id},
     );
     await _removerAnimalDosCaches(id);
     return true;
+  }
+
+  Future<void> _excluirFotoDoStorage({
+    required String animalId,
+    required String fazendaId,
+    String? fotoUrl,
+  }) async {
+    final caminho = _caminhoStorageDaFoto(
+      animalId: animalId,
+      fazendaId: fazendaId,
+      fotoUrl: fotoUrl,
+    );
+
+    if (caminho == null) return;
+
+    try {
+      await _client.storage.from('animal-fotos').remove([caminho]);
+    } catch (_) {
+      // A exclusão do registro do animal não deve falhar por causa de uma
+      // foto que já não existe no Storage.
+    }
+  }
+
+  String? _caminhoStorageDaFoto({
+    required String animalId,
+    required String fazendaId,
+    String? fotoUrl,
+  }) {
+    final url = fotoUrl?.trim();
+    if (url == null || url.isEmpty || !url.startsWith('http')) {
+      return null;
+    }
+
+    final uri = Uri.tryParse(url);
+    if (uri == null) return null;
+
+    const marcador = '/storage/v1/object/public/animal-fotos/';
+    final indice = uri.path.indexOf(marcador);
+    if (indice < 0) return null;
+
+    final caminho = Uri.decodeComponent(
+      uri.path.substring(indice + marcador.length),
+    );
+
+    final prefixo = '$fazendaId/$animalId.';
+    if (!caminho.startsWith(prefixo)) return null;
+
+    return caminho;
   }
 
   Future<void> _removerAnimalDosCaches(String id, [String? rebanhoId]) async {
