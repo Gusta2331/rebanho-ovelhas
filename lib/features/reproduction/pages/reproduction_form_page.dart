@@ -237,7 +237,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
       context: context,
       initialDate:
           _dataPrevisaoParto ??
-          _dataCobertura?.add(const Duration(days: 150)) ??
+          _dataCobertura?.add(const Duration(days: 146)) ??
           hoje,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
@@ -549,6 +549,8 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
 
           const SizedBox(height: 16),
 
+          if (_status == StatusReproducao.prenhe ||
+              _dataConfirmacaoPrenhez != null) ...[
           _buildDataCampo(
             titulo: 'Data da confirmação da prenhez',
             valor: _dataConfirmacaoPrenhez,
@@ -558,6 +560,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
 
           const SizedBox(height: 16),
 
+          ],
           DropdownButtonFormField<StatusReproducao>(
             initialValue: _status,
             decoration: const InputDecoration(
