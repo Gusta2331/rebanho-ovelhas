@@ -481,7 +481,6 @@ class AnimalService {
       'denticao_observacoes': denticaoObservacoes?.trim().isEmpty == true
           ? null
           : denticaoObservacoes?.trim(),
-      'raca': raca.trim(),
     };
 
     if (!online) {
