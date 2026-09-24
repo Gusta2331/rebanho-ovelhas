@@ -370,7 +370,18 @@ class OfflineSyncService {
   }
 
   Future<void> _sincronizarManejoCriar(OfflineOperation op) async {
-    await _insertIdempotente('manejos', op.dados);
+    final dados = Map<String, dynamic>.from(op.dados);
+    if (dados['farmacia_produto_id']?.toString().isNotEmpty == true) {
+      await _client.rpc(
+        'registrar_manejo_com_estoque',
+        params: {
+          'p_dados': dados,
+          'p_quantidade': dados['farmacia_quantidade'] ?? dados['dose'],
+        },
+      );
+      return;
+    }
+    await _insertIdempotente('manejos', dados);
   }
 
   Future<void> _sincronizarManejoLote(OfflineOperation op) async {
@@ -378,9 +389,22 @@ class OfflineSyncService {
         .map((item) => Map<String, dynamic>.from(item as Map))
         .toList();
     if (itens.isEmpty) return;
+
+    final usaFarmacia = itens.any(
+      (item) => item['farmacia_produto_id']?.toString().isNotEmpty == true,
+    );
+
+    if (usaFarmacia) {
+      await _client.rpc(
+        'registrar_manejos_com_estoque',
+        params: {'p_itens': itens},
+      );
+      return;
+    }
+
     try {
       await _client.from('manejos').insert(itens);
-    } catch (erro) {
+    } catch (_) {
       for (final item in itens) {
         final id = item['id'];
         final existe = await _client
@@ -397,20 +421,25 @@ class OfflineSyncService {
     final d = Map<String, dynamic>.from(op.dados);
     final id = d.remove('id');
     final fazendaId = d.remove('fazenda_id');
-    await _client
-        .from('manejos')
-        .update(d)
-        .eq('id', id)
-        .eq('fazenda_id', fazendaId);
+    await _client.rpc(
+      'atualizar_manejo_com_estoque',
+      params: {
+        'p_id': id,
+        'p_fazenda_id': fazendaId,
+        'p_dados': {'id': id, 'fazenda_id': fazendaId, ...d},
+      },
+    );
   }
 
   Future<void> _sincronizarManejoExcluir(OfflineOperation op) async {
     final d = op.dados;
-    await _client
-        .from('manejos')
-        .delete()
-        .eq('id', d['id'])
-        .eq('fazenda_id', d['fazenda_id']);
+    await _client.rpc(
+      'excluir_manejo_com_estoque',
+      params: {
+        'p_id': d['id'],
+        'p_fazenda_id': d['fazenda_id'],
+      },
+    );
   }
 
   Future<void> _sincronizarManejoProgramadoCriar(OfflineOperation op) async {
