@@ -200,8 +200,11 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
 
     setState(() {
       _dataCobertura = data;
+      _dataPrevisaoParto = data.add(const Duration(days: 146));
 
-      _dataPrevisaoParto = data.add(const Duration(days: 150));
+      if (_status == StatusReproducao.planejada) {
+        _status = StatusReproducao.coberta;
+      }
     });
   }
 
@@ -447,9 +450,32 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Informe a mãe e os dados iniciais. '
-            'O pai pode ser definido posteriormente.',
+            'Comece pela ovelha e pelo carneiro, se já estiver definido. '
+            'A cobertura é registrada quando realmente acontecer. '
+            'A previsão de parto é uma estimativa e pode ser ajustada depois.',
             style: TextStyle(color: Colors.grey.shade600, height: 1.4),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.route_outlined, color: AppTheme.primaryColor),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Fluxo recomendado: Planejada → registrar cobertura → '
+                    'confirmar prenhez → registrar parto → registrar nascimentos.',
+                    style: TextStyle(height: 1.4),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
 
