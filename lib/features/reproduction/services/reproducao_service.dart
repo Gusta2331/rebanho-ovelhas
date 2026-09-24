@@ -513,7 +513,7 @@ class ReproducaoService {
           dataCobertura: reproducao.dataCobertura ?? dataMonta,
           dataPrevisaoParto:
               reproducao.dataPrevisaoParto ??
-              dataMonta.add(const Duration(days: 150)),
+              dataMonta.add(const Duration(days: 146)),
           dataParto: reproducao.dataParto,
           status: 'coberta',
           observacoes: reproducao.observacoes,
@@ -584,7 +584,7 @@ class ReproducaoService {
 
       if (reproducao['data_previsao_parto'] == null) {
         atualizacao['data_previsao_parto'] = _dateOnly(
-          dataMonta.add(const Duration(days: 150)),
+          dataMonta.add(const Duration(days: 146)),
         );
       }
 
