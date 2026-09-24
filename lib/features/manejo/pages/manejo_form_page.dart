@@ -988,23 +988,27 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             ? null
             : _viaAplicacao.trim(),
         carenciaDias: int.tryParse(_carenciaTexto.trim()),
-        vermifugoId: _tipo == TipoManejo.vermifugacao
+        vermifugoId: _tipo == TipoManejo.vermifugacao && _farmaciaProdutoSelecionado == null
             ? _campo(_vermifugoSelecionado, 'id')?.toString()
             : null,
         vermifugoNome: _tipo == TipoManejo.vermifugacao
-            ? _campo(_vermifugoSelecionado, 'nome')?.toString()
+            ? (_campo(_farmaciaProdutoSelecionado, 'nome')?.toString() ??
+                _campo(_vermifugoSelecionado, 'nome')?.toString())
             : null,
         vermifugoPrincipioAtivo: _tipo == TipoManejo.vermifugacao
-            ? _campo(_vermifugoSelecionado, 'principio_ativo')?.toString()
+            ? (_campo(_farmaciaProdutoSelecionado, 'principio_ativo')?.toString() ??
+                _campo(_vermifugoSelecionado, 'principio_ativo')?.toString())
             : null,
-        medicamentoId: _tipo == TipoManejo.tratamento
+        medicamentoId: _tipo == TipoManejo.tratamento && _farmaciaProdutoSelecionado == null
             ? _campo(_medicamentoSelecionado, 'id')?.toString()
             : null,
         medicamentoNome: _tipo == TipoManejo.tratamento
-            ? _campo(_medicamentoSelecionado, 'nome')?.toString()
+            ? (_campo(_farmaciaProdutoSelecionado, 'nome')?.toString() ??
+                _campo(_medicamentoSelecionado, 'nome')?.toString())
             : null,
         medicamentoPrincipioAtivo: _tipo == TipoManejo.tratamento
-            ? _campo(_medicamentoSelecionado, 'principio_ativo')?.toString()
+            ? (_campo(_farmaciaProdutoSelecionado, 'principio_ativo')?.toString() ??
+                _campo(_medicamentoSelecionado, 'principio_ativo')?.toString())
             : null,
         enfermidade: _tipo == TipoManejo.tratamento
             ? _enfermidadeController.text
