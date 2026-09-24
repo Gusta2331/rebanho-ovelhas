@@ -186,11 +186,6 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
   }
 
   Future<void> _dataPicker(String campo) async {
-    if (campo == 'confirmacao' && _cobertura == null) {
-      _snack('Registre a cobertura antes de confirmar a prenhez.', true);
-      return;
-    }
-
     DateTime? atual;
     if (campo == 'cobertura') {
       atual = _cobertura;
@@ -388,10 +383,6 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
                         .toList(),
                     onChanged: (v) {
                       if (v == null) return;
-                      if (v == StatusReproducao.prenhe && _cobertura == null) {
-                        _snack('Registre a cobertura antes de confirmar a prenhez.', true);
-                        return;
-                      }
                       setState(() => _statusSelecionado = v);
                     },
                   ),
