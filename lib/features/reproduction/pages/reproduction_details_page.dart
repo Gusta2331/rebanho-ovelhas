@@ -436,6 +436,11 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
               _info('Data da cobertura', _data(_reproducao.dataCobertura)),
             if (_reproducao.dataPrevisaoParto != null)
               _info('Previsão de parto', _data(_reproducao.dataPrevisaoParto)),
+            if (_reproducao.dataConfirmacaoPrenhez != null)
+              _info(
+                'Prenhez confirmada',
+                _data(_reproducao.dataConfirmacaoPrenhez),
+              ),
             if (_reproducao.dataParto != null)
               _info('Data do parto', _data(_reproducao.dataParto)),
             if (_reproducao.dataCobertura == null &&
