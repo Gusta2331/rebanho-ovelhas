@@ -19,7 +19,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
   List<Map<String, dynamic>> _femeas = [];
   List<Map<String, dynamic>> _machos = [];
   String? _maeId, _paiId;
-  DateTime? _cobertura, _previsao, _parto;
+  DateTime? _cobertura, _previsao, _confirmacaoPrenhez, _parto;
   late StatusReproducao _statusSelecionado;
   bool _carregando = true, _salvando = false;
   String? _erro;
@@ -32,6 +32,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
     _paiId = r.paiId;
     _cobertura = r.dataCobertura;
     _previsao = r.dataPrevisaoParto;
+    _confirmacaoPrenhez = r.dataConfirmacaoPrenhez;
     _parto = r.dataParto;
     _statusSelecionado = r.status;
     _obs.text = r.observacoes ?? '';
@@ -131,6 +132,25 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
     return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
   }
 
+  Future<void> _selecionarConfirmacaoPrenhez() async {
+    if (_cobertura == null) {
+      _snack('Registre a cobertura antes de confirmar a prenhez.', true);
+      return;
+    }
+
+    final data = await showDatePicker(
+      context: context,
+      initialDate: _confirmacaoPrenhez ?? DateTime.now(),
+      firstDate: _cobertura!,
+      lastDate: DateTime(2100),
+      locale: const Locale('pt', 'BR'),
+    );
+
+    if (data != null && mounted) {
+      setState(() => _confirmacaoPrenhez = data);
+    }
+  }
+
   Future<void> _salvar() async {
     if (_maeId == null) {
       _snack('Selecione a mãe.', true);
@@ -144,6 +164,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
         paiId: _paiId,
         dataCobertura: _cobertura,
         dataPrevisaoParto: _previsao,
+        dataConfirmacaoPrenhez: _confirmacaoPrenhez,
         dataParto: _parto,
         status: _statusDb(_statusSelecionado),
         observacoes: _obs.text,
@@ -325,6 +346,13 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
                     Icons.child_friendly,
                   ),
                   const SizedBox(height: 16),
+                  _dateField(
+                    'Data da confirmação da prenhez',
+                    _confirmacaoPrenhez,
+                    'confirmacao',
+                    Icons.verified_outlined,
+                  ),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<StatusReproducao>(
                     initialValue: _statusSelecionado,
                     decoration: const InputDecoration(
@@ -340,7 +368,12 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
                         )
                         .toList(),
                     onChanged: (v) {
-                      if (v != null) setState(() => _statusSelecionado = v);
+                      if (v == null) return;
+                      if (v == StatusReproducao.prenhe && _cobertura == null) {
+                        _snack('Registre a cobertura antes de confirmar a prenhez.', true);
+                        return;
+                      }
+                      setState(() => _statusSelecionado = v);
                     },
                   ),
                   const SizedBox(height: 16),
