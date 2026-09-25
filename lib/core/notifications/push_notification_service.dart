@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../firebase_options.dart';
@@ -15,6 +16,12 @@ class PushNotificationService {
   static final instance = PushNotificationService._();
 
   SupabaseClient get _client => SupabaseService.client;
+
+  static const String _canalId = 'farmacia_alertas';
+  static const String _canalNome = 'Alertas da Fazenda';
+
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
   bool _iniciado = false;
   StreamSubscription<AuthState>? _authSubscription;
@@ -30,11 +37,15 @@ class PushNotificationService {
 
       final messaging = FirebaseMessaging.instance;
 
+      await _inicializarNotificacoesLocais();
+
       await messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
       );
+
+      FirebaseMessaging.onMessage.listen(_mostrarNotificacaoEmPrimeiroPlano);
 
       final token = await messaging.getToken();
 
@@ -71,6 +82,51 @@ class PushNotificationService {
       // temporariamente indisponível ou ainda não esteja completamente
       // configurado no dispositivo.
     }
+  }
+
+  Future<void> _inicializarNotificacoesLocais() async {
+    const androidSettings = AndroidInitializationSettings('@mipmap/launcher_icon');
+
+    await _localNotifications.initialize(
+      const InitializationSettings(android: androidSettings),
+    );
+
+    final androidPlugin = _localNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
+    await androidPlugin?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        _canalId,
+        _canalNome,
+        description: 'Alertas importantes da Fazenda Baixinha.',
+        importance: Importance.max,
+      ),
+    );
+
+    await androidPlugin?.requestNotificationsPermission();
+  }
+
+  Future<void> _mostrarNotificacaoEmPrimeiroPlano(RemoteMessage message) async {
+    final notification = message.notification;
+    if (notification == null) return;
+
+    await _localNotifications.show(
+      notification.hashCode,
+      notification.title ?? 'Fazenda Baixinha',
+      notification.body ?? 'Há uma nova atenção na Fazenda.',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _canalId,
+          _canalNome,
+          channelDescription: 'Alertas importantes da Fazenda Baixinha.',
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/launcher_icon',
+        ),
+      ),
+      payload: message.data['alerta_id']?.toString(),
+    );
   }
 
   Future<void> _salvarToken(String token) async {
