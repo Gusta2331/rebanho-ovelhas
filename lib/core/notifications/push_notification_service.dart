@@ -38,7 +38,7 @@ class PushNotificationService {
       });
 
       _iniciado = true;
-    } catch (e) {
+    } catch (_) {
       // O app continua funcionando sem push enquanto o Firebase ainda não
       // estiver configurado no projeto Android/iOS.
     }
