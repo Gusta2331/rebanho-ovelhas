@@ -43,7 +43,7 @@ select
   a.fazenda_id,
   a.brinco,
   (array_agg(a.id order by a.id))[1],
-  min(coalesce(a.created_at, now()))
+  now()
 from public.animais a
 where a.brinco is not null
 group by a.fazenda_id, a.brinco
