@@ -307,7 +307,7 @@ class OfflineSyncService {
             if (reproducao['data_previsao_parto'] == null)
               'data_previsao_parto':
                   DateTime.parse(dados['data_cobertura'].toString())
-                      .add(const Duration(days: 150))
+                      .add(const Duration(days: 146))
                       .toIso8601String()
                       .split('T')
                       .first,
