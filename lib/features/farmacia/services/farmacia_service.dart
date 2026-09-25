@@ -179,6 +179,7 @@ class FarmaciaService {
       'unidade_estoque': unidadeFinal,
       'estoque': 0,
       'estoque_inicial': estoque,
+      'estoque_inicial_movimentacao_id': estoque > 0 ? const Uuid().v4() : null,
       'estoque_minimo': estoqueMinimo,
       'validade': validade?.toIso8601String().split('T').first,
       'principio_ativo': _text(principioAtivo),
@@ -205,6 +206,7 @@ class FarmaciaService {
 
     final insertData = Map<String, dynamic>.from(dados)
       ..remove('estoque_inicial')
+      ..remove('estoque_inicial_movimentacao_id')
       ..remove('codigo_lote_inicial')
       ..remove('validade_lote_inicial');
 
