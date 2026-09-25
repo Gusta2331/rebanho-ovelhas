@@ -350,6 +350,7 @@ class OfflineSyncService {
   Future<void> _sincronizarProdutoCriar(OfflineOperation op) async {
     final dados = Map<String, dynamic>.from(op.dados);
     final estoqueInicial = (dados.remove('estoque_inicial') as num?)?.toDouble() ?? 0;
+    final estoqueInicialMovimentacaoId = dados.remove('estoque_inicial_movimentacao_id');
     final codigoLote = dados.remove('codigo_lote_inicial');
     final validadeLote = dados.remove('validade_lote_inicial');
 
@@ -359,7 +360,7 @@ class OfflineSyncService {
       await _client.rpc(
         'registrar_movimentacao_farmacia',
         params: {
-          'p_id': const Uuid().v4(),
+          'p_id': estoqueInicialMovimentacaoId ?? const Uuid().v4(),
           'p_fazenda_id': dados['fazenda_id'],
           'p_produto_id': dados['id'],
           'p_tipo': 'entrada',
