@@ -1,0 +1,4 @@
+project_id = "ezbfjgozqwzricjwxtba"
+
+[functions.farmacia-alertas]
+verify_jwt = false
