@@ -1025,7 +1025,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                 _tipo == TipoManejo.tratamento
             ? (_dosesCalculadas[_animalId] ?? _numero(_doseManual.text))
             : null,
-      );;
+      );
 
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
