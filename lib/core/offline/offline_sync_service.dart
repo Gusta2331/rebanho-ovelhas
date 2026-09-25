@@ -348,13 +348,39 @@ class OfflineSyncService {
   }
 
   Future<void> _sincronizarProdutoCriar(OfflineOperation op) async {
-    await _insertIdempotente('farmacia_produtos', op.dados);
+    final dados = Map<String, dynamic>.from(op.dados);
+    final estoqueInicial = (dados.remove('estoque_inicial') as num?)?.toDouble() ?? 0;
+    final codigoLote = dados.remove('codigo_lote_inicial');
+    final validadeLote = dados.remove('validade_lote_inicial');
+
+    await _insertIdempotente('farmacia_produtos', dados);
+
+    if (estoqueInicial > 0) {
+      await _client.rpc(
+        'registrar_movimentacao_farmacia',
+        params: {
+          'p_id': const Uuid().v4(),
+          'p_fazenda_id': dados['fazenda_id'],
+          'p_produto_id': dados['id'],
+          'p_tipo': 'entrada',
+          'p_quantidade': estoqueInicial,
+          'p_data': DateTime.now().toIso8601String().split('T').first,
+          'p_lote_id': null,
+          'p_animal_id': null,
+          'p_observacoes': 'Estoque inicial sincronizado.',
+          'p_codigo_lote': codigoLote,
+          'p_validade': validadeLote,
+          'p_fabricante': dados['fabricante'],
+          'p_farmacia_lote_id': null,
+        },
+      );
+    }
   }
 
   Future<void> _sincronizarMovimentacaoFarmacia(OfflineOperation op) async {
     final d = op.dados;
     await _client.rpc(
-      'sincronizar_movimentacao_farmacia',
+      'registrar_movimentacao_farmacia',
       params: {
         'p_id': d['id'],
         'p_fazenda_id': d['fazenda_id'],
@@ -365,6 +391,10 @@ class OfflineSyncService {
         'p_lote_id': d['lote_id'],
         'p_animal_id': d['animal_id'],
         'p_observacoes': d['observacoes'],
+        'p_codigo_lote': d['codigo_lote'],
+        'p_validade': d['validade'],
+        'p_fabricante': d['fabricante'],
+        'p_farmacia_lote_id': d['farmacia_lote_id'],
       },
     );
   }
