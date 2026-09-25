@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/app.dart';
 import 'core/config/supabase_config.dart';
 import 'core/offline/offline_sync_service.dart';
+import 'core/notifications/push_notification_service.dart';
 import 'core/services/supabase_connection_test.dart';
 
 Future<void> main() async {
@@ -15,6 +16,7 @@ Future<void> main() async {
   );
 
   await OfflineSyncService.instance.iniciar();
+  await PushNotificationService.instance.iniciar();
 
   final conectado = await SupabaseConnectionTest.testar();
 
