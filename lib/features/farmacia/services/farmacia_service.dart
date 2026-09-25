@@ -21,12 +21,18 @@ class FarmaciaService {
       final cache = await _offlineStore.lerCache(chaveCache);
       final id = cache?.toString();
       if (id != null && id.isNotEmpty) return id;
-      throw Exception('Sem internet e a fazenda ainda não foi salva neste aparelho.');
+      throw Exception(
+        'Sem internet e a fazenda ainda não foi salva neste aparelho.',
+      );
     }
 
     try {
-      final farm = await _client.from('fazendas').select('id')
-          .eq('proprietario_id', user.id).eq('ativo', true).maybeSingle();
+      final farm = await _client
+          .from('fazendas')
+          .select('id')
+          .eq('proprietario_id', user.id)
+          .eq('ativo', true)
+          .maybeSingle();
       final id = farm?['id']?.toString();
       if (id == null || id.isEmpty) {
         throw Exception('Nenhuma fazenda ativa foi encontrada.');
@@ -43,15 +49,91 @@ class FarmaciaService {
 
   Future<List<Map<String, dynamic>>> listarProdutos() async {
     final fazendaId = await _fazendaId();
+
     if (!_connectivity.isOnline) {
       final cache = await _offlineStore.lerCache('farmacia_produtos');
-      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      if (cache is List) {
+        return cache
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
       return [];
     }
-    final result = await _client.from('farmacia_produtos').select('*')
-        .eq('fazenda_id', fazendaId).eq('ativo', true).order('nome');
+
+    final result = await _client
+        .from('farmacia_produtos')
+        .select('*, farmacia_lotes(*)')
+        .eq('fazenda_id', fazendaId)
+        .eq('ativo', true)
+        .order('nome');
+
     final lista = List<Map<String, dynamic>>.from(result);
     await _offlineStore.salvarCache('farmacia_produtos', lista);
+    return lista;
+  }
+
+  Future<List<Map<String, dynamic>>> listarLotes(String produtoId) async {
+    final fazendaId = await _fazendaId();
+
+    if (!_connectivity.isOnline) {
+      final produtos = await listarProdutos();
+      final produto = produtos.firstWhere(
+        (p) => p['id']?.toString() == produtoId,
+        orElse: () => <String, dynamic>{},
+      );
+      final lotes = produto['farmacia_lotes'];
+      if (lotes is List) {
+        return lotes
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+      return [];
+    }
+
+    final result = await _client
+        .from('farmacia_lotes')
+        .select('*')
+        .eq('fazenda_id', fazendaId)
+        .eq('produto_id', produtoId)
+        .order('validade', ascending: true)
+        .order('created_at', ascending: true);
+
+    return List<Map<String, dynamic>>.from(result);
+  }
+
+  Future<List<Map<String, dynamic>>> listarAlertas({
+    bool apenasAbertos = true,
+  }) async {
+    final fazendaId = await _fazendaId();
+
+    if (!_connectivity.isOnline) {
+      final cache = await _offlineStore.lerCache('farmacia_alertas');
+      if (cache is List) {
+        return cache
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .where((e) => !apenasAbertos || e['aberto'] == true)
+            .toList();
+      }
+      return [];
+    }
+
+    dynamic query = _client
+        .from('farmacia_alertas')
+        .select(
+          '*, farmacia_produtos(nome, unidade, unidade_estoque, estoque, estoque_minimo)',
+        )
+        .eq('fazenda_id', fazendaId);
+
+    if (apenasAbertos) {
+      query = query.eq('aberto', true);
+    }
+
+    final result = await query.order('created_at', ascending: false);
+    final lista = List<Map<String, dynamic>>.from(result);
+    await _offlineStore.salvarCache('farmacia_alertas', lista);
     return lista;
   }
 
@@ -69,21 +151,34 @@ class FarmaciaService {
     double? pesoReferenciaKg,
     String? viaAplicacao,
     int? carenciaDias,
+    String? fabricante,
+    double? conteudoEmbalagem,
+    String? unidadeEmbalagem,
+    String? codigoLote,
   }) async {
     final fazendaId = await _fazendaId();
-    if (nome.trim().isEmpty) throw Exception('Informe o nome do produto.');
+
+    if (nome.trim().isEmpty) {
+      throw Exception('Informe o nome do produto.');
+    }
     if (estoque < 0 || estoqueMinimo < 0) {
       throw Exception('O estoque não pode ser negativo.');
     }
+    if (conteudoEmbalagem != null && conteudoEmbalagem <= 0) {
+      throw Exception('O conteúdo da embalagem deve ser maior que zero.');
+    }
 
     final id = const Uuid().v4();
+    final unidadeFinal = unidade.trim().isEmpty ? 'unidade' : unidade.trim();
     final dados = <String, dynamic>{
       'id': id,
       'fazenda_id': fazendaId,
       'nome': nome.trim(),
       'categoria': categoria,
-      'unidade': unidade.trim().isEmpty ? 'unidade' : unidade.trim(),
-      'estoque': estoque,
+      'unidade': unidadeFinal,
+      'unidade_estoque': unidadeFinal,
+      'estoque': 0,
+      'estoque_inicial': estoque,
       'estoque_minimo': estoqueMinimo,
       'validade': validade?.toIso8601String().split('T').first,
       'principio_ativo': _text(principioAtivo),
@@ -93,16 +188,53 @@ class FarmaciaService {
       'peso_referencia_kg': pesoReferenciaKg,
       'via_aplicacao': _text(viaAplicacao),
       'carencia_dias': carenciaDias,
+      'fabricante': _text(fabricante),
+      'conteudo_embalagem': conteudoEmbalagem,
+      'unidade_embalagem': _text(unidadeEmbalagem),
+      'codigo_lote_inicial': _text(codigoLote),
+      'validade_lote_inicial': validade?.toIso8601String().split('T').first,
     };
 
     if (!_connectivity.isOnline) {
       await OfflineSyncService.instance.enfileirar(
-        tipo: 'farmacia.produto.criar', dados: dados,
+        tipo: 'farmacia.produto.criar',
+        dados: dados,
       );
       return dados;
     }
 
-    final result = await _client.from('farmacia_produtos').insert(dados).select().single();
+    final insertData = Map<String, dynamic>.from(dados)
+      ..remove('estoque_inicial')
+      ..remove('codigo_lote_inicial')
+      ..remove('validade_lote_inicial');
+
+    final result = await _client
+        .from('farmacia_produtos')
+        .insert(insertData)
+        .select()
+        .single();
+
+    if (estoque > 0) {
+      await _client.rpc(
+        'registrar_movimentacao_farmacia',
+        params: {
+          'p_id': const Uuid().v4(),
+          'p_fazenda_id': fazendaId,
+          'p_produto_id': id,
+          'p_tipo': 'entrada',
+          'p_quantidade': estoque,
+          'p_data': DateTime.now().toIso8601String().split('T').first,
+          'p_lote_id': null,
+          'p_animal_id': null,
+          'p_observacoes': 'Estoque inicial.',
+          'p_codigo_lote': codigoLote,
+          'p_validade': validade?.toIso8601String().split('T').first,
+          'p_fabricante': fabricante,
+          'p_farmacia_lote_id': null,
+        },
+      );
+    }
+
     return Map<String, dynamic>.from(result);
   }
 
@@ -113,44 +245,18 @@ class FarmaciaService {
     String? loteId,
     String? animalId,
     String? observacoes,
+    String? codigoLote,
+    DateTime? validade,
+    String? fabricante,
   }) async {
     final fazendaId = await _fazendaId();
-    if (quantidade <= 0) throw Exception('Informe uma quantidade maior que zero.');
-
-    if (!_connectivity.isOnline) {
-      final id = const Uuid().v4();
-      await OfflineSyncService.instance.enfileirar(
-        tipo: 'farmacia.movimentacao',
-        dados: {
-          'id': id,
-          'fazenda_id': fazendaId,
-          'produto_id': produtoId,
-          'tipo': tipo,
-          'quantidade': quantidade,
-          'data': DateTime.now().toIso8601String().split('T').first,
-          'lote_id': loteId,
-          'animal_id': animalId,
-          'observacoes': _text(observacoes),
-        },
-      );
-      return;
+    if (quantidade <= 0) {
+      throw Exception('Informe uma quantidade maior que zero.');
     }
 
-    final produto = await _client.from('farmacia_produtos').select('estoque')
-        .eq('id', produtoId).eq('fazenda_id', fazendaId).maybeSingle();
-    if (produto == null) throw Exception('Produto não encontrado.');
-
-    final atual = _number(produto['estoque']);
-    final novo = tipo == 'entrada' ? atual + quantidade : atual - quantidade;
-    if (novo < 0) throw Exception('Estoque insuficiente.');
-
-    await _client.from('farmacia_produtos').update({
-      'estoque': novo,
-      'atualizado_em': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', produtoId).eq('fazenda_id', fazendaId);
-
-    await _client.from('farmacia_movimentacoes').insert({
-      'id': const Uuid().v4(),
+    final id = const Uuid().v4();
+    final dados = <String, dynamic>{
+      'id': id,
       'fazenda_id': fazendaId,
       'produto_id': produtoId,
       'tipo': tipo,
@@ -159,25 +265,81 @@ class FarmaciaService {
       'lote_id': loteId,
       'animal_id': animalId,
       'observacoes': _text(observacoes),
-    });
+      'codigo_lote': _text(codigoLote),
+      'validade': validade?.toIso8601String().split('T').first,
+      'fabricante': _text(fabricante),
+      'farmacia_lote_id': null,
+    };
+
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'farmacia.movimentacao',
+        dados: dados,
+      );
+      return;
+    }
+
+    await _client.rpc(
+      'registrar_movimentacao_farmacia',
+      params: {
+        'p_id': id,
+        'p_fazenda_id': fazendaId,
+        'p_produto_id': produtoId,
+        'p_tipo': tipo,
+        'p_quantidade': quantidade,
+        'p_data': dados['data'],
+        'p_lote_id': loteId,
+        'p_animal_id': animalId,
+        'p_observacoes': dados['observacoes'],
+        'p_codigo_lote': codigoLote,
+        'p_validade': dados['validade'],
+        'p_fabricante': fabricante,
+        'p_farmacia_lote_id': null,
+      },
+    );
   }
 
   Future<List<Map<String, dynamic>>> listarMovimentacoes({
     required String loteId,
   }) async {
     final fazendaId = await _fazendaId();
+
     if (!_connectivity.isOnline) {
-      final cache = await _offlineStore.lerCache('farmacia_movimentos_' + loteId);
-      if (cache is List) return cache.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      final cache = await _offlineStore.lerCache('farmacia_movimentos_$loteId');
+      if (cache is List) {
+        return cache
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
       return [];
     }
-    final result = await _client.from('farmacia_movimentacoes').select(
-      '*, farmacia_produtos(nome, unidade, categoria), animais(brinco, nome)',
-    ).eq('fazenda_id', fazendaId).eq('lote_id', loteId)
-      .order('data', ascending: false).order('created_at', ascending: false);
+
+    final result = await _client
+        .from('farmacia_movimentacoes')
+        .select(
+          '*, farmacia_produtos(nome, unidade, unidade_estoque, categoria), '
+          'farmacia_lotes(codigo_lote, validade), animais(brinco, nome)',
+        )
+        .eq('fazenda_id', fazendaId)
+        .eq('lote_id', loteId)
+        .order('data', ascending: false)
+        .order('created_at', ascending: false);
+
     final lista = List<Map<String, dynamic>>.from(result);
-    await _offlineStore.salvarCache('farmacia_movimentos_' + loteId, lista);
+    await _offlineStore.salvarCache(
+      'farmacia_movimentos_$loteId',
+      lista,
+    );
     return lista;
+  }
+
+  String formatarQuantidade(dynamic valor, {String unidade = ''}) {
+    final numero = _number(valor);
+    final texto = numero % 1 == 0
+        ? numero.toInt().toString()
+        : numero.toStringAsFixed(3).replaceFirst(RegExp(r'0+$'), '');
+    return unidade.trim().isEmpty ? texto : texto + ' ' + unidade.trim();
   }
 
   double _number(dynamic value) {

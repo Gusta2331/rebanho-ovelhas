@@ -20,6 +20,7 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
   List<Map<String, dynamic>> _produtos = [];
   List<Map<String, dynamic>> _movimentacoes = [];
   List<Map<String, dynamic>> _animais = [];
+  List<Map<String, dynamic>> _alertas = [];
   bool _carregando = true;
 
   @override
@@ -41,15 +42,18 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
     try {
       final loteId = _selection.rebanhoSelecionadoId;
       final produtos = await _service.listarProdutos();
+      final alertas = await _service.listarAlertas();
       final animais = loteId == null
           ? <Map<String, dynamic>>[]
           : await _animalService.getTodosAnimais(rebanhoId: loteId);
       final movimentos = loteId == null
           ? <Map<String, dynamic>>[]
           : await _service.listarMovimentacoes(loteId: loteId);
+
       if (!mounted) return;
       setState(() {
         _produtos = produtos;
+        _alertas = alertas;
         _animais = animais;
         _movimentacoes = movimentos;
         _carregando = false;
@@ -64,7 +68,7 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
   Future<void> _novoProduto() async {
     final dados = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (_) => _ProdutoDialog(),
+      builder: (_) => const _ProdutoDialog(),
     );
     if (dados == null) return;
     try {
@@ -76,6 +80,11 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
         estoqueMinimo: dados['estoqueMinimo'],
         validade: dados['validade'],
         principioAtivo: dados['principioAtivo'],
+        fabricante: dados['fabricante'],
+        conteudoEmbalagem: dados['conteudoEmbalagem'],
+        unidadeEmbalagem: dados['unidadeEmbalagem'],
+        codigoLote: dados['codigoLote'],
+        observacoes: dados['observacoes'],
       );
       await _carregar();
       _mensagem('Produto cadastrado.');
@@ -85,8 +94,8 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
   }
 
   Future<void> _movimentar(Map<String, dynamic> produto) async {
-    final loteId = _selection.rebanhoSelecionadoId;
-    if (loteId == null) {
+    final rebanhoId = _selection.rebanhoSelecionadoId;
+    if (rebanhoId == null) {
       _mensagem('Selecione um lote antes de movimentar a farmácia.');
       return;
     }
@@ -96,17 +105,25 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
       builder: (_) => _MovimentoDialog(produto: produto, animais: _animais),
     );
     if (dados == null) return;
+
     try {
       await _service.movimentar(
         produtoId: produto['id'].toString(),
         tipo: dados['tipo'],
         quantidade: dados['quantidade'],
-        loteId: loteId,
+        loteId: rebanhoId,
         animalId: dados['animalId'],
         observacoes: dados['observacoes'],
+        codigoLote: dados['codigoLote'],
+        validade: dados['validade'],
+        fabricante: dados['fabricante'],
       );
       await _carregar();
-      _mensagem('Movimentação registrada.');
+      _mensagem(
+        dados['tipo'] == 'saida'
+            ? 'Saída registrada usando FEFO.'
+            : 'Entrada registrada em novo lote.',
+      );
     } catch (e) {
       _mensagem(_erro(e));
     }
@@ -115,37 +132,48 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
   String _erro(Object e) => e.toString().replaceFirst('Exception: ', '');
 
   void _mensagem(String texto) {
-    if (mounted)
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(texto)));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texto)));
+  }
+
+  String _quantidade(Map<String, dynamic> p) {
+    final unidade = (p['unidade_estoque'] ?? p['unidade'] ?? 'unidade').toString();
+    return _service.formatarQuantidade(p['estoque'], unidade: unidade);
+  }
+
+  bool _baixo(Map<String, dynamic> p) {
+    final estoque = double.tryParse((p['estoque'] ?? 0).toString()) ?? 0;
+    final minimo = double.tryParse((p['estoque_minimo'] ?? 0).toString()) ?? 0;
+    return minimo > 0 && estoque <= minimo;
   }
 
   @override
   Widget build(BuildContext context) {
-    final lote = _selection.rebanhoSelecionado;
+    final rebanho = _selection.rebanhoSelecionado;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Farmácia'),
         actions: [
           const ContextualHelpButton(
             title: 'Farmácia',
-            introduction: 'Acompanhe os produtos usados no manejo e as movimentações de estoque da fazenda.',
+            introduction: 'Controle produtos, lotes, validade, estoque e consumo.',
             topics: [
               HelpTopic(
-                title: 'Cadastrar produto',
-                description: 'Informe nome, categoria e unidade de medida. Use uma unidade consistente nas entradas e aplicações.',
+                title: 'FEFO',
+                description: 'Nas saídas, o sistema usa primeiro o lote que vence antes.',
               ),
               HelpTopic(
-                title: 'Entrada de estoque',
-                description: 'Registre compras ou outras entradas para manter a quantidade disponível atualizada.',
+                title: 'Estoque preciso',
+                description: 'Controle ml, L, mg, g, unidade ou comprimido.',
               ),
               HelpTopic(
-                title: 'Aplicar produto',
-                description: 'Registre a quantidade utilizada e os animais ou lote atendidos. Confira a unidade antes de salvar.',
+                title: 'Lotes',
+                description: 'Cada entrada pode ter código, validade e fabricante próprios.',
               ),
               HelpTopic(
-                title: 'Lote selecionado',
-                description: 'A seleção de lote ajuda a associar o uso do produto ao grupo correto.',
+                title: 'Alertas',
+                description: 'A tela mostra produtos que atingiram o estoque mínimo.',
               ),
             ],
           ),
@@ -157,104 +185,132 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
       ),
       body: _carregando
           ? const Center(child: CircularProgressIndicator())
-          : lote == null
-          ? const _SelecioneLote()
-          : RefreshIndicator(
-              onRefresh: _carregar,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                children: [
-                  Text(
-                    'Lote: ${lote.nome}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    onPressed: _novoProduto,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Cadastrar produto'),
-                  ),
-                  const SizedBox(height: 18),
-                  const Text(
-                    'Estoque da fazenda',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_produtos.isEmpty)
-                    const Text(
-                      'Nenhum produto cadastrado.',
-                      style: TextStyle(color: Colors.black54),
-                    )
-                  else
-                    ..._produtos.map(
-                      (produto) => Card(
-                        child: ListTile(
-                          leading: const CircleAvatar(
-                            child: Icon(Icons.medical_services_outlined),
-                          ),
-                          title: Text(produto['nome'].toString()),
-                          subtitle: Text(
-                            "${produto['categoria']} • ${produto['unidade']}",
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "${produto['estoque']}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+          : rebanho == null
+              ? const _SelecioneLote()
+              : RefreshIndicator(
+                  onRefresh: _carregar,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    children: [
+                      Text(
+                        'Lote: ' + rebanho.nome,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 12),
+                      if (_alertas.isNotEmpty) _AlertasCard(alertas: _alertas),
+                      if (_alertas.isNotEmpty) const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: _novoProduto,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Cadastrar produto'),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Estoque da fazenda',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      if (_produtos.isEmpty)
+                        const Text('Nenhum produto cadastrado.')
+                      else
+                        ..._produtos.map(
+                          (p) => Card(
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                child: Icon(
+                                  _baixo(p)
+                                      ? Icons.warning_amber_rounded
+                                      : Icons.medical_services_outlined,
                                 ),
                               ),
-                              IconButton(
+                              title: Text(p['nome'].toString()),
+                              subtitle: Text(
+                                p['categoria'].toString() + ' • ' + _quantidade(p),
+                              ),
+                              trailing: IconButton(
                                 tooltip: 'Movimentar',
-                                onPressed: () => _movimentar(produto),
+                                onPressed: () => _movimentar(p),
                                 icon: const Icon(Icons.swap_vert_rounded),
                               ),
-                            ],
+                            ),
                           ),
                         ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Movimentações deste lote',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
-                    ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Movimentações deste lote',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      const SizedBox(height: 8),
+                      if (_movimentacoes.isEmpty)
+                        const Text('Nenhuma movimentação neste lote.')
+                      else
+                        ..._movimentacoes.map((item) {
+                          final p = item['farmacia_produtos'];
+                          final l = item['farmacia_lotes'];
+                          final nome = p is Map ? p['nome'].toString() : 'Produto';
+                          final unidade = p is Map
+                              ? (p['unidade_estoque'] ?? p['unidade'] ?? '').toString()
+                              : '';
+                          final codigo = l is Map ? l['codigo_lote']?.toString() : null;
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              item['tipo'] == 'entrada'
+                                  ? Icons.add_circle
+                                  : Icons.remove_circle,
+                            ),
+                            title: Text(nome),
+                            subtitle: Text(
+                              item['tipo'].toString() +
+                                  ' • ' +
+                                  _service.formatarQuantidade(
+                                    item['quantidade'],
+                                    unidade: unidade,
+                                  ) +
+                                  (codigo == null || codigo.isEmpty
+                                      ? ''
+                                      : ' • lote ' + codigo),
+                            ),
+                          );
+                        }),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  if (_movimentacoes.isEmpty)
-                    const Text(
-                      'Nenhuma movimentação neste lote.',
-                      style: TextStyle(color: Colors.black54),
-                    )
-                  else
-                    ..._movimentacoes.map((item) {
-                      final produto = item['farmacia_produtos'];
-                      final nome = produto is Map
-                          ? produto['nome'].toString()
-                          : 'Produto';
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(
-                          item['tipo'] == 'entrada'
-                              ? Icons.add_circle
-                              : Icons.remove_circle,
-                          color: item['tipo'] == 'entrada'
-                              ? Colors.green
-                              : Colors.orange,
-                        ),
-                        title: Text(nome),
-                        subtitle: Text(
-                          "${item['tipo']} • ${item['quantidade']}",
-                        ),
-                      );
-                    }),
-                ],
+                ),
+    );
+  }
+}
+
+class _AlertasCard extends StatelessWidget {
+  final List<Map<String, dynamic>> alertas;
+
+  const _AlertasCard({required this.alertas});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.notifications_active_outlined),
+                SizedBox(width: 8),
+                Text('Atenção', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ...alertas.map(
+              (a) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text('• ' + (a['mensagem'] ?? a['titulo'] ?? 'Alerta').toString()),
               ),
             ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -264,28 +320,37 @@ class _SelecioneLote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Center(
-    child: Padding(
-      padding: EdgeInsets.all(24),
-      child: Text(
-        'Selecione um lote no início para acessar a farmácia.',
-        textAlign: TextAlign.center,
-      ),
-    ),
-  );
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'Selecione um lote no início para acessar a farmácia.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
 }
 
 class _ProdutoDialog extends StatefulWidget {
+  const _ProdutoDialog();
+
   @override
   State<_ProdutoDialog> createState() => _ProdutoDialogState();
 }
 
 class _ProdutoDialogState extends State<_ProdutoDialog> {
   final nome = TextEditingController();
-  final unidade = TextEditingController(text: 'unidade');
+  final unidade = TextEditingController(text: 'ml');
   final estoque = TextEditingController(text: '0');
   final minimo = TextEditingController(text: '0');
   final principio = TextEditingController();
+  final fabricante = TextEditingController();
+  final conteudo = TextEditingController();
+  final unidadeEmbalagem = TextEditingController(text: 'ml');
+  final codigoLote = TextEditingController();
+  final observacoes = TextEditingController();
+
   String categoria = 'medicamento';
+  DateTime? validade;
 
   @override
   void dispose() {
@@ -294,83 +359,132 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
     estoque.dispose();
     minimo.dispose();
     principio.dispose();
+    fabricante.dispose();
+    conteudo.dispose();
+    unidadeEmbalagem.dispose();
+    codigoLote.dispose();
+    observacoes.dispose();
     super.dispose();
+  }
+
+  Future<void> _validade() async {
+    final agora = DateTime.now();
+    final data = await showDatePicker(
+      context: context,
+      initialDate: validade ?? agora,
+      firstDate: agora.subtract(const Duration(days: 1)),
+      lastDate: DateTime(2100),
+      locale: const Locale('pt', 'BR'),
+    );
+    if (data != null) setState(() => validade = data);
   }
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Novo produto'),
-    content: SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: nome,
-            decoration: const InputDecoration(labelText: 'Nome'),
-          ),
-          DropdownButtonFormField<String>(
-            value: categoria,
-            items: const [
-              DropdownMenuItem(value: 'vacina', child: Text('Vacina')),
-              DropdownMenuItem(value: 'vermifugo', child: Text('Vermífugo')),
-              DropdownMenuItem(
-                value: 'medicamento',
-                child: Text('Medicamento'),
+        title: const Text('Novo produto'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nome, decoration: const InputDecoration(labelText: 'Nome')),
+              DropdownButtonFormField<String>(
+                value: categoria,
+                items: const [
+                  DropdownMenuItem(value: 'vacina', child: Text('Vacina')),
+                  DropdownMenuItem(value: 'vermifugo', child: Text('Vermífugo')),
+                  DropdownMenuItem(value: 'medicamento', child: Text('Medicamento')),
+                  DropdownMenuItem(value: 'outro', child: Text('Outro')),
+                ],
+                onChanged: (v) => setState(() => categoria = v!),
+                decoration: const InputDecoration(labelText: 'Categoria'),
               ),
-              DropdownMenuItem(value: 'outro', child: Text('Outro')),
+              TextField(
+                controller: unidade,
+                decoration: const InputDecoration(
+                  labelText: 'Unidade do estoque',
+                  hintText: 'ml, L, mg, g, unidade, comprimido...',
+                ),
+              ),
+              TextField(controller: principio, decoration: const InputDecoration(labelText: 'Princípio ativo')),
+              TextField(controller: fabricante, decoration: const InputDecoration(labelText: 'Fabricante')),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: conteudo,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(labelText: 'Conteúdo da embalagem'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: unidadeEmbalagem,
+                      decoration: const InputDecoration(labelText: 'Unidade'),
+                    ),
+                  ),
+                ],
+              ),
+              TextField(
+                controller: estoque,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Estoque inicial'),
+              ),
+              TextField(
+                controller: minimo,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Estoque mínimo'),
+              ),
+              TextField(controller: codigoLote, decoration: const InputDecoration(labelText: 'Lote inicial')),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  validade == null ? 'Validade: não informada' : 'Validade: ' + _formatarData(validade!),
+                ),
+                trailing: const Icon(Icons.calendar_month_outlined),
+                onTap: _validade,
+              ),
+              TextField(
+                controller: observacoes,
+                maxLines: 2,
+                decoration: const InputDecoration(labelText: 'Observações'),
+              ),
             ],
-            onChanged: (v) => setState(() => categoria = v!),
-            decoration: const InputDecoration(labelText: 'Categoria'),
           ),
-          TextField(
-            controller: unidade,
-            decoration: const InputDecoration(labelText: 'Unidade'),
-          ),
-          TextField(
-            controller: principio,
-            decoration: const InputDecoration(labelText: 'Princípio ativo'),
-          ),
-          TextField(
-            controller: estoque,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Estoque inicial'),
-          ),
-          TextField(
-            controller: minimo,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Estoque mínimo'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () {
+              final e = double.tryParse(estoque.text.replaceAll(',', '.')) ?? 0;
+              final m = double.tryParse(minimo.text.replaceAll(',', '.')) ?? 0;
+              final c = double.tryParse(conteudo.text.replaceAll(',', '.'));
+              if (nome.text.trim().isEmpty || e < 0 || m < 0 || (c != null && c <= 0)) return;
+              Navigator.pop(context, {
+                'nome': nome.text,
+                'categoria': categoria,
+                'unidade': unidade.text,
+                'estoque': e,
+                'estoqueMinimo': m,
+                'principioAtivo': principio.text,
+                'fabricante': fabricante.text,
+                'conteudoEmbalagem': c,
+                'unidadeEmbalagem': unidadeEmbalagem.text,
+                'codigoLote': codigoLote.text,
+                'validade': validade,
+                'observacoes': observacoes.text,
+              });
+            },
+            child: const Text('Salvar'),
           ),
         ],
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancelar'),
-      ),
-      FilledButton(
-        onPressed: () {
-          final e = double.tryParse(estoque.text.replaceAll(',', '.')) ?? 0;
-          final m = double.tryParse(minimo.text.replaceAll(',', '.')) ?? 0;
-          if (nome.text.trim().isEmpty) return;
-          Navigator.pop(context, {
-            'nome': nome.text,
-            'categoria': categoria,
-            'unidade': unidade.text,
-            'estoque': e,
-            'estoqueMinimo': m,
-            'principioAtivo': principio.text,
-          });
-        },
-        child: const Text('Salvar'),
-      ),
-    ],
-  );
+      );
 }
 
 class _MovimentoDialog extends StatefulWidget {
   final Map<String, dynamic> produto;
   final List<Map<String, dynamic>> animais;
+
   const _MovimentoDialog({required this.produto, required this.animais});
 
   @override
@@ -380,71 +494,133 @@ class _MovimentoDialog extends StatefulWidget {
 class _MovimentoDialogState extends State<_MovimentoDialog> {
   String tipo = 'saida';
   final quantidade = TextEditingController(text: '1');
+  final codigoLote = TextEditingController();
+  final fabricante = TextEditingController();
+  final observacoes = TextEditingController();
   String? animalId;
+  DateTime? validade;
 
   @override
   void dispose() {
     quantidade.dispose();
+    codigoLote.dispose();
+    fabricante.dispose();
+    observacoes.dispose();
     super.dispose();
   }
 
+  Future<void> _validade() async {
+    final agora = DateTime.now();
+    final data = await showDatePicker(
+      context: context,
+      initialDate: validade ?? agora,
+      firstDate: agora.subtract(const Duration(days: 1)),
+      lastDate: DateTime(2100),
+      locale: const Locale('pt', 'BR'),
+    );
+    if (data != null) setState(() => validade = data);
+  }
+
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.produto['nome'].toString()),
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        DropdownButtonFormField<String>(
-          value: tipo,
-          items: const [
-            DropdownMenuItem(value: 'entrada', child: Text('Entrada')),
-            DropdownMenuItem(value: 'saida', child: Text('Saída')),
-          ],
-          onChanged: (v) => setState(() => tipo = v!),
-          decoration: const InputDecoration(labelText: 'Tipo'),
-        ),
-        TextField(
-          controller: quantidade,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Quantidade'),
-        ),
-        DropdownButtonFormField<String?>(
-          value: animalId,
-          isExpanded: true,
-          items: [
-            const DropdownMenuItem<String?>(
-              value: null,
-              child: Text('Lote inteiro'),
+  Widget build(BuildContext context) {
+    final unidade = (widget.produto['unidade_estoque'] ?? widget.produto['unidade'] ?? 'unidade').toString();
+
+    return AlertDialog(
+      title: Text(widget.produto['nome'].toString()),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Estoque atual: ' + widget.produto['estoque'].toString() + ' ' + unidade,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            ...widget.animais.map(
-              (a) => DropdownMenuItem<String?>(
-                value: a['id'].toString(),
-                child: Text('Brinco ${a['brinco']}'),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: tipo,
+              items: const [
+                DropdownMenuItem(value: 'entrada', child: Text('Entrada')),
+                DropdownMenuItem(value: 'saida', child: Text('Saída')),
+              ],
+              onChanged: (v) => setState(() => tipo = v!),
+              decoration: const InputDecoration(labelText: 'Tipo'),
+            ),
+            TextField(
+              controller: quantidade,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(labelText: 'Quantidade', suffixText: unidade),
+            ),
+            if (tipo == 'saida')
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'FEFO ativo: a saída será retirada primeiro do lote que vence antes.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
               ),
+            DropdownButtonFormField<String?>(
+              value: animalId,
+              isExpanded: true,
+              items: [
+                const DropdownMenuItem<String?>(value: null, child: Text('Lote inteiro')),
+                ...widget.animais.map(
+                  (a) => DropdownMenuItem<String?>(
+                    value: a['id'].toString(),
+                    child: Text('Brinco ' + a['brinco'].toString()),
+                  ),
+                ),
+              ],
+              onChanged: (v) => setState(() => animalId = v),
+              decoration: const InputDecoration(labelText: 'Animal (opcional)'),
+            ),
+            if (tipo == 'entrada') ...[
+              TextField(controller: codigoLote, decoration: const InputDecoration(labelText: 'Código do lote')),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  validade == null ? 'Validade: não informada' : 'Validade: ' + _formatarData(validade!),
+                ),
+                trailing: const Icon(Icons.calendar_month_outlined),
+                onTap: _validade,
+              ),
+              TextField(controller: fabricante, decoration: const InputDecoration(labelText: 'Fabricante')),
+            ],
+            TextField(
+              controller: observacoes,
+              maxLines: 2,
+              decoration: const InputDecoration(labelText: 'Observações'),
             ),
           ],
-          onChanged: (v) => setState(() => animalId = v),
-          decoration: const InputDecoration(labelText: 'Animal (opcional)'),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+        FilledButton(
+          onPressed: () {
+            final q = double.tryParse(quantidade.text.replaceAll(',', '.'));
+            if (q == null || q <= 0) return;
+            Navigator.pop(context, {
+              'tipo': tipo,
+              'quantidade': q,
+              'animalId': animalId,
+              'codigoLote': codigoLote.text,
+              'validade': validade,
+              'fabricante': fabricante.text,
+              'observacoes': observacoes.text,
+            });
+          },
+          child: const Text('Salvar'),
         ),
       ],
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancelar'),
-      ),
-      FilledButton(
-        onPressed: () {
-          final q = double.tryParse(quantidade.text.replaceAll(',', '.'));
-          if (q == null || q <= 0) return;
-          Navigator.pop(context, {
-            'tipo': tipo,
-            'quantidade': q,
-            'animalId': animalId,
-          });
-        },
-        child: const Text('Salvar'),
-      ),
-    ],
-  );
+    );
+  }
+}
+
+String _formatarData(DateTime data) {
+  final d = data.day.toString().padLeft(2, '0');
+  final m = data.month.toString().padLeft(2, '0');
+  return d + '/' + m + '/' + data.year.toString();
 }
