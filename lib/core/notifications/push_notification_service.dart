@@ -88,7 +88,7 @@ class PushNotificationService {
     const androidSettings = AndroidInitializationSettings('@mipmap/launcher_icon');
 
     await _localNotifications.initialize(
-      const InitializationSettings(android: androidSettings),
+      settings: const InitializationSettings(android: androidSettings),
     );
 
     final androidPlugin = _localNotifications
@@ -112,10 +112,10 @@ class PushNotificationService {
     if (notification == null) return;
 
     await _localNotifications.show(
-      notification.hashCode,
-      notification.title ?? 'Fazenda Baixinha',
-      notification.body ?? 'Há uma nova atenção na Fazenda.',
-      const NotificationDetails(
+      id: notification.hashCode,
+      title: notification.title ?? 'Fazenda Baixinha',
+      body: notification.body ?? 'Há uma nova atenção na Fazenda.',
+      notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           _canalId,
           _canalNome,
