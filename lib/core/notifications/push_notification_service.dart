@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -13,6 +14,7 @@ class PushNotificationService {
 
   SupabaseClient get _client => SupabaseService.client;
   bool _iniciado = false;
+  StreamSubscription<AuthState>? _authSubscription;
 
   Future<void> iniciar() async {
     if (_iniciado) return;
@@ -35,6 +37,16 @@ class PushNotificationService {
 
       messaging.onTokenRefresh.listen((novoToken) async {
         await _salvarToken(novoToken);
+      });
+
+      await _authSubscription?.cancel();
+      _authSubscription = _client.auth.onAuthStateChange.listen((data) async {
+        if (data.session != null) {
+          final novoToken = await messaging.getToken();
+          if (novoToken != null && novoToken.isNotEmpty) {
+            await _salvarToken(novoToken);
+          }
+        }
       });
 
       _iniciado = true;
