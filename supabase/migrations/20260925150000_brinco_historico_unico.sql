@@ -1,6 +1,7 @@
--- Proteção definitiva dos brincos:
--- um brinco usado por uma fazenda nunca pode ser reutilizado,
--- mesmo depois da exclusão do animal.
+-- Proteção dos brincos:
+-- um brinco fica bloqueado enquanto o animal existe, inclusive quando
+-- estiver vendido, morto ou descartado. Se o animal for excluído
+-- definitivamente, a reserva do brinco é liberada para reutilização.
 
 create table if not exists public.animais_brincos_historico (
   id uuid primary key default gen_random_uuid(),
@@ -103,3 +104,30 @@ execute function public.reservar_brinco_animal();
 -- A função é usada pelo trigger e não deve ficar disponível para chamadas
 -- arbitrárias pela aplicação.
 revoke all on function public.reservar_brinco_animal() from public;
+
+-- Exclusão definitiva libera o brinco.
+-- Venda, morte ou descarte não removem a reserva porque o animal continua
+-- registrado na tabela animais com seu status histórico.
+create or replace function public.liberar_brinco_animal_excluido()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from public.animais_brincos_historico
+  where fazenda_id = old.fazenda_id
+    and brinco = old.brinco;
+
+  return old;
+end;
+$$;
+
+drop trigger if exists trg_liberar_brinco_animal_excluido on public.animais;
+
+create trigger trg_liberar_brinco_animal_excluido
+after delete on public.animais
+for each row
+execute function public.liberar_brinco_animal_excluido();
+
+revoke all on function public.liberar_brinco_animal_excluido() from public;
