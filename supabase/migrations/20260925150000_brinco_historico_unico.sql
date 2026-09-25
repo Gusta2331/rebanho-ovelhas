@@ -42,7 +42,7 @@ insert into public.animais_brincos_historico (
 select
   a.fazenda_id,
   a.brinco,
-  min(a.id),
+  (array_agg(a.id order by a.id))[1],
   min(coalesce(a.created_at, now()))
 from public.animais a
 where a.brinco is not null
