@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../firebase_options.dart';
 import '../services/supabase_service.dart';
 
 class PushNotificationService {
@@ -13,14 +15,18 @@ class PushNotificationService {
   static final instance = PushNotificationService._();
 
   SupabaseClient get _client => SupabaseService.client;
+
   bool _iniciado = false;
   StreamSubscription<AuthState>? _authSubscription;
+  StreamSubscription<String>? _tokenSubscription;
 
   Future<void> iniciar() async {
     if (_iniciado) return;
 
     try {
-      await Firebase.initializeApp();
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
 
       final messaging = FirebaseMessaging.instance;
 
@@ -31,66 +37,106 @@ class PushNotificationService {
       );
 
       final token = await messaging.getToken();
+
       if (token != null && token.isNotEmpty) {
         await _salvarToken(token);
       }
 
-      messaging.onTokenRefresh.listen((novoToken) async {
+      await _tokenSubscription?.cancel();
+      _tokenSubscription = messaging.onTokenRefresh.listen((novoToken) async {
         await _salvarToken(novoToken);
       });
 
       await _authSubscription?.cancel();
       _authSubscription = _client.auth.onAuthStateChange.listen((data) async {
-        if (data.session != null) {
-          final novoToken = await messaging.getToken();
-          if (novoToken != null && novoToken.isNotEmpty) {
-            await _salvarToken(novoToken);
-          }
+        if (data.session == null) return;
+
+        final novoToken = await messaging.getToken();
+
+        if (novoToken != null && novoToken.isNotEmpty) {
+          await _salvarToken(novoToken);
         }
       });
 
       _iniciado = true;
-    } catch (_) {
-      // O app continua funcionando sem push enquanto o Firebase ainda não
-      // estiver configurado no projeto Android/iOS.
+    } catch (e, stackTrace) {
+      developer.log(
+        'Não foi possível iniciar o Firebase Messaging.',
+        name: 'PushNotificationService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+
+      // O aplicativo continua funcionando mesmo que o Firebase esteja
+      // temporariamente indisponível ou ainda não esteja completamente
+      // configurado no dispositivo.
     }
   }
 
   Future<void> _salvarToken(String token) async {
-    final user = _client.auth.currentUser;
-    if (user == null) return;
+    try {
+      final user = _client.auth.currentUser;
 
-    final fazenda = await _client
-        .from('fazendas')
-        .select('id')
-        .eq('proprietario_id', user.id)
-        .eq('ativo', true)
-        .maybeSingle();
+      if (user == null) return;
 
-    final fazendaId = fazenda?['id']?.toString();
-    if (fazendaId == null || fazendaId.isEmpty) return;
+      final fazenda = await _client
+          .from('fazendas')
+          .select('id')
+          .eq('proprietario_id', user.id)
+          .eq('ativo', true)
+          .maybeSingle();
 
-    await _client.from('notificacao_dispositivos').upsert(
-      {
-        'user_id': user.id,
-        'fazenda_id': fazendaId,
-        'fcm_token': token,
-        'plataforma': Platform.isAndroid ? 'android' : 'ios',
-        'ativo': true,
-        'ultimo_acesso': DateTime.now().toUtc().toIso8601String(),
-      },
-      onConflict: 'fcm_token',
-    );
+      final fazendaId = fazenda?['id']?.toString();
+
+      if (fazendaId == null || fazendaId.isEmpty) return;
+
+      await _client.from('notificacao_dispositivos').upsert(
+        {
+          'user_id': user.id,
+          'fazenda_id': fazendaId,
+          'fcm_token': token,
+          'plataforma': Platform.isAndroid ? 'android' : 'ios',
+          'ativo': true,
+          'ultimo_acesso': DateTime.now().toUtc().toIso8601String(),
+        },
+        onConflict: 'fcm_token',
+      );
+    } catch (e, stackTrace) {
+      developer.log(
+        'Erro ao salvar token FCM.',
+        name: 'PushNotificationService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Future<void> desativarToken() async {
     try {
       final token = await FirebaseMessaging.instance.getToken();
+
       if (token == null || token.isEmpty) return;
+
       await _client
           .from('notificacao_dispositivos')
           .update({'ativo': false})
           .eq('fcm_token', token);
-    } catch (_) {}
+    } catch (e, stackTrace) {
+      developer.log(
+        'Erro ao desativar token FCM.',
+        name: 'PushNotificationService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> dispose() async {
+    await _tokenSubscription?.cancel();
+    await _authSubscription?.cancel();
+
+    _tokenSubscription = null;
+    _authSubscription = null;
+    _iniciado = false;
   }
 }
