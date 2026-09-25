@@ -45,7 +45,14 @@ class PushNotificationService {
         sound: true,
       );
 
-      FirebaseMessaging.onMessage.listen(_mostrarNotificacaoEmPrimeiroPlano);
+      FirebaseMessaging.onMessage.listen((message) async {
+        developer.log(
+          'Mensagem FCM recebida em primeiro plano: ${message.messageId}',
+          name: 'PushNotificationService',
+        );
+
+        await _mostrarNotificacaoEmPrimeiroPlano(message);
+      });
 
       final token = await messaging.getToken();
 
@@ -109,7 +116,21 @@ class PushNotificationService {
 
   Future<void> _mostrarNotificacaoEmPrimeiroPlano(RemoteMessage message) async {
     final notification = message.notification;
-    if (notification == null) return;
+
+    developer.log(
+      'Processando notificação em primeiro plano. '
+      'title=${notification?.title}, body=${notification?.body}, '
+      'data=${message.data}',
+      name: 'PushNotificationService',
+    );
+
+    if (notification == null) {
+      developer.log(
+        'Mensagem FCM sem payload de notificação. A notificação local não será exibida.',
+        name: 'PushNotificationService',
+      );
+      return;
+    }
 
     await _localNotifications.show(
       id: notification.hashCode,
@@ -126,6 +147,11 @@ class PushNotificationService {
         ),
       ),
       payload: message.data['alerta_id']?.toString(),
+    );
+
+    developer.log(
+      'Notificação local exibida com sucesso.',
+      name: 'PushNotificationService',
     );
   }
 
