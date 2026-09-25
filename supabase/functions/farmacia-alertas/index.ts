@@ -38,13 +38,10 @@ Deno.serve(async (request) => {
       return Response.json({ ignored: true })
     }
 
-    const secretKeys = JSON.parse(
-      Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}',
-    )
-    const secretKey = secretKeys.default ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const secretKey = Deno.env.get('OVIGESTAO_SERVICE_ROLE_KEY')
 
     if (!secretKey) {
-      throw new Error('Chave secreta do Supabase não encontrada.')
+      throw new Error('OVIGESTAO_SERVICE_ROLE_KEY não configurado.')
     }
 
     const supabase = createClient(
