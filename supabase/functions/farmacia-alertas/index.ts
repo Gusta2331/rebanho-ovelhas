@@ -31,17 +31,26 @@ Deno.serve(async (request) => {
       return new Response('Method Not Allowed', { status: 405 })
     }
 
+    const secretKey = Deno.env.get('OVIGESTAO_SERVICE_ROLE_KEY')
+
+    if (!secretKey) {
+      throw new Error('OVIGESTAO_SERVICE_ROLE_KEY não configurado.')
+    }
+
+    const providedKey = request.headers.get('apikey')
+
+    if (!providedKey || providedKey !== secretKey) {
+      return Response.json(
+        { ok: false, error: 'Não autorizado.' },
+        { status: 401 },
+      )
+    }
+
     const payload = (await request.json()) as WebhookPayload
     const alert = payload.record
 
     if (!alert?.id || !alert.fazenda_id || alert.aberto === false) {
       return Response.json({ ignored: true })
-    }
-
-    const secretKey = Deno.env.get('OVIGESTAO_SERVICE_ROLE_KEY')
-
-    if (!secretKey) {
-      throw new Error('OVIGESTAO_SERVICE_ROLE_KEY não configurado.')
     }
 
     const supabase = createClient(
