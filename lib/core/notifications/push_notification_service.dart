@@ -37,18 +37,10 @@ class PushNotificationService {
         await _salvarToken(novoToken);
       });
 
-      FirebaseMessaging.onMessage.listen((message) {
-        // No foreground, a tela pode atualizar os alertas pelo Supabase.
-        // Em background/encerrado, o FCM mostra a notificação automaticamente
-        // quando o payload enviado pelo servidor contém notification.
-        _client.auth.currentUser;
-      });
-
       _iniciado = true;
     } catch (e) {
       // O app continua funcionando sem push enquanto o Firebase ainda não
       // estiver configurado no projeto Android/iOS.
-      print('PUSH: Firebase ainda não configurado: $e');
     }
   }
 
