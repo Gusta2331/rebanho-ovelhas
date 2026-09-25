@@ -78,9 +78,6 @@ Deno.serve(async (request) => {
           },
           android: {
             priority: 'high',
-            notification: {
-              channelId: 'farmacia_alertas',
-            },
           },
         })
         enviados++
