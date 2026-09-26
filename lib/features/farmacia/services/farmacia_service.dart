@@ -255,7 +255,7 @@ class FarmaciaService {
       );
     }
 
-    final fazendaId = await _fazendaId();
+    await _fazendaId();
     final result = await _client.rpc(
       'corrigir_estoque_farmacia',
       params: {
