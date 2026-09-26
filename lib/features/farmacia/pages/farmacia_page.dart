@@ -146,6 +146,82 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
     }
   }
 
+  Future<void> _apagarHistoricoProduto(Map<String, dynamic> produto) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Apagar histórico do produto?'),
+        content: Text(
+          'Isso apagará as movimentações, lotes e alertas de "${produto['nome']}". '
+          'O cadastro do produto continuará existindo, mas o estoque será zerado. '
+          'Essa ação não pode ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Apagar histórico'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    try {
+      await _service.apagarHistoricoProduto(produto['id'].toString());
+      await _carregar();
+      _mensagem('Histórico do produto apagado.');
+    } catch (e) {
+      _mensagem(_erro(e));
+    }
+  }
+
+  Future<void> _apagarHistoricoFarmacia() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Limpar todo o histórico?'),
+        content: const Text(
+          'Isso apagará todos os lotes, movimentações e alertas da Farmácia '
+          'desta fazenda. Os produtos cadastrados serão mantidos, mas os '
+          'estoques serão zerados. Essa ação não pode ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Limpar histórico'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    try {
+      await _service.apagarHistoricoFarmacia();
+      await _carregar();
+      _mensagem('Histórico da Farmácia apagado.');
+    } catch (e) {
+      _mensagem(_erro(e));
+    }
+  }
+
   Future<void> _movimentar(Map<String, dynamic> produto) async {
     final rebanhoId = _selection.rebanhoSelecionadoId;
     if (rebanhoId == null) {
@@ -294,6 +370,9 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
                                     case 'remover':
                                       _desativarProduto(p);
                                       break;
+                                    case 'historico':
+                                      _apagarHistoricoProduto(p);
+                                      break;
                                   }
                                 },
                                 itemBuilder: (_) => const [
@@ -321,11 +400,28 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
                                       title: Text('Remover do estoque'),
                                     ),
                                   ),
+                                  PopupMenuItem(
+                                    value: 'historico',
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: Icon(Icons.delete_sweep_outlined),
+                                      title: Text('Apagar histórico'),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                           ),
                         ),
+                      const SizedBox(height: 18),
+                      OutlinedButton.icon(
+                        onPressed: _apagarHistoricoFarmacia,
+                        icon: const Icon(Icons.delete_sweep_outlined),
+                        label: const Text('Limpar todo o histórico da Farmácia'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
                       const SizedBox(height: 20),
                       const Text(
                         'Movimentações deste lote',
