@@ -94,25 +94,12 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
         await _financeiroService.criar(
           tipo: 'despesa',
           categoria: 'Farmácia',
-          descricao: 'Compra de 
-    } catch (e) {
-      _mensagem(_erro(e));
-    }
-  }
-
-  Future<void> _corrigirEstoque(Map<String, dynamic> produto) async {
-    final dados = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (_) => _CorrecaoEstoqueDialog(produto: produto),
-    );
-    if (dados == null) return;
-
-    try {
-      await _service.corrigirEstoque(
-        produtoId: produto['id'].toString(),
-        novoEstoque: dados['novoEstoque'] as double,
-        observacoes: dados['observacoes'] as String?,
-      );
+          descricao: 'Compra de ' + dados['nome'].toString(),
+          valor: valorCompra,
+          data: DateTime.now(),
+          observacoes: 'Despesa gerada automaticamente pelo cadastro da Farmácia.',
+        );
+      }
       await _carregar();
       _mensagem('Estoque corrigido com sucesso.');
     } catch (e) {
