@@ -93,6 +93,59 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
     }
   }
 
+  Future<void> _corrigirEstoque(Map<String, dynamic> produto) async {
+    final dados = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => _CorrecaoEstoqueDialog(produto: produto),
+    );
+    if (dados == null) return;
+
+    try {
+      await _service.corrigirEstoque(
+        produtoId: produto['id'].toString(),
+        novoEstoque: dados['novoEstoque'] as double,
+        observacoes: dados['observacoes'] as String?,
+      );
+      await _carregar();
+      _mensagem('Estoque corrigido com sucesso.');
+    } catch (e) {
+      _mensagem(_erro(e));
+    }
+  }
+
+  Future<void> _desativarProduto(Map<String, dynamic> produto) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remover produto?'),
+        content: Text(
+          'O produto "${produto['nome']}" será retirado do estoque ativo. '
+          'O histórico de movimentações continuará preservado.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Remover'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    try {
+      await _service.desativarProduto(produto['id'].toString());
+      await _carregar();
+      _mensagem('Produto removido do estoque ativo.');
+    } catch (e) {
+      _mensagem(_erro(e));
+    }
+  }
+
   Future<void> _movimentar(Map<String, dynamic> produto) async {
     final rebanhoId = _selection.rebanhoSelecionadoId;
     if (rebanhoId == null) {
@@ -228,10 +281,47 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
                               subtitle: Text(
                                 p['categoria'].toString() + ' • ' + _quantidade(p),
                               ),
-                              trailing: IconButton(
-                                tooltip: 'Movimentar',
-                                onPressed: () => _movimentar(p),
-                                icon: const Icon(Icons.swap_vert_rounded),
+                              trailing: PopupMenuButton<String>(
+                                tooltip: 'Ações do produto',
+                                onSelected: (acao) {
+                                  switch (acao) {
+                                    case 'movimentar':
+                                      _movimentar(p);
+                                      break;
+                                    case 'corrigir':
+                                      _corrigirEstoque(p);
+                                      break;
+                                    case 'remover':
+                                      _desativarProduto(p);
+                                      break;
+                                  }
+                                },
+                                itemBuilder: (_) => const [
+                                  PopupMenuItem(
+                                    value: 'movimentar',
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: Icon(Icons.swap_vert_rounded),
+                                      title: Text('Movimentar estoque'),
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'corrigir',
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: Icon(Icons.edit_note_outlined),
+                                      title: Text('Corrigir estoque'),
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'remover',
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: Icon(Icons.archive_outlined),
+                                      title: Text('Remover do estoque'),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -349,7 +439,7 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
   final codigoLote = TextEditingController();
   final observacoes = TextEditingController();
 
-  String categoria = 'medicamento';
+  String categoria = 'vacina';
   DateTime? validade;
 
   @override
@@ -381,7 +471,7 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: const Text('Novo produto'),
+        title: const Text('Cadastrar produto'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
