@@ -476,6 +476,7 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const _FarmaciaSecao(titulo: '1. Identificação', descricao: 'Nome, categoria e fabricante.'),
               TextField(controller: nome, decoration: const InputDecoration(labelText: 'Nome')),
               DropdownButtonFormField<String>(
                 value: categoria,
@@ -488,6 +489,7 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
                 onChanged: (v) => setState(() => categoria = v!),
                 decoration: const InputDecoration(labelText: 'Categoria'),
               ),
+              const _FarmaciaSecao(titulo: '2. Controle de estoque', descricao: 'Defina como a quantidade será medida.'),
               TextField(
                 controller: unidade,
                 decoration: const InputDecoration(
@@ -497,6 +499,7 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
               ),
               TextField(controller: principio, decoration: const InputDecoration(labelText: 'Princípio ativo')),
               TextField(controller: fabricante, decoration: const InputDecoration(labelText: 'Fabricante')),
+              const _FarmaciaSecao(titulo: '3. Embalagem', descricao: 'Opcional, mas ajuda a identificar a apresentação comprada.'),
               Row(
                 children: [
                   Expanded(
@@ -515,6 +518,7 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
                   ),
                 ],
               ),
+              const _FarmaciaSecao(titulo: '4. Estoque inicial', descricao: 'Informe quanto você possui agora e o limite para alerta.'),
               TextField(
                 controller: estoque,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -525,6 +529,7 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(labelText: 'Estoque mínimo'),
               ),
+              const _FarmaciaSecao(titulo: '5. Lote e validade', descricao: 'Esses dados alimentam o FEFO.'),
               TextField(controller: codigoLote, decoration: const InputDecoration(labelText: 'Lote inicial')),
               ListTile(
                 contentPadding: EdgeInsets.zero,
@@ -565,10 +570,139 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
                 'observacoes': observacoes.text,
               });
             },
-            child: const Text('Salvar'),
+            child: const Text('Cadastrar'),
           ),
         ],
       );
+}
+
+
+class _CorrecaoEstoqueDialog extends StatefulWidget {
+  final Map<String, dynamic> produto;
+
+  const _CorrecaoEstoqueDialog({required this.produto});
+
+  @override
+  State<_CorrecaoEstoqueDialog> createState() => _CorrecaoEstoqueDialogState();
+}
+
+class _CorrecaoEstoqueDialogState extends State<_CorrecaoEstoqueDialog> {
+  late final TextEditingController estoque;
+  final observacoes = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    estoque = TextEditingController(
+      text: widget.produto['estoque']?.toString() ?? '0',
+    );
+  }
+
+  @override
+  void dispose() {
+    estoque.dispose();
+    observacoes.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final unidade = (
+      widget.produto['unidade_estoque'] ??
+      widget.produto['unidade'] ??
+      'unidade'
+    ).toString();
+
+    return AlertDialog(
+      title: const Text('Corrigir estoque'),
+      content: SizedBox(
+        width: 430,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.produto['nome'].toString(),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            const SizedBox(height: 6),
+            Text('Saldo atual: ${widget.produto['estoque']} $unidade'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: estoque,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: 'Novo saldo',
+                suffixText: unidade,
+                helperText: 'A diferença será registrada como ajuste e manterá os lotes sincronizados.',
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: observacoes,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Motivo da correção',
+                hintText: 'Ex.: cadastrei 500 ml, mas eram 50 ml',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final valor = double.tryParse(estoque.text.replaceAll(',', '.'));
+            if (valor == null || valor < 0) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Informe um saldo válido.')),
+              );
+              return;
+            }
+            Navigator.pop(context, {
+              'novoEstoque': valor,
+              'observacoes': observacoes.text.trim(),
+            });
+          },
+          child: const Text('Corrigir estoque'),
+        ),
+      ],
+    );
+  }
+}
+
+class _FarmaciaSecao extends StatelessWidget {
+  final String titulo;
+  final String descricao;
+
+  const _FarmaciaSecao({
+    required this.titulo,
+    required this.descricao,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 14, bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titulo,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          Text(
+            descricao,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _MovimentoDialog extends StatefulWidget {
