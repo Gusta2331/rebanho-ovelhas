@@ -282,6 +282,32 @@ class FarmaciaService {
     );
   }
 
+  Future<void> apagarHistoricoProduto(String produtoId) async {
+    if (!_connectivity.isOnline) {
+      throw Exception(
+        'A limpeza do histórico precisa de internet para garantir a exclusão completa.',
+      );
+    }
+
+    await _fazendaId();
+    await _client.rpc(
+      'apagar_historico_produto_farmacia',
+      params: {'p_produto_id': produtoId},
+    );
+  }
+
+  Future<void> apagarHistoricoFarmacia() async {
+    if (!_connectivity.isOnline) {
+      throw Exception(
+        'A limpeza do histórico precisa de internet para garantir a exclusão completa.',
+      );
+    }
+
+    await _fazendaId();
+    await _client.rpc('apagar_historico_farmacia');
+  }
+
+
   Future<void> movimentar({
     required String produtoId,
     required String tipo,
