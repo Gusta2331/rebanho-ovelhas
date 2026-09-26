@@ -107,6 +107,7 @@ class OfflineSyncService {
 
   void _registrarHandlersPadrao() {
     registrarHandler('financeiro.criar', _sincronizarFinanceiroCriar);
+    registrarHandler('financeiro.editar', _sincronizarFinanceiroEditar);
     registrarHandler('financeiro.excluir', _sincronizarFinanceiroExcluir);
     registrarHandler('farmacia.produto.criar', _sincronizarProdutoCriar);
     registrarHandler('farmacia.movimentacao', _sincronizarMovimentacaoFarmacia);
@@ -336,6 +337,17 @@ class OfflineSyncService {
 
   Future<void> _sincronizarFinanceiroCriar(OfflineOperation op) async {
     await _insertIdempotente('financeiro_lancamentos', op.dados);
+  }
+
+  Future<void> _sincronizarFinanceiroEditar(OfflineOperation op) async {
+    final d = Map<String, dynamic>.from(op.dados);
+    final id = d.remove('id');
+    final fazendaId = d.remove('fazenda_id');
+    await _client
+        .from('financeiro_lancamentos')
+        .update(d)
+        .eq('id', id)
+        .eq('fazenda_id', fazendaId);
   }
 
   Future<void> _sincronizarFinanceiroExcluir(OfflineOperation op) async {
