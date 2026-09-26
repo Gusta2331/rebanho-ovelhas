@@ -1181,29 +1181,6 @@ class _MovimentoDialogState extends State<_MovimentoDialog> {
   }
 }
 
-String _formatarData(DateTime data) {
-  final d = data.day.toString().padLeft(2, '0');
-  final m = data.month.toString().padLeft(2, '0');
-  return d + '/' + m + '/' + data.year.toString();
-}
- + '{dados['nome']}',
-          valor: valorCompra,
-          data: DateTime.now(),
-          observacoes: 'Despesa gerada automaticamente pelo cadastro da Farmácia.',
-        );
-      }
-
-      await _carregar();
-      _mensagem(
-        valorCompra != null && valorCompra > 0
-            ? 'Produto cadastrado e despesa registrada.'
-            : 'Produto cadastrado.',
-      );
-    } catch (e) {
-      _mensagem(_erro(e));
-    }
-  }
-
   Future<void> _corrigirEstoque(Map<String, dynamic> produto) async {
     final dados = await showDialog<Map<String, dynamic>>(
       context: context,
