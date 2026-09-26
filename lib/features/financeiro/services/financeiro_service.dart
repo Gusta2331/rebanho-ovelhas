@@ -188,6 +188,72 @@ class FinanceiroService {
     }
   }
 
+  Future<void> editar({
+    required String id,
+    required String tipo,
+    required String categoria,
+    required String descricao,
+    required double valor,
+    required DateTime data,
+    String? loteId,
+    String? animalId,
+    String? observacoes,
+  }) async {
+    final fazendaId = await _fazendaId();
+    if (descricao.trim().isEmpty) throw Exception('Informe a descrição.');
+    if (categoria.trim().isEmpty) throw Exception('Informe a categoria.');
+    if (valor <= 0) throw Exception('Informe um valor maior que zero.');
+
+    final dados = <String, dynamic>{
+      'id': id,
+      'fazenda_id': fazendaId,
+      'tipo': tipo,
+      'categoria': categoria.trim(),
+      'descricao': descricao.trim(),
+      'valor': valor,
+      'data': data.toIso8601String().split('T').first,
+      'lote_id': loteId,
+      'animal_id': animalId,
+      'observacoes': observacoes?.trim().isEmpty == true
+          ? null
+          : observacoes?.trim(),
+    };
+
+    if (!_connectivity.isOnline) {
+      await OfflineSyncService.instance.enfileirar(
+        tipo: 'financeiro.editar',
+        dados: dados,
+      );
+      await _atualizarNoCache(dados);
+      return;
+    }
+
+    final dadosAtualizacao = Map<String, dynamic>.from(dados)
+      ..remove('id')
+      ..remove('fazenda_id');
+    await _client
+        .from('financeiro_lancamentos')
+        .update(dadosAtualizacao)
+        .eq('id', id)
+        .eq('fazenda_id', fazendaId);
+    await _atualizarNoCache(dados);
+  }
+
+  Future<void> _atualizarNoCache(Map<String, dynamic> dados) async {
+    final chaves = <String>{_chaveCache(null)};
+    final loteId = dados['lote_id']?.toString();
+    if (loteId != null) chaves.add(_chaveCache(loteId));
+
+    for (final chave in chaves) {
+      final registros = await _lerCache(chave);
+      registros.removeWhere(
+        (item) => item['id']?.toString() == dados['id']?.toString(),
+      );
+      registros.add(Map<String, dynamic>.from(dados));
+      await _offlineStore.salvarCache(chave, registros);
+    }
+  }
+
   Future<void> excluir(String id, {String? loteId}) async {
     final fazendaId = await _fazendaId();
     if (!_connectivity.isOnline) {
