@@ -428,30 +428,49 @@ class _ProdutoDialog extends StatefulWidget {
 }
 
 class _ProdutoDialogState extends State<_ProdutoDialog> {
+  static const unidades = [
+    'mL',
+    'L',
+    'mg',
+    'g',
+    'kg',
+    'unidade',
+    'comprimido',
+    'cápsula',
+    'frasco',
+    'ampola',
+    'dose',
+  ];
+
   final nome = TextEditingController();
-  final unidade = TextEditingController(text: 'ml');
   final estoque = TextEditingController(text: '0');
   final minimo = TextEditingController(text: '0');
   final principio = TextEditingController();
   final fabricante = TextEditingController();
   final conteudo = TextEditingController();
-  final unidadeEmbalagem = TextEditingController(text: 'ml');
+  final outraUnidade = TextEditingController();
+  final outraUnidadeEmbalagem = TextEditingController();
   final codigoLote = TextEditingController();
   final observacoes = TextEditingController();
 
   String categoria = 'vacina';
+  String unidade = 'mL';
+  String unidadeEmbalagem = 'frasco';
   DateTime? validade;
+
+  bool get usaOutraUnidade => unidade == 'Outra';
+  bool get usaOutraUnidadeEmbalagem => unidadeEmbalagem == 'Outra';
 
   @override
   void dispose() {
     nome.dispose();
-    unidade.dispose();
     estoque.dispose();
     minimo.dispose();
     principio.dispose();
     fabricante.dispose();
     conteudo.dispose();
-    unidadeEmbalagem.dispose();
+    outraUnidade.dispose();
+    outraUnidadeEmbalagem.dispose();
     codigoLote.dispose();
     observacoes.dispose();
     super.dispose();
@@ -469,113 +488,353 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
     if (data != null) setState(() => validade = data);
   }
 
+  InputDecoration _campo(String label, {String? hint, String? helper}) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      helperText: helper,
+      border: const OutlineInputBorder(),
+      isDense: true,
+    );
+  }
+
+  Widget _secao({
+    required IconData icon,
+    required String titulo,
+    required String descricao,
+    required Widget child,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  titulo,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            descricao,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: const Text('Cadastrar produto'),
-        content: SingleChildScrollView(
+  Widget build(BuildContext context) {
+    final unidadeControle = usaOutraUnidade
+        ? outraUnidade.text.trim()
+        : unidade;
+    final unidadeEmbalagemFinal = usaOutraUnidadeEmbalagem
+        ? outraUnidadeEmbalagem.text.trim()
+        : unidadeEmbalagem;
+
+    return AlertDialog(
+      title: const Row(
+        children: [
+          Icon(Icons.medical_services_outlined),
+          SizedBox(width: 10),
+          Text('Cadastrar produto'),
+        ],
+      ),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const _FarmaciaSecao(titulo: '1. Identificação', descricao: 'Nome, categoria e fabricante.'),
-              TextField(controller: nome, decoration: const InputDecoration(labelText: 'Nome')),
-              DropdownButtonFormField<String>(
-                value: categoria,
-                items: const [
-                  DropdownMenuItem(value: 'vacina', child: Text('Vacina')),
-                  DropdownMenuItem(value: 'vermifugo', child: Text('Vermífugo')),
-                  DropdownMenuItem(value: 'medicamento', child: Text('Medicamento')),
-                  DropdownMenuItem(value: 'outro', child: Text('Outro')),
-                ],
-                onChanged: (v) => setState(() => categoria = v!),
-                decoration: const InputDecoration(labelText: 'Categoria'),
-              ),
-              const _FarmaciaSecao(titulo: '2. Controle de estoque', descricao: 'Defina como a quantidade será medida.'),
-              TextField(
-                controller: unidade,
-                decoration: const InputDecoration(
-                  labelText: 'Unidade do estoque',
-                  hintText: 'ml, L, mg, g, unidade, comprimido...',
+              _secao(
+                icon: Icons.badge_outlined,
+                titulo: 'Identificação',
+                descricao: 'Comece pelo básico do produto.',
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: nome,
+                      autofocus: true,
+                      decoration: _campo('Nome do produto *', hint: 'Ex.: Vacina contra clostridiose'),
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<String>(
+                      value: categoria,
+                      decoration: _campo('Categoria *'),
+                      items: const [
+                        DropdownMenuItem(value: 'vacina', child: Text('Vacina')),
+                        DropdownMenuItem(value: 'vermifugo', child: Text('Vermífugo')),
+                        DropdownMenuItem(value: 'medicamento', child: Text('Medicamento')),
+                        DropdownMenuItem(value: 'outro', child: Text('Outro')),
+                      ],
+                      onChanged: (v) => setState(() => categoria = v ?? 'vacina'),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: principio,
+                      decoration: _campo('Princípio ativo', hint: 'Opcional'),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: fabricante,
+                      decoration: _campo('Fabricante', hint: 'Opcional'),
+                    ),
+                  ],
                 ),
               ),
-              TextField(controller: principio, decoration: const InputDecoration(labelText: 'Princípio ativo')),
-              TextField(controller: fabricante, decoration: const InputDecoration(labelText: 'Fabricante')),
-              const _FarmaciaSecao(titulo: '3. Embalagem', descricao: 'Opcional, mas ajuda a identificar a apresentação comprada.'),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: conteudo,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(labelText: 'Conteúdo da embalagem'),
+              _secao(
+                icon: Icons.straighten_outlined,
+                titulo: 'Como o estoque será medido?',
+                descricao: 'Escolha uma unidade pronta. Assim o sistema mantém tudo padronizado.',
+                child: Column(
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: unidade,
+                      isExpanded: true,
+                      decoration: _campo('Unidade de controle *'),
+                      items: [
+                        ...unidades.map(
+                          (item) => DropdownMenuItem(value: item, child: Text(item)),
+                        ),
+                        const DropdownMenuItem(
+                          value: 'Outra',
+                          child: Text('Outra unidade'),
+                        ),
+                      ],
+                      onChanged: (v) => setState(() {
+                        unidade = v ?? 'mL';
+                      }),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: unidadeEmbalagem,
-                      decoration: const InputDecoration(labelText: 'Unidade'),
+                    if (usaOutraUnidade) ...[
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: outraUnidade,
+                        onChanged: (_) => setState(() {}),
+                        decoration: _campo(
+                          'Nome da unidade *',
+                          hint: 'Ex.: sachê',
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Ex.: 500 mL, 2 kg, 30 comprimidos ou 10 doses.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const _FarmaciaSecao(titulo: '4. Estoque inicial', descricao: 'Informe quanto você possui agora e o limite para alerta.'),
-              TextField(
-                controller: estoque,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Estoque inicial'),
-              ),
-              TextField(
-                controller: minimo,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Estoque mínimo'),
-              ),
-              const _FarmaciaSecao(titulo: '5. Lote e validade', descricao: 'Esses dados alimentam o FEFO.'),
-              TextField(controller: codigoLote, decoration: const InputDecoration(labelText: 'Lote inicial')),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  validade == null ? 'Validade: não informada' : 'Validade: ' + _formatarData(validade!),
+                  ],
                 ),
-                trailing: const Icon(Icons.calendar_month_outlined),
-                onTap: _validade,
               ),
-              TextField(
-                controller: observacoes,
-                maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Observações'),
+              _secao(
+                icon: Icons.inventory_2_outlined,
+                titulo: 'Embalagem',
+                descricao: 'Informe como o produto é comprado ou armazenado.',
+                child: Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: conteudo,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: _campo(
+                              'Conteúdo por embalagem',
+                              hint: 'Ex.: 100',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: unidadeEmbalagem,
+                            isExpanded: true,
+                            decoration: _campo('Embalagem'),
+                            items: [
+                              ...unidades.map(
+                                (item) => DropdownMenuItem(
+                                  value: item,
+                                  child: Text(item),
+                                ),
+                              ),
+                              const DropdownMenuItem(
+                                value: 'Outra',
+                                child: Text('Outra'),
+                              ),
+                            ],
+                            onChanged: (v) => setState(() {
+                              unidadeEmbalagem = v ?? 'frasco';
+                            }),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (usaOutraUnidadeEmbalagem) ...[
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: outraUnidadeEmbalagem,
+                        decoration: _campo(
+                          'Tipo de embalagem *',
+                          hint: 'Ex.: caixa',
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Ex.: 1 frasco = 100 mL.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _secao(
+                icon: Icons.stacked_bar_chart_outlined,
+                titulo: 'Estoque inicial',
+                descricao: 'Defina quanto existe agora e quando o sistema deve alertar.',
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: estoque,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: _campo('Quantidade inicial *'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: minimo,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: _campo('Estoque mínimo *'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _secao(
+                icon: Icons.qr_code_2_outlined,
+                titulo: 'Lote e validade',
+                descricao: 'Esses dados são usados pelo controle FEFO.',
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: codigoLote,
+                      decoration: _campo('Código do lote', hint: 'Opcional'),
+                    ),
+                    const SizedBox(height: 4),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.calendar_month_outlined),
+                      title: const Text('Validade'),
+                      subtitle: Text(
+                        validade == null
+                            ? 'Não informada'
+                            : _formatarData(validade!),
+                      ),
+                      trailing: TextButton(
+                        onPressed: _validade,
+                        child: Text(validade == null ? 'Selecionar' : 'Alterar'),
+                      ),
+                      onTap: _validade,
+                    ),
+                  ],
+                ),
+              ),
+              _secao(
+                icon: Icons.notes_outlined,
+                titulo: 'Observações',
+                descricao: 'Campo opcional para informações adicionais.',
+                child: TextField(
+                  controller: observacoes,
+                  maxLines: 2,
+                  decoration: _campo(
+                    'Observações',
+                    hint: 'Ex.: conservar refrigerado',
+                  ),
+                ),
               ),
             ],
           ),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          FilledButton(
-            onPressed: () {
-              final e = double.tryParse(estoque.text.replaceAll(',', '.')) ?? 0;
-              final m = double.tryParse(minimo.text.replaceAll(',', '.')) ?? 0;
-              final c = double.tryParse(conteudo.text.replaceAll(',', '.'));
-              if (nome.text.trim().isEmpty || e < 0 || m < 0 || (c != null && c <= 0)) return;
-              Navigator.pop(context, {
-                'nome': nome.text,
-                'categoria': categoria,
-                'unidade': unidade.text,
-                'estoque': e,
-                'estoqueMinimo': m,
-                'principioAtivo': principio.text,
-                'fabricante': fabricante.text,
-                'conteudoEmbalagem': c,
-                'unidadeEmbalagem': unidadeEmbalagem.text,
-                'codigoLote': codigoLote.text,
-                'validade': validade,
-                'observacoes': observacoes.text,
-              });
-            },
-            child: const Text('Cadastrar'),
-          ),
-        ],
-      );
-}
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton.icon(
+          onPressed: () {
+            final e = double.tryParse(estoque.text.replaceAll(',', '.'));
+            final m = double.tryParse(minimo.text.replaceAll(',', '.'));
+            final c = double.tryParse(conteudo.text.replaceAll(',', '.'));
 
+            if (nome.text.trim().isEmpty ||
+                e == null ||
+                e < 0 ||
+                m == null ||
+                m < 0 ||
+                (c != null && c <= 0) ||
+                unidadeControle.isEmpty ||
+                unidadeEmbalagemFinal.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Confira os campos obrigatórios antes de cadastrar.'),
+                ),
+              );
+              return;
+            }
+
+            Navigator.pop(context, {
+              'nome': nome.text.trim(),
+              'categoria': categoria,
+              'unidade': unidadeControle,
+              'estoque': e,
+              'estoqueMinimo': m,
+              'principioAtivo': principio.text.trim(),
+              'fabricante': fabricante.text.trim(),
+              'conteudoEmbalagem': c,
+              'unidadeEmbalagem': unidadeEmbalagemFinal,
+              'codigoLote': codigoLote.text.trim(),
+              'validade': validade,
+              'observacoes': observacoes.text.trim(),
+            });
+          },
+          icon: const Icon(Icons.check),
+          label: const Text('Cadastrar produto'),
+        ),
+      ],
+    );
+  }
+}
 
 class _CorrecaoEstoqueDialog extends StatefulWidget {
   final Map<String, dynamic> produto;
