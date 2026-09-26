@@ -75,6 +75,68 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
     }
   }
 
+  Future<void> _editar(Map<String, dynamic> registro) async {
+    final dados = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => _LancamentoDialog(
+        lotes: _lotes,
+        inicial: registro,
+      ),
+    );
+    if (dados == null) return;
+
+    try {
+      await _service.editar(
+        id: registro['id'].toString(),
+        tipo: dados['tipo'],
+        categoria: dados['categoria'],
+        descricao: dados['descricao'],
+        valor: dados['valor'],
+        data: dados['data'],
+        loteId: dados['loteId'] as String?,
+        observacoes: dados['observacoes'],
+      );
+      await _carregar();
+      _msg('Lançamento atualizado.');
+    } catch (e) {
+      _msg(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _excluir(Map<String, dynamic> registro) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Excluir lançamento?'),
+        content: Text(
+          'O lançamento "${registro['descricao']}" será removido do financeiro.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true) return;
+
+    try {
+      await _service.excluir(
+        registro['id'].toString(),
+        loteId: registro['lote_id']?.toString(),
+      );
+      await _carregar();
+      _msg('Lançamento excluído.');
+    } catch (e) {
+      _msg(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
   void _msg(String text) {
     if (mounted)
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
@@ -224,9 +286,39 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                           subtitle: Text(
                             '${item['categoria']} • ${item['data']}',
                           ),
-                          trailing: Text(
-                            _moeda((item['valor'] as num).toDouble()),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _moeda((item['valor'] as num).toDouble()),
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              PopupMenuButton<String>(
+                                onSelected: (value) {
+                                  if (value == 'editar') {
+                                    _editar(item);
+                                  } else if (value == 'excluir') {
+                                    _excluir(item);
+                                  }
+                                },
+                                itemBuilder: (_) => const [
+                                  PopupMenuItem(
+                                    value: 'editar',
+                                    child: ListTile(
+                                      leading: Icon(Icons.edit_outlined),
+                                      title: Text('Editar'),
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'excluir',
+                                    child: ListTile(
+                                      leading: Icon(Icons.delete_outline),
+                                      title: Text('Excluir'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -276,10 +368,15 @@ class _ResumoCard extends StatelessWidget {
 }
 
 class _LancamentoDialog extends StatefulWidget {
-  const _LancamentoDialog({required this.lotes, this.loteIdInicial});
+  const _LancamentoDialog({
+    required this.lotes,
+    this.loteIdInicial,
+    this.inicial,
+  });
 
   final List<Map<String, dynamic>> lotes;
   final String? loteIdInicial;
+  final Map<String, dynamic>? inicial;
 
   @override
   State<_LancamentoDialog> createState() => _LancamentoDialogState();
@@ -297,7 +394,19 @@ class _LancamentoDialogState extends State<_LancamentoDialog> {
   @override
   void initState() {
     super.initState();
-    loteId = widget.loteIdInicial;
+    final inicial = widget.inicial;
+    loteId = inicial?['lote_id']?.toString() ?? widget.loteIdInicial;
+    if (inicial != null) {
+      tipo = inicial['tipo']?.toString() ?? 'despesa';
+      categoria.text = inicial['categoria']?.toString() ?? '';
+      descricao.text = inicial['descricao']?.toString() ?? '';
+      valor.text = inicial['valor']?.toString() ?? '';
+      observacoes.text = inicial['observacoes']?.toString() ?? '';
+      final dataTexto = inicial['data']?.toString();
+      if (dataTexto != null) {
+        data = DateTime.tryParse(dataTexto) ?? DateTime.now();
+      }
+    }
   }
 
   @override
@@ -311,7 +420,7 @@ class _LancamentoDialogState extends State<_LancamentoDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Novo lançamento'),
+    title: Text(widget.inicial == null ? 'Novo lançamento' : 'Editar lançamento'),
     content: SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
