@@ -934,36 +934,6 @@ class _CorrecaoEstoqueDialogState extends State<_CorrecaoEstoqueDialog> {
   }
 }
 
-class _FarmaciaSecao extends StatelessWidget {
-  final String titulo;
-  final String descricao;
-
-  const _FarmaciaSecao({
-    required this.titulo,
-    required this.descricao,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 14, bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            titulo,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-          ),
-          Text(
-            descricao,
-            style: const TextStyle(fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _MovimentoDialog extends StatefulWidget {
   final Map<String, dynamic> produto;
   final List<Map<String, dynamic>> animais;
