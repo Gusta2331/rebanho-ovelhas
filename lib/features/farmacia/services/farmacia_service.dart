@@ -240,6 +240,48 @@ class FarmaciaService {
     return Map<String, dynamic>.from(result);
   }
 
+  Future<Map<String, dynamic>> corrigirEstoque({
+    required String produtoId,
+    required double novoEstoque,
+    String? observacoes,
+  }) async {
+    if (novoEstoque < 0) {
+      throw Exception('O estoque não pode ser negativo.');
+    }
+
+    if (!_connectivity.isOnline) {
+      throw Exception(
+        'A correção de estoque precisa de internet para manter os lotes e o histórico sincronizados.',
+      );
+    }
+
+    final fazendaId = await _fazendaId();
+    final result = await _client.rpc(
+      'corrigir_estoque_farmacia',
+      params: {
+        'p_produto_id': produtoId,
+        'p_novo_estoque': novoEstoque,
+        'p_observacoes': _text(observacoes),
+      },
+    );
+
+    return Map<String, dynamic>.from(result as Map);
+  }
+
+  Future<void> desativarProduto(String produtoId) async {
+    if (!_connectivity.isOnline) {
+      throw Exception(
+        'A exclusão do cadastro precisa de internet para preservar o histórico da farmácia.',
+      );
+    }
+
+    await _fazendaId();
+    await _client.rpc(
+      'desativar_produto_farmacia',
+      params: {'p_produto_id': produtoId},
+    );
+  }
+
   Future<void> movimentar({
     required String produtoId,
     required String tipo,
