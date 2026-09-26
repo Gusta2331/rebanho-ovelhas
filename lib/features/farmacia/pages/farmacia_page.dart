@@ -101,7 +101,11 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
         );
       }
       await _carregar();
-      _mensagem('Estoque corrigido com sucesso.');
+      _mensagem(
+        valorCompra != null && valorCompra > 0
+            ? 'Produto cadastrado e despesa registrada.'
+            : 'Produto cadastrado.',
+      );
     } catch (e) {
       _mensagem(_erro(e));
     }
