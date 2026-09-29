@@ -4,6 +4,7 @@ import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/racas.dart';
 import '../models/animal.dart';
+import '../services/raca_service.dart';
 
 class RacasPage extends StatefulWidget {
   final bool modoSelecao;
@@ -20,16 +21,42 @@ class RacasPage extends StatefulWidget {
 }
 
 class _RacasPageState extends State<RacasPage> {
+  final _racaService = RacaService();
   String _busca = '';
+  List<Raca> _racas = [];
+  bool _carregando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarRacas();
+  }
+
+  Future<void> _carregarRacas() async {
+    try {
+      final racas = await _racaService.listar();
+      if (!mounted) return;
+      setState(() {
+        _racas = racas;
+        _carregando = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _carregando = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível carregar as raças: $e')),
+      );
+    }
+  }
 
   List<Raca> get _racasFiltradas {
     if (_busca.trim().isEmpty) {
-      return RacasData.racas;
+      return _racas;
     }
 
     final busca = _busca.trim().toLowerCase();
 
-    return RacasData.racas.where((raca) {
+    return _racas.where((raca) {
       return raca.nome.toLowerCase().contains(busca);
     }).toList();
   }
@@ -58,7 +85,7 @@ class _RacasPageState extends State<RacasPage> {
 
     final nomeNormalizado = nome.trim().toLowerCase();
 
-    final jaExiste = RacasData.racas.any(
+    final jaExiste = _racas.any(
       (raca) => raca.nome.trim().toLowerCase() == nomeNormalizado,
     );
 
@@ -70,14 +97,16 @@ class _RacasPageState extends State<RacasPage> {
       return;
     }
 
-    setState(() {
-      RacasData.racas.add(
-        Raca(
-          id: DateTime.now().microsecondsSinceEpoch.toString(),
-          nome: nome.trim(),
-        ),
+    try {
+      await _racaService.adicionar(nome.trim());
+      await _carregarRacas();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
-    });
+      return;
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Raça "$nome" adicionada com sucesso.')),
@@ -113,7 +142,7 @@ class _RacasPageState extends State<RacasPage> {
 
     final nomeNormalizado = novoNome.trim().toLowerCase();
 
-    final jaExiste = RacasData.racas.any(
+    final jaExiste = _racas.any(
       (outraRaca) =>
           outraRaca.id != raca.id &&
           outraRaca.nome.trim().toLowerCase() == nomeNormalizado,
@@ -127,17 +156,16 @@ class _RacasPageState extends State<RacasPage> {
       return;
     }
 
-    final indice = RacasData.racas.indexWhere(
-      (outraRaca) => outraRaca.id == raca.id,
-    );
-
-    if (indice == -1) {
+    try {
+      await _racaService.editar(raca, novoNome.trim());
+      await _carregarRacas();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
       return;
     }
-
-    setState(() {
-      RacasData.racas[indice] = Raca(id: raca.id, nome: novoNome.trim());
-    });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Raça "$novoNome" atualizada com sucesso.')),
@@ -207,9 +235,16 @@ class _RacasPageState extends State<RacasPage> {
       return;
     }
 
-    setState(() {
-      RacasData.racas.removeWhere((outraRaca) => outraRaca.id == raca.id);
-    });
+    try {
+      await _racaService.excluir(raca);
+      await _carregarRacas();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+      return;
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Raça "${raca.nome}" excluída com sucesso.')),
@@ -410,7 +445,9 @@ class _RacasPageState extends State<RacasPage> {
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: racas.isEmpty
+              child: _carregando
+                  ? const Center(child: CircularProgressIndicator())
+                  : racas.isEmpty
                   ? const Center(
                       child: Text(
                         'Nenhuma raça encontrada.',
