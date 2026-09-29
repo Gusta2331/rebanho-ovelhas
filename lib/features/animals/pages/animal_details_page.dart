@@ -11,6 +11,8 @@ import '../../flock/pages/animal_transfer_history_page.dart';
 import '../../flock/services/rebanho_selection_service.dart';
 import '../../flock/services/rebanho_service.dart';
 import '../models/animal.dart';
+import '../models/composicao_racial.dart';
+import '../services/composicao_racial_service.dart';
 import '../services/animal_service.dart';
 import '../models/animal_venda.dart';
 import '../services/animal_venda_service.dart';
@@ -18,6 +20,7 @@ import 'animal_sale_page.dart';
 import '../widgets/animal_photo.dart';
 import '../widgets/animal_descendants.dart';
 import '../widgets/animal_family_tree.dart';
+import '../widgets/animal_breed_composition_card.dart';
 import 'animal_form_page.dart';
 
 class AnimalDetailsPage extends StatefulWidget {
@@ -41,6 +44,11 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
   final AnimalService _animalService = AnimalService();
   final AnimalVendaService _vendaService = AnimalVendaService();
   final ManejoService _manejoService = ManejoService();
+  final ComposicaoRacialService _composicaoRacialService = ComposicaoRacialService();
+
+  List<ComposicaoRacial> _composicoes = [];
+  bool _carregandoComposicao = true;
+  String? _erroComposicao;
 
   List<Manejo> _historicoManejos = [];
   bool _carregandoManejos = true;
@@ -63,6 +71,22 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
     _carregarAnimaisRelacionados();
     _carregarVenda();
     _carregarHistoricoManejos();
+    _carregarComposicaoRacial();
+  }
+
+  Future<void> _carregarComposicaoRacial() async {
+    if (mounted) setState(() { _carregandoComposicao = true; _erroComposicao = null; });
+    try {
+      final dados = await _composicaoRacialService.listarPorAnimal(_animal.id);
+      if (!mounted) return;
+      setState(() { _composicoes = dados; _carregandoComposicao = false; });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _erroComposicao = error.toString().replaceFirst('Exception: ', '');
+        _carregandoComposicao = false;
+      });
+    }
   }
 
   Future<void> _carregarHistoricoManejos() async {
@@ -107,6 +131,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
     }
     await Future.wait([
       _carregarHistoricoManejos(),
+      _carregarComposicaoRacial(),
       _carregarAnimaisRelacionados(),
       _carregarVenda(),
     ]);
@@ -927,6 +952,15 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
                   valueColor: _statusCor(),
                 ),
               ],
+            ),
+
+            const SizedBox(height: 16),
+
+            AnimalBreedCompositionCard(
+              composicoes: _composicoes,
+              carregando: _carregandoComposicao,
+              erro: _erroComposicao,
+              onRetry: _carregarComposicaoRacial,
             ),
 
             const SizedBox(height: 16),
