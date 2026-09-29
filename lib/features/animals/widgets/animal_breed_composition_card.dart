@@ -37,10 +37,17 @@ class AnimalBreedCompositionCard extends StatelessWidget {
         if (carregando) const Center(child:Padding(padding:EdgeInsets.all(12),child:CircularProgressIndicator()))
         else if (erro != null) ListTile(contentPadding:EdgeInsets.zero,title:Text(erro!),trailing:IconButton(onPressed:onRetry,icon:const Icon(Icons.refresh)))
         else if (composicoes.isEmpty) const Text('Ainda não foi possível calcular a composição racial.')
-        else ...composicoes.map((item)=>Padding(padding:const EdgeInsets.only(bottom:10),child:Row(children:[
+        else ...[
+          ...composicoes.map((item)=>Padding(padding:const EdgeInsets.only(bottom:10),child:Row(children:[
           Expanded(child:Text(item.racaNome,style:const TextStyle(fontWeight:FontWeight.w600))),
           Text(_percentual(item.percentual),style:const TextStyle(fontWeight:FontWeight.bold,color:AppTheme.primaryColor)),
-        ]))),
+        ])),
+          if (composicoes.fold<double>(0, (s, item) => s + item.percentual) < 99.9)
+            const Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: Text('Parte da composição é desconhecida porque falta a filiação completa.', style: TextStyle(fontSize: 12, color: Colors.black54)),
+            ),
+        ],
       ]),
     );
   }
