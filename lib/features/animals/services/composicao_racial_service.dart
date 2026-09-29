@@ -54,8 +54,10 @@ class ComposicaoRacialService {
     if (paisConhecidos == 0) {
       final racaId = animal['raca_id']?.toString();
       if (racaId != null && racaId.isNotEmpty) resultado[racaId] = 100;
+      return resultado;
     }
-    return _normalizar(resultado);
+    if (paisConhecidos == 2) return _normalizar(resultado);
+    return resultado;
   }
 
   Map<String, double> _normalizar(Map<String, double> valores) {
