@@ -21,6 +21,7 @@ import '../widgets/animal_photo.dart';
 import '../widgets/animal_descendants.dart';
 import '../widgets/animal_family_tree.dart';
 import '../widgets/animal_breed_composition_card.dart';
+import '../widgets/animal_weight_chart.dart';
 import 'animal_form_page.dart';
 
 class AnimalDetailsPage extends StatefulWidget {
@@ -1034,6 +1035,10 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
                 TipoManejo.famacha,
               }),
             ),
+
+            const SizedBox(height: 12),
+
+            AnimalWeightChart(registros: _historicoManejos),
 
             const SizedBox(height: 12),
 
