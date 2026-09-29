@@ -14,7 +14,6 @@ class RacaService {
         .select('id')
         .eq('proprietario_id', usuario.id)
         .eq('ativo', true)
-        .order('created_at')
         .limit(1)
         .maybeSingle();
     return fazenda?['id']?.toString();
