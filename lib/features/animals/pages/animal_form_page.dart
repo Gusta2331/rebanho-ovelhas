@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../flock/services/rebanho_selection_service.dart';
 import '../models/animal.dart';
+import '../services/composicao_racial_service.dart';
 import '../services/animal_service.dart';
 import '../widgets/animal_parent_selector.dart';
 import '../widgets/animal_photo.dart';
@@ -43,6 +44,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
   final ImagePicker _imagePicker = ImagePicker();
   final ImageCropper _imageCropper = ImageCropper();
   final AnimalService _animalService = AnimalService();
+  final ComposicaoRacialService _composicaoRacialService = ComposicaoRacialService();
 
   final RebanhoSelectionService _rebanhoSelectionService =
       RebanhoSelectionService.instance;
@@ -567,6 +569,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
 
       final animalSalvo = Animal.fromMap(dadosSalvos);
       final pendenteOffline = dadosSalvos['offline_pendente'] == true;
+
+      if (!pendenteOffline) {
+        await _composicaoRacialService.recalcularAnimal(animalSalvo.id);
+      }
 
       if (!mounted) {
         return;
