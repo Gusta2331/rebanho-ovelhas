@@ -5,6 +5,8 @@ import '../../animals/services/animal_service.dart';
 import '../models/monta.dart';
 import '../services/reproducao_service.dart';
 
+import '../../../core/widgets/app_asset_icon.dart';
+
 class MontaFormPage extends StatefulWidget {
   final String reproducaoId;
   final Monta? monta;
