@@ -1032,7 +1032,6 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
             _buildHistoricoSection(
               title: 'Saúde',
               icon: Icons.medical_services_outlined,
-              assetPath: 'assets/images/icon_farmacia.png',
               registros: _manejosDoTipo({
                 TipoManejo.vacinacao,
                 TipoManejo.vermifugacao,
@@ -1058,7 +1057,6 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
             _buildHistoricoSection(
               title: 'Manejo',
               icon: Icons.agriculture_outlined,
-              assetPath: 'assets/images/icon_manejo.png',
               registros: _manejosDoTipo({TipoManejo.tosquia, TipoManejo.outro}),
             ),
 
