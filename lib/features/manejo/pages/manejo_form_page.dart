@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
@@ -572,7 +574,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             isExpanded: true,
             decoration: InputDecoration(
               labelText: 'Selecionar ' + titulo,
-              prefixIcon: const Icon(Icons.medical_services_outlined),
+              prefixIcon: const AppAssetIcon(assetPath: 'assets/images/icon_farmacia.png', size: 28_outlined),
               border: const OutlineInputBorder(),
             ),
             items: itens
@@ -1573,7 +1575,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       value: _animalId,
       decoration: const InputDecoration(
         labelText: 'Animal',
-        prefixIcon: Icon(Icons.pets_outlined),
+        prefixIcon: AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 28_outlined),
         border: OutlineInputBorder(),
       ),
       items: _animais
