@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
+../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../../animals/models/animal.dart';
@@ -145,7 +147,14 @@ class _ReportsPageState extends State<ReportsPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Relatórios'),
+      title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppAssetIcon(assetPath: 'assets/images/icon_relatorios.png', size: 26),
+            SizedBox(width: 8),
+            Text('Relatórios'),
+          ],
+        ),
       actions: const [
         ContextualHelpButton(
           title: 'Relatórios do rebanho',
