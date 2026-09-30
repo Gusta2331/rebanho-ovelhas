@@ -574,7 +574,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             isExpanded: true,
             decoration: InputDecoration(
               labelText: 'Selecionar ' + titulo,
-              prefixIcon: const AppAssetIcon(assetPath: 'assets/images/icon_farmacia.png', size: 28_outlined),
+              prefixIcon: const AppAssetIcon(
+                assetPath: 'assets/images/icon_farmacia.png',
+                size: 28,
+              ),
               border: const OutlineInputBorder(),
             ),
             items: itens
