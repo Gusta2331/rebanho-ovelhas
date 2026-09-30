@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+../../../core/widgets/app_asset_icon.dart';
+
 import '../../core/offline/connectivity_service.dart';
 import '../../core/offline/offline_sync_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -103,7 +105,14 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configurações'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppAssetIcon(assetPath: 'assets/images/icon_configuracoes.png', size: 26),
+            SizedBox(width: 8),
+            Text('Configurações'),
+          ],
+        ),
         actions: const [
           ContextualHelpButton(
             title: 'Configurações',
