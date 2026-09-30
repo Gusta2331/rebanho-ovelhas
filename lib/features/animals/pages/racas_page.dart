@@ -287,7 +287,9 @@ class _RacasPageState extends State<RacasPage> {
                         color: AppTheme.primaryColor.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 24),
+                      child: const AppAssetIcon(
+                        assetPath: 'assets/images/icon_animais.png',
+                        size: 24,
                         color: AppTheme.primaryColor,
                       ),
                     ),
@@ -491,7 +493,9 @@ class _RacasPageState extends State<RacasPage> {
                                       ),
                                       borderRadius: BorderRadius.circular(14),
                                     ),
-                                    child: const AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 24),
+                                    child: const AppAssetIcon(
+                                      assetPath: 'assets/images/icon_animais.png',
+                                      size: 24,
                                       color: AppTheme.primaryColor,
                                     ),
                                   ),
