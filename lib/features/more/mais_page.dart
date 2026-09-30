@@ -24,7 +24,7 @@ class MaisPage extends StatelessWidget {
         onTap: () => _abrir(context, const ManejoAgendaPage()),
       ),
       _Item(
-        assetPath: 'assets/images/icon_reproducao.png',
+        assetPath: 'assets/images/icon_cobertura.png',
         titulo: 'Reprodução',
         descricao: 'Montas, coberturas e nascimentos',
         onTap: () => _abrir(context, const ReproductionsPage()),
