@@ -363,9 +363,15 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
                         label: const Text('Cadastrar produto'),
                       ),
                       const SizedBox(height: 20),
-                      const Text(
-                        'Estoque da fazenda',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      const Row(
+                        children: [
+                          AppAssetIcon(assetPath: 'assets/images/icon_estoque.png', size: 30),
+                          SizedBox(width: 8),
+                          Text(
+                            'Estoque da fazenda',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       if (_produtos.isEmpty)
