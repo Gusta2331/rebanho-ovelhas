@@ -377,7 +377,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
         title: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 26),
+            AppAssetIcon(assetPath: 'assets/images/icon_cobertura.png', size: 26),
             SizedBox(width: 8),
             Text('Nova reprodução'),
           ],
@@ -450,7 +450,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               AppAssetIcon(
-                assetPath: 'assets/images/icon_reproducao.png',
+                assetPath: 'assets/images/icon_cobertura.png',
                 size: 64,
                 color: Colors.grey.shade400,
               ),
