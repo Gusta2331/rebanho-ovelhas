@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../models/animal.dart';
 import '../pages/animal_details_page.dart';
@@ -438,7 +440,7 @@ class AnimalFamilyTree extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.pets_rounded, color: AppTheme.primaryColor),
+          const AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 26),
         ],
       ),
     );
