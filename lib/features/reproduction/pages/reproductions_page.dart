@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_selection_service.dart';
@@ -211,7 +213,14 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reprodução'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 26),
+            SizedBox(width: 8),
+            Text('Reprodução'),
+          ],
+        ),
         actions: [
           IconButton(
             onPressed: _abrirAjuda,
