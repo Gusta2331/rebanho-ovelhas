@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 import '../data/racas.dart';
 import '../models/animal.dart';
 import '../services/raca_service.dart';
@@ -286,8 +287,7 @@ class _RacasPageState extends State<RacasPage> {
                         color: AppTheme.primaryColor.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(
-                        Icons.pets_rounded,
+                      child: const AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 24),
                         color: AppTheme.primaryColor,
                       ),
                     ),
@@ -491,8 +491,7 @@ class _RacasPageState extends State<RacasPage> {
                                       ),
                                       borderRadius: BorderRadius.circular(14),
                                     ),
-                                    child: const Icon(
-                                      Icons.pets_rounded,
+                                    child: const AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 24),
                                       color: AppTheme.primaryColor,
                                     ),
                                   ),

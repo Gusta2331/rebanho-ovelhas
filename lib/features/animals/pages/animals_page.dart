@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/widgets/app_asset_icon.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 import '../../flock/services/rebanho_selection_service.dart';
 import '../models/animal.dart';
 import '../services/animal_service.dart';
@@ -602,7 +603,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
                       children: [
                         AnimalSexFilter(
                           label: 'Todos',
-                          icon: Icons.pets_rounded,
+                          assetPath: 'assets/images/icon_animais.png',
                           quantidade: AnimalListLogic.porStatus(
                             _animals,
                             _statusSelecionado,
@@ -617,7 +618,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
                         const SizedBox(width: 8),
                         AnimalSexFilter(
                           label: 'Fêmeas',
-                          icon: Icons.female_rounded,
+                          assetPath: 'assets/images/icon_ovino_femea.png',
                           quantidade: AnimalListLogic.quantidadePorSexo(
                             _animals,
                             _statusSelecionado,
@@ -633,7 +634,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
                         const SizedBox(width: 8),
                         AnimalSexFilter(
                           label: 'Machos',
-                          icon: Icons.male_rounded,
+                          assetPath: 'assets/images/icon_ovino_macho.png',
                           quantidade: AnimalListLogic.quantidadePorSexo(
                             _animals,
                             _statusSelecionado,

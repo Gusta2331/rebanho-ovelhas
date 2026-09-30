@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/theme/app_theme.dart';
 
 class ManejoAnimalSelector extends StatelessWidget {
@@ -183,7 +185,7 @@ class ManejoAnimalSelector extends StatelessWidget {
                         ? (_) => onToggleAnimal(id)
                         : null,
                     title: Text(_animalTexto(animal)),
-                    secondary: const Icon(Icons.pets_outlined),
+                    secondary: const AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 28_outlined),
                     controlAffinity: ListTileControlAffinity.leading,
                   );
                 }),

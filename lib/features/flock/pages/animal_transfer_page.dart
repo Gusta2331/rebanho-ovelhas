@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../services/animal_transfer_service.dart';
@@ -263,8 +265,7 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
               color: AppTheme.primaryColor.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(
-              Icons.pets_rounded,
+            child: const AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 30),
               color: AppTheme.primaryColor,
               size: 27,
             ),

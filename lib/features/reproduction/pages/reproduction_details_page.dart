@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
@@ -10,6 +12,8 @@ import '../services/reproducao_service.dart';
 import 'monta_form_page.dart';
 import 'nascimento_form_page.dart';
 import 'reproduction_edit_page.dart';
+
+import '../../../core/widgets/app_asset_icon.dart';
 
 class ReproductionDetailsPage extends StatefulWidget {
   final Reproducao reproducao;

@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 import '../../flock/services/rebanho_selection_service.dart';
 import '../models/animal.dart';
 import '../services/composicao_racial_service.dart';
@@ -847,12 +848,12 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 segments: const [
                   ButtonSegment<SexoAnimal>(
                     value: SexoAnimal.femea,
-                    icon: Icon(Icons.female_rounded),
+                    icon: AppAssetIcon(assetPath: 'assets/images/icon_ovino_femea.png', size: 24),
                     label: Text('Fêmea'),
                   ),
                   ButtonSegment<SexoAnimal>(
                     value: SexoAnimal.macho,
-                    icon: Icon(Icons.male_rounded),
+                    icon: AppAssetIcon(assetPath: 'assets/images/icon_ovino_macho.png', size: 24),
                     label: Text('Macho'),
                   ),
                 ],
@@ -1032,7 +1033,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 segments: const [
                   ButtonSegment<OrigemAnimal>(
                     value: OrigemAnimal.nascido,
-                    icon: Icon(Icons.child_friendly_outlined),
+                    icon: AppAssetIcon(assetPath: 'assets/images/icon_cordeiro.png', size: 24),
                     label: Text('Nascido'),
                   ),
                   ButtonSegment<OrigemAnimal>(
