@@ -72,7 +72,8 @@ class MaisPage extends StatelessWidget {
             topics: [
               HelpTopic(
                 title: 'Agenda de manejo',
-                description: 'Planeje atividades futuras e consulte os lembretes cadastrados.',
+                description:
+                    'Planeje atividades futuras e consulte os lembretes cadastrados.',
               ),
               HelpTopic(
                 title: 'Reprodução',
@@ -81,15 +82,18 @@ class MaisPage extends StatelessWidget {
               ),
               HelpTopic(
                 title: 'Farmácia e financeiro',
-                description: 'Acompanhe estoque de produtos e movimentações financeiras.',
+                description:
+                    'Acompanhe estoque de produtos e movimentações financeiras.',
               ),
               HelpTopic(
                 title: 'Configurações',
-                description: 'Consulte os dados da conta e da fazenda e acompanhe a sincronização.',
+                description:
+                    'Consulte os dados da conta e da fazenda e acompanhe a sincronização.',
               ),
               HelpTopic(
                 title: 'Relatórios',
-                description: 'Consulte o rebanho, filtre os animais e exporte uma planilha compatível com Excel.',
+                description:
+                    'Consulte o rebanho, filtre os animais e exporte uma planilha compatível com Excel.',
               ),
             ],
           ),
@@ -107,9 +111,10 @@ class MaisPage extends StatelessWidget {
               leading: CircleAvatar(
                 backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.10),
                 foregroundColor: AppTheme.primaryColor,
-                child: item.assetPath != null
-                    ? AppAssetIcon(assetPath: item.assetPath!, size: 30)
-                    : Icon(item.icon),
+                child: AppAssetIcon(
+                  assetPath: item.assetPath,
+                  size: 30,
+                ),
               ),
               title: Text(
                 item.titulo,
@@ -131,15 +136,13 @@ class MaisPage extends StatelessWidget {
 }
 
 class _Item {
-  final IconData? icon;
-  final String? assetPath;
+  final String assetPath;
   final String titulo;
   final String descricao;
   final VoidCallback onTap;
 
   const _Item({
-    this.icon,
-    this.assetPath,
+    required this.assetPath,
     required this.titulo,
     required this.descricao,
     required this.onTap,
