@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
@@ -372,7 +374,14 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nova reprodução'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 26),
+            SizedBox(width: 8),
+            Text('Nova reprodução'),
+          ],
+        ),
         actions: const [
           ContextualHelpButton(
             title: 'Registrar reprodução',
