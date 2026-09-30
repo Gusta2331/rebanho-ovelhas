@@ -185,7 +185,10 @@ class ManejoAnimalSelector extends StatelessWidget {
                         ? (_) => onToggleAnimal(id)
                         : null,
                     title: Text(_animalTexto(animal)),
-                    secondary: const AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 28_outlined),
+                    secondary: const AppAssetIcon(
+                      assetPath: 'assets/images/icon_animais.png',
+                      size: 28,
+                    ),
                     controlAffinity: ListTileControlAffinity.leading,
                   );
                 }),
