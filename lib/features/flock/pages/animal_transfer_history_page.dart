@@ -203,9 +203,10 @@ class _AnimalTransferHistoryPageState extends State<AnimalTransferHistoryPage> {
               color: AppTheme.primaryColor.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 30),
+            child: const AppAssetIcon(
+              assetPath: 'assets/images/icon_animais.png',
+              size: 30,
               color: AppTheme.primaryColor,
-              size: 27,
             ),
           ),
           const SizedBox(width: 14),
