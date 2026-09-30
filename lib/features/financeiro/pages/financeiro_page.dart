@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../flock/services/rebanho_service.dart';
@@ -153,7 +155,14 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
     );
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Despesas e lucro'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppAssetIcon(assetPath: 'assets/images/icon_financeiro.png', size: 26),
+            SizedBox(width: 8),
+            Text('Despesas e lucro'),
+          ],
+        ),
         actions: [
           const ContextualHelpButton(
             title: 'Despesas e lucro',
