@@ -169,7 +169,7 @@ class _NascimentoFormPageState extends State<NascimentoFormPage> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.child_friendly),
+                : const AppAssetIcon(assetPath: 'assets/images/icon_cordeiro.png', size: 24),
             label: Text(_saving ? 'Registrando...' : 'Registrar nascimento'),
           ),
         ),
