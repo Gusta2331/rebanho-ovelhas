@@ -39,6 +39,21 @@ flutter:
   assets:
     - assets/images/ovigestao_logo.png
     - assets/images/ovigestao_icon.png
+    - assets/images/icon_administracao.png
+    - assets/images/icon_agenda.png
+    - assets/images/icon_animais.png
+    - assets/images/icon_cobertura.png
+    - assets/images/icon_configuracoes.png
+    - assets/images/icon_cordeiro.png
+    - assets/images/icon_estoque.png
+    - assets/images/icon_farmacia.png
+    - assets/images/icon_financeiro.png
+    - assets/images/icon_manejo.png
+    - assets/images/icon_nascimento.png
+    - assets/images/icon_ovino_femea.png
+    - assets/images/icon_ovino_macho.png
+    - assets/images/icon_relatorios.png
+    - assets/images/icon_reproducao.png
 
 flutter_launcher_icons:
   android: "launcher_icon"
