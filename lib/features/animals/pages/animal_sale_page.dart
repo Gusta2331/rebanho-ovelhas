@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../../../core/offline/connectivity_service.dart';
 import '../../manejo/services/manejo_service.dart';
