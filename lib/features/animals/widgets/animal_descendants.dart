@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../models/animal.dart';
 import '../pages/animal_details_page.dart';
@@ -47,8 +49,7 @@ class AnimalDescendants extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                const Icon(
-                  Icons.family_restroom_outlined,
+                const AppAssetIcon(assetPath: 'assets/images/icon_cordeiro.png', size: 26),
                   color: AppTheme.primaryColor,
                   size: 21,
                 ),
