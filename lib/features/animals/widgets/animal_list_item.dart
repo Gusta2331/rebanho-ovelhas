@@ -132,7 +132,6 @@ class EmptyAnimalsState extends StatelessWidget {
               ),
               child: const AppAssetIcon(
                 assetPath: 'assets/images/icon_animais.png',
-                size: 30,
                 color: AppTheme.primaryColor,
                 size: 38,
               ),
