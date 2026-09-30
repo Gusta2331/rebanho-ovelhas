@@ -783,7 +783,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildQuickActions() {
     final acoes = [
       QuickAction(
-        icon: Icons.add_circle_outline_rounded,
+        assetPath: 'assets/images/icon_animais.png',
         title: 'Adicionar animal',
         onTap: _openAnimals,
       ),
@@ -793,27 +793,27 @@ class _DashboardPageState extends State<DashboardPage> {
         onTap: _abrirGerenciamentoRebanhos,
       ),
       QuickAction(
-        icon: Icons.favorite_outline_rounded,
+        assetPath: 'assets/images/icon_reproducao.png',
         title: 'Reprodução',
         onTap: _openReproductions,
       ),
       QuickAction(
-        icon: Icons.assignment_outlined,
+        assetPath: 'assets/images/icon_manejo.png',
         title: 'Manejo',
         onTap: _openManejos,
       ),
       QuickAction(
-        icon: Icons.event_note_outlined,
+        assetPath: 'assets/images/icon_agenda.png',
         title: 'Agenda de manejo',
         onTap: _openManejoAgenda,
       ),
       QuickAction(
-        icon: Icons.medical_services_outlined,
+        assetPath: 'assets/images/icon_farmacia.png',
         title: 'Farmácia',
         onTap: _openFarmacia,
       ),
       QuickAction(
-        icon: Icons.attach_money_rounded,
+        assetPath: 'assets/images/icon_financeiro.png',
         title: 'Despesas e lucro',
         onTap: _openFinanceiro,
       ),
