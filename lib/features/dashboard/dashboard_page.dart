@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/app_asset_icon.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/contextual_help.dart';
@@ -885,7 +886,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         NavigationDestination(
           icon: Icon(Icons.pets_outlined),
-          selectedIcon: Icon(Icons.pets_rounded),
+          selectedIcon: AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 30),
           label: 'Animais',
         ),
         NavigationDestination(
