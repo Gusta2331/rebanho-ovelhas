@@ -543,7 +543,11 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
       padding: const EdgeInsets.all(24),
       children: [
         const SizedBox(height: 80),
-        AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 28_outlined, size: 72, color: Colors.grey.shade400),
+        AppAssetIcon(
+          assetPath: 'assets/images/icon_reproducao.png',
+          size: 72,
+          color: Colors.grey.shade400,
+        ),
         const SizedBox(height: 20),
         Text(
           'Nenhuma reprodução registrada',
