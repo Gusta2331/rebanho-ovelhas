@@ -449,7 +449,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.pets_outlined, size: 64, color: Colors.grey.shade400),
+              AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 28_outlined, size: 64, color: Colors.grey.shade400),
               const SizedBox(height: 16),
               Text(
                 'Nenhuma ovelha ativa encontrada.',
