@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/widgets/contextual_help.dart';
 import '../services/reproducao_service.dart';
 
@@ -57,7 +59,14 @@ class _NascimentoFormPageState extends State<NascimentoFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registrar nascimento'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppAssetIcon(assetPath: 'assets/images/icon_nascimento.png', size: 26),
+            SizedBox(width: 8),
+            Text('Registrar nascimento'),
+          ],
+        ),
         actions: const [
           ContextualHelpButton(
             title: 'Registrar nascimento',
