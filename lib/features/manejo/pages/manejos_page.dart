@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
@@ -366,7 +368,14 @@ class _ManejosPageState extends State<ManejosPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manejo'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppAssetIcon(assetPath: 'assets/images/icon_manejo.png', size: 26),
+            SizedBox(width: 8),
+            Text('Manejo'),
+          ],
+        ),
         actions: [
           const ContextualHelpButton(
             title: 'Manejo',
