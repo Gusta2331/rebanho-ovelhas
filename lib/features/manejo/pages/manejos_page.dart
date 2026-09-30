@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-../../../core/widgets/app_asset_icon.dart';
+import ../../../core/widgets/app_asset_icon.dart';
 
 import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
