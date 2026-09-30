@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 
 class AnimalCard extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final String? assetPath;
   final String title;
   final String value;
 
   const AnimalCard({
     super.key,
-    required this.icon,
+    this.icon,
+    this.assetPath,
     required this.title,
     required this.value,
   });
@@ -25,7 +28,9 @@ class AnimalCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, color: AppTheme.primaryColor, size: 25),
+          assetPath != null
+              ? AppAssetIcon(assetPath: assetPath!, size: 30)
+              : Icon(icon, color: AppTheme.primaryColor, size: 25),
           const SizedBox(height: 8),
           Text(
             value,
