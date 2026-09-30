@@ -49,9 +49,10 @@ class AnimalDescendants extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                const AppAssetIcon(assetPath: 'assets/images/icon_cordeiro.png', size: 26),
+                const AppAssetIcon(
+                  assetPath: 'assets/images/icon_cordeiro.png',
+                  size: 26,
                   color: AppTheme.primaryColor,
-                  size: 21,
                 ),
                 const SizedBox(width: 9),
                 const Expanded(
