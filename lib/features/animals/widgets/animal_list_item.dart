@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../models/animal.dart';
 import 'animal_photo.dart';
@@ -128,8 +130,9 @@ class EmptyAnimalsState extends StatelessWidget {
                 color: AppTheme.primaryColor.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.pets_rounded,
+              child: const AppAssetIcon(
+                assetPath: 'assets/images/icon_animais.png',
+                size: 30,
                 color: AppTheme.primaryColor,
                 size: 38,
               ),
