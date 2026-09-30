@@ -1013,7 +1013,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
               _buildSection(
                 title: 'Reprodução e parição',
                 icon: Icons.child_friendly_outlined,
-                assetPath: 'assets/images/icon_reproducao.png',
+                assetPath: 'assets/images/icon_cobertura.png',
                 children: [
                   ListTile(
                     title: const Text('Registrar reprodução / futura parição'),
