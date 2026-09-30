@@ -670,7 +670,7 @@ class _DashboardPageState extends State<DashboardPage> {
       children: [
         Expanded(
           child: AnimalCard(
-            icon: Icons.female_rounded,
+            assetPath: 'assets/images/icon_ovino_femea.png',
             title: 'Fêmeas',
             value: _loadingAnimals ? '...' : _totalFemeas.toString(),
           ),
@@ -678,7 +678,7 @@ class _DashboardPageState extends State<DashboardPage> {
         const SizedBox(width: 10),
         Expanded(
           child: AnimalCard(
-            icon: Icons.male_rounded,
+            assetPath: 'assets/images/icon_ovino_macho.png',
             title: 'Machos',
             value: _loadingAnimals ? '...' : _totalMachos.toString(),
           ),
@@ -686,7 +686,7 @@ class _DashboardPageState extends State<DashboardPage> {
         const SizedBox(width: 10),
         Expanded(
           child: AnimalCard(
-            icon: Icons.favorite_rounded,
+            assetPath: 'assets/images/icon_ovino_femea.png',
             title: 'Fêmeas reprodutoras',
             value: _loadingAnimals
                 ? '...'
