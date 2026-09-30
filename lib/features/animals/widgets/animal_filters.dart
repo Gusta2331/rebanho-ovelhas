@@ -67,7 +67,7 @@ class AnimalStatusFilter extends StatelessWidget {
 class AnimalSexFilter extends StatelessWidget {
   final String label;
   final int quantidade;
-  final IconData icon;
+  final String assetPath;
   final bool selected;
   final VoidCallback onTap;
 
@@ -75,7 +75,7 @@ class AnimalSexFilter extends StatelessWidget {
     super.key,
     required this.label,
     required this.quantidade,
-    required this.icon,
+    required this.assetPath,
     required this.selected,
     required this.onTap,
   });
@@ -100,7 +100,7 @@ class AnimalSexFilter extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(icon, size: 17, color: selected ? Colors.white : color),
+              AppAssetIcon(assetPath: assetPath, size: 22),
               const SizedBox(width: 6),
               Text(
                 label,
