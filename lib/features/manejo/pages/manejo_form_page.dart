@@ -1578,7 +1578,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       value: _animalId,
       decoration: const InputDecoration(
         labelText: 'Animal',
-        prefixIcon: AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 28_outlined),
+        prefixIcon: AppAssetIcon(
+          assetPath: 'assets/images/icon_animais.png',
+          size: 28,
+        ),
         border: OutlineInputBorder(),
       ),
       items: _animais
