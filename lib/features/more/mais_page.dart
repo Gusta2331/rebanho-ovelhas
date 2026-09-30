@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/contextual_help.dart';
+import '../../core/widgets/app_asset_icon.dart';
 import '../admin/pages/admin_producers_page.dart';
 import '../farmacia/pages/farmacia_page.dart';
 import '../financeiro/pages/financeiro_page.dart';
@@ -17,43 +18,43 @@ class MaisPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final itens = [
       _Item(
-        icon: Icons.event_note_outlined,
+        assetPath: 'assets/images/icon_agenda.png',
         titulo: 'Agenda de manejo',
         descricao: 'Manejos programados do lote',
         onTap: () => _abrir(context, const ManejoAgendaPage()),
       ),
       _Item(
-        icon: Icons.favorite_outline_rounded,
+        assetPath: 'assets/images/icon_reproducao.png',
         titulo: 'Reprodução',
         descricao: 'Montas, coberturas e nascimentos',
         onTap: () => _abrir(context, const ReproductionsPage()),
       ),
       _Item(
-        icon: Icons.medical_services_outlined,
+        assetPath: 'assets/images/icon_farmacia.png',
         titulo: 'Farmácia',
         descricao: 'Estoque e uso de produtos',
         onTap: () => _abrir(context, const FarmaciaPage()),
       ),
       _Item(
-        icon: Icons.attach_money_rounded,
+        assetPath: 'assets/images/icon_financeiro.png',
         titulo: 'Despesas e lucro',
         descricao: 'Receitas, despesas e saldo da fazenda ou por lote',
         onTap: () => _abrir(context, const FinanceiroPage()),
       ),
       _Item(
-        icon: Icons.assessment_outlined,
+        assetPath: 'assets/images/icon_relatorios.png',
         titulo: 'Relatórios',
         descricao: 'Consulte o rebanho e exporte uma planilha para Excel',
         onTap: () => _abrir(context, const ReportsPage()),
       ),
       _Item(
-        icon: Icons.settings_outlined,
+        assetPath: 'assets/images/icon_configuracoes.png',
         titulo: 'Configurações',
         descricao: 'Dados da fazenda, conta e sincronização',
         onTap: () => _abrir(context, const ConfiguracoesPage()),
       ),
       _Item(
-        icon: Icons.admin_panel_settings_outlined,
+        assetPath: 'assets/images/icon_administracao.png',
         titulo: 'Administração',
         descricao: 'Contas de produtores e planos (acesso restrito)',
         onTap: () => _abrir(context, const AdminProducersPage()),
@@ -106,7 +107,9 @@ class MaisPage extends StatelessWidget {
               leading: CircleAvatar(
                 backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.10),
                 foregroundColor: AppTheme.primaryColor,
-                child: Icon(item.icon),
+                child: item.assetPath != null
+                    ? AppAssetIcon(assetPath: item.assetPath!, size: 30)
+                    : Icon(item.icon),
               ),
               title: Text(
                 item.titulo,
@@ -128,13 +131,15 @@ class MaisPage extends StatelessWidget {
 }
 
 class _Item {
-  final IconData icon;
+  final IconData? icon;
+  final String? assetPath;
   final String titulo;
   final String descricao;
   final VoidCallback onTap;
 
   const _Item({
-    required this.icon,
+    this.icon,
+    this.assetPath,
     required this.titulo,
     required this.descricao,
     required this.onTap,
