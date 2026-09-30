@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/app_asset_icon.dart';
 
 import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../models/reproducao.dart';
 import '../services/reproducao_service.dart';
 
-import '../../../core/widgets/app_asset_icon.dart';
 
 class ReproductionEditPage extends StatefulWidget {
   final Reproducao reproducao;
