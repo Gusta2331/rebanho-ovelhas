@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../flock/services/rebanho_selection_service.dart';
 import '../models/animal.dart';
@@ -484,7 +486,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
                   value: 'racas',
                   child: Row(
                     children: [
-                      Icon(Icons.pets_rounded),
+                      AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 42),
                       SizedBox(width: 12),
                       Text('Biblioteca de raças'),
                     ],
@@ -518,8 +520,9 @@ class _AnimalsPageState extends State<AnimalsPage> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.groups_rounded,
+                          const AppAssetIcon(
+                            assetPath: 'assets/images/icon_animais.png',
+                            size: 34,
                             color: AppTheme.primaryColor,
                           ),
                           const SizedBox(width: 10),
