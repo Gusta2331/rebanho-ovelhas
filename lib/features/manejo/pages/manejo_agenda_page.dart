@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
@@ -264,7 +266,14 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Agenda de manejo'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppAssetIcon(assetPath: 'assets/images/icon_agenda.png', size: 26),
+            SizedBox(width: 8),
+            Text('Agenda de manejo'),
+          ],
+        ),
         actions: const [
           ContextualHelpButton(
             title: 'Agenda de manejo',
