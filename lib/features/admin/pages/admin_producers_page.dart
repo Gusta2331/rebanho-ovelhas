@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../services/admin_producers_service.dart';
@@ -128,7 +130,14 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Administração'),
+      title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppAssetIcon(assetPath: 'assets/images/icon_administracao.png', size: 26),
+            SizedBox(width: 8),
+            Text('Administração'),
+          ],
+        ),
       actions: [
         const ContextualHelpButton(
           title: 'Administração de produtores',
