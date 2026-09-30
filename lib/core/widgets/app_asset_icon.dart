@@ -21,7 +21,7 @@ class AppAssetIcon extends StatelessWidget {
       width: size,
       height: size,
       fit: fit,
-      color: color,
+      filterQuality: FilterQuality.high,
       errorBuilder: (_, __, ___) {
         return Icon(
           Icons.image_not_supported_outlined,
