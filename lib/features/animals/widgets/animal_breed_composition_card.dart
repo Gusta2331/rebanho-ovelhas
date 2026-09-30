@@ -19,9 +19,9 @@ class AnimalBreedCompositionCard extends StatelessWidget {
 
   String _percentual(double valor) {
     if (valor.roundToDouble() == valor) {
-      return '\${valor.toStringAsFixed(0)}%';
+      return '${valor.toStringAsFixed(0)}%';
     }
-    return '\${valor.toStringAsFixed(1).replaceAll('.', ',')}%';
+    return '${valor.toStringAsFixed(1).replaceAll('.', ',')}%';
   }
 
   @override
@@ -207,7 +207,7 @@ class AnimalBreedCompositionCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Parte da composição é desconhecida porque falta a filiação completa (\${_percentual(percentualDesconhecido)}).',
+                        'Parte da composição é desconhecida porque falta a filiação completa (${_percentual(percentualDesconhecido)}).',
                         style: const TextStyle(
                           fontSize: 12,
                           height: 1.35,
