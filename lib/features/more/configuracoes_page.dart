@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import ../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 
 import '../../core/offline/connectivity_service.dart';
 import '../../core/offline/offline_sync_service.dart';
