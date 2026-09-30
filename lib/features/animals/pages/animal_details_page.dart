@@ -904,9 +904,10 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
                   value: _animal.brinco,
                 ),
                 _buildInfoRow(
-                  icon: _animal.sexo == SexoAnimal.femea
-                      ? Icons.female
-                      : Icons.male,
+                  icon: Icons.pets_outlined,
+                  assetPath: _animal.sexo == SexoAnimal.femea
+                      ? 'assets/images/icon_ovino_femea.png'
+                      : 'assets/images/icon_ovino_macho.png',
                   label: 'Sexo',
                   value: _sexoTexto(),
                 ),
@@ -983,6 +984,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
             _buildSection(
               title: 'Filiação',
               icon: Icons.family_restroom_outlined,
+              assetPath: 'assets/images/icon_animais.png',
               children: [
                 _buildParentRow(
                   titulo: 'Mãe',
@@ -1011,6 +1013,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
               _buildSection(
                 title: 'Reprodução e parição',
                 icon: Icons.child_friendly_outlined,
+                assetPath: 'assets/images/icon_reproducao.png',
                 children: [
                   ListTile(
                     title: const Text('Registrar reprodução / futura parição'),
@@ -1029,6 +1032,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
             _buildHistoricoSection(
               title: 'Saúde',
               icon: Icons.medical_services_outlined,
+              assetPath: 'assets/images/icon_farmacia.png',
               registros: _manejosDoTipo({
                 TipoManejo.vacinacao,
                 TipoManejo.vermifugacao,
@@ -1054,6 +1058,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
             _buildHistoricoSection(
               title: 'Manejo',
               icon: Icons.agriculture_outlined,
+              assetPath: 'assets/images/icon_manejo.png',
               registros: _manejosDoTipo({TipoManejo.tosquia, TipoManejo.outro}),
             ),
 
@@ -1355,6 +1360,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
   Widget _buildSection({
     required String title,
     required IconData icon,
+    String? assetPath,
     required List<Widget> children,
   }) {
     return Container(
@@ -1370,7 +1376,9 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                Icon(icon, color: AppTheme.primaryColor, size: 21),
+                assetPath != null
+                    ? AppAssetIcon(assetPath: assetPath, size: 26)
+                    : Icon(icon, color: AppTheme.primaryColor, size: 21),
                 const SizedBox(width: 9),
                 Text(
                   title,
@@ -1411,10 +1419,11 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
                 color: AppTheme.primaryColor.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(
-                sexo == SexoAnimal.femea ? Icons.female : Icons.male,
-                color: AppTheme.primaryColor,
-                size: 28,
+              child: AppAssetIcon(
+                assetPath: sexo == SexoAnimal.femea
+                    ? 'assets/images/icon_ovino_femea.png'
+                    : 'assets/images/icon_ovino_macho.png',
+                size: 34,
               ),
             ),
           const SizedBox(width: 12),
@@ -1456,6 +1465,7 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
 
   Widget _buildInfoRow({
     required IconData icon,
+    String? assetPath,
     required String label,
     required String value,
     Color? valueColor,
@@ -1465,7 +1475,9 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Colors.black45),
+          assetPath != null
+              ? AppAssetIcon(assetPath: assetPath, size: 24)
+              : Icon(icon, size: 20, color: Colors.black45),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
