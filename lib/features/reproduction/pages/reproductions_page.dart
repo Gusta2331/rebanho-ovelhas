@@ -392,7 +392,7 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
                       color: AppTheme.primaryColor.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(Icons.pets, color: AppTheme.primaryColor),
+                    child: const AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 28, color: AppTheme.primaryColor),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -543,7 +543,7 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
       padding: const EdgeInsets.all(24),
       children: [
         const SizedBox(height: 80),
-        Icon(Icons.pets_outlined, size: 72, color: Colors.grey.shade400),
+        AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 28_outlined, size: 72, color: Colors.grey.shade400),
         const SizedBox(height: 20),
         Text(
           'Nenhuma reprodução registrada',
