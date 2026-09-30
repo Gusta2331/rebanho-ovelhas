@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_selection_service.dart';
@@ -301,7 +303,14 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Farmácia'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppAssetIcon(assetPath: 'assets/images/icon_farmacia.png', size: 26),
+            SizedBox(width: 8),
+            Text('Farmácia'),
+          ],
+        ),
         actions: [
           const ContextualHelpButton(
             title: 'Farmácia',
