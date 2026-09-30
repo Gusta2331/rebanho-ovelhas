@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import ../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../animals/services/animal_service.dart';
