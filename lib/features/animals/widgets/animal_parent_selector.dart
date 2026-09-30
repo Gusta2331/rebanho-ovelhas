@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/app_asset_icon.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../models/animal.dart';
 
@@ -418,7 +420,7 @@ class _EmptyParentList extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.pets_outlined, size: 64, color: Colors.grey.shade400),
+            AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 64),
             const SizedBox(height: 16),
             Text(
               'Nenhum animal encontrado',
