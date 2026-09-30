@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 
 class ManagementItem extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final String? assetPath;
   final String title;
   final String description;
   final String date;
 
   const ManagementItem({
     super.key,
-    required this.icon,
+    this.icon,
+    this.assetPath,
     required this.title,
     required this.description,
     required this.date,
@@ -34,7 +37,9 @@ class ManagementItem extends StatelessWidget {
               color: AppTheme.primaryColor.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: AppTheme.primaryColor),
+            child: assetPath != null
+                ? AppAssetIcon(assetPath: assetPath!, size: 32)
+                : Icon(icon, color: AppTheme.primaryColor),
           ),
           const SizedBox(width: 14),
           Expanded(
