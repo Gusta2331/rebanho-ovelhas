@@ -216,7 +216,7 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
         title: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 26),
+            AppAssetIcon(assetPath: 'assets/images/icon_cobertura.png', size: 26),
             SizedBox(width: 8),
             Text('Reprodução'),
           ],
@@ -392,7 +392,7 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
                       color: AppTheme.primaryColor.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 28, color: AppTheme.primaryColor),
+                    child: const AppAssetIcon(assetPath: 'assets/images/icon_cobertura.png', size: 28, color: AppTheme.primaryColor),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -544,7 +544,7 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
       children: [
         const SizedBox(height: 80),
         AppAssetIcon(
-          assetPath: 'assets/images/icon_reproducao.png',
+          assetPath: 'assets/images/icon_cobertura.png',
           size: 72,
           color: Colors.grey.shade400,
         ),
