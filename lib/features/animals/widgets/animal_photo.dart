@@ -82,10 +82,9 @@ class AnimalPhoto extends StatelessWidget {
           color: AppTheme.primaryColor.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(borderRadius),
         ),
-        child: Icon(
-          Icons.pets_rounded,
-          size: size * 0.45,
-          color: AppTheme.primaryColor,
+        child: const AppAssetIcon(
+          assetPath: 'assets/images/icon_animais.png',
+          size: 38,
         ),
       );
     }
@@ -125,10 +124,9 @@ class AnimalPhoto extends StatelessWidget {
         color: AppTheme.primaryColor.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(borderRadius),
       ),
-      child: Icon(
-        Icons.pets_rounded,
-        size: size * 0.45,
-        color: AppTheme.primaryColor,
+      child: const AppAssetIcon(
+        assetPath: 'assets/images/icon_animais.png',
+        size: 38,
       ),
     );
   }
