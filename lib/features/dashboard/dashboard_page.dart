@@ -885,18 +885,36 @@ class _DashboardPageState extends State<DashboardPage> {
           label: 'Início',
         ),
         NavigationDestination(
-          icon: Icon(Icons.pets_outlined),
-          selectedIcon: AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 30),
+          icon: AppAssetIcon(
+            assetPath: 'assets/images/icon_animais.png',
+            size: 27,
+          ),
+          selectedIcon: AppAssetIcon(
+            assetPath: 'assets/images/icon_animais.png',
+            size: 31,
+          ),
           label: 'Animais',
         ),
         NavigationDestination(
-          icon: Icon(Icons.assignment_outlined),
-          selectedIcon: Icon(Icons.assignment_rounded),
+          icon: AppAssetIcon(
+            assetPath: 'assets/images/icon_manejo.png',
+            size: 27,
+          ),
+          selectedIcon: AppAssetIcon(
+            assetPath: 'assets/images/icon_manejo.png',
+            size: 31,
+          ),
           label: 'Manejo',
         ),
         NavigationDestination(
-          icon: Icon(Icons.more_horiz_rounded),
-          selectedIcon: Icon(Icons.more_horiz_rounded),
+          icon: AppAssetIcon(
+            assetPath: 'assets/images/icon_administracao.png',
+            size: 27,
+          ),
+          selectedIcon: AppAssetIcon(
+            assetPath: 'assets/images/icon_administracao.png',
+            size: 31,
+          ),
           label: 'Mais',
         ),
       ],
