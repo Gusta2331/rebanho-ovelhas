@@ -789,7 +789,7 @@ class _DashboardPageState extends State<DashboardPage> {
         onTap: _openAnimals,
       ),
       QuickAction(
-        icon: Icons.groups_rounded,
+        assetPath: 'assets/images/icon_lotes.png',
         title: 'Lotes',
         onTap: _abrirGerenciamentoRebanhos,
       ),
