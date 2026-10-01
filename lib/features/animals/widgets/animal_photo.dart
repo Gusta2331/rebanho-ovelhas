@@ -82,9 +82,9 @@ class AnimalPhoto extends StatelessWidget {
           color: AppTheme.primaryColor.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(borderRadius),
         ),
-        child: const AppAssetIcon(
+        child: AppAssetIcon(
           assetPath: 'assets/images/icon_animais.png',
-          size: 38,
+          size: size * 0.45,
         ),
       );
     }
