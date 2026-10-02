@@ -198,6 +198,8 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
         return 'Pesagem';
       case TipoManejo.famacha:
         return 'Avaliação FAMACHA';
+      case TipoManejo.denticao:
+        return 'Avaliação de dentição';
       case TipoManejo.outro:
         return manejo.outroNome ?? 'Outro manejo';
     }
