@@ -128,8 +128,8 @@ class ReportExcelService {
     );
 
     final headerStyle = CellStyle(
-      backgroundColorHex: '#367C2B',
-      fontColorHex: '#FFFFFF',
+      backgroundColorHex: ExcelColor.fromHexString('#367C2B'),
+      fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
       fontSize: 10,
       bold: true,
       horizontalAlign: HorizontalAlign.Center,
@@ -143,7 +143,7 @@ class ReportExcelService {
     );
 
     final bodyStyle = CellStyle(
-      fontColorHex: '#263323',
+      fontColorHex: ExcelColor.fromHexString('#263323'),
       verticalAlign: VerticalAlign.Center,
     );
 
