@@ -105,7 +105,12 @@ class _NascimentoFormPageState extends State<NascimentoFormPage> {
               initialValue: _sexo,
               decoration: const InputDecoration(
                 labelText: 'Sexo *',
-                prefixIcon: Icon(Icons.pets_outlined),
+                prefixIcon: AppAssetIcon(
+                   assetPath: _sexo == 'femea'
+                       ? 'assets/images/icon_ovino_femea.png'
+                       : 'assets/images/icon_ovino_macho.png',
+                   size: 24,
+                 ),
               ),
               items: const [
                 DropdownMenuItem(value: 'femea', child: Text('Fêmea')),
