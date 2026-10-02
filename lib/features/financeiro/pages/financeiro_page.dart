@@ -4,6 +4,7 @@ import '../../../core/widgets/app_asset_icon.dart';
 
 import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 import '../../flock/services/rebanho_service.dart';
 import '../services/financeiro_service.dart';
 
@@ -269,7 +270,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                             child: _ResumoCard(
                               titulo: 'Saldo',
                               valor: _moeda(_resumo['saldo']!),
-                              icone: Icons.account_balance_wallet_outlined,
+                              assetPath: 'assets/images/icon_financeiro.png',
                             ),
                           ),
                         ],
