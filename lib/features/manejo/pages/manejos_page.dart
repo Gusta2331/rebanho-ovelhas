@@ -208,7 +208,7 @@ class _ManejosPageState extends State<ManejosPage> {
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Animal',
-                prefixIcon: const AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 22),
+                prefixIcon: AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 22),
                 border: OutlineInputBorder(),
               ),
               items: [
