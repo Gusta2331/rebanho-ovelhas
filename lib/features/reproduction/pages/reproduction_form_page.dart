@@ -524,7 +524,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
                 _maeId = valor;
               });
             },
-            icone: AppAssetIcon(assetPath: 'assets/images/icon_ovino_femea.png', size: 28),
+            icone: Icons.female,
           ),
 
           const SizedBox(height: 16),
@@ -538,7 +538,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
                 _paiId = valor;
               });
             },
-            icone: AppAssetIcon(assetPath: 'assets/images/icon_ovino_macho.png', size: 28),
+            icone: Icons.male,
             textoVazio: 'Pai ainda não definido',
           ),
 
