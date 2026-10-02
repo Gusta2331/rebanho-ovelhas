@@ -832,7 +832,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
                   hintText: 'Ex.: Branquinha',
-                  prefixIcon: Icon(Icons.pets_outlined),
+                  prefixIcon: AppAssetIcon(
+                    assetPath: 'assets/images/icon_animais.png',
+                    size: 24,
+                  ),
                 ),
               ),
 
