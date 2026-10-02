@@ -256,7 +256,7 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(24, 70, 24, 120),
         children: [
-          Icon(Icons.layers_outlined, size: 72, color: AppTheme.primaryColor.withValues(alpha: 0.65)),
+          AppAssetIcon(assetPath: 'assets/images/icon_lotes.png', size: 72),
           const SizedBox(height: 18),
           const Text('Selecione um lote', textAlign: TextAlign.center, style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
