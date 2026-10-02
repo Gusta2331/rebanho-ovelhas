@@ -14,7 +14,7 @@ class RebanhoHelpPage extends StatelessWidget {
         children: [
           _intro(context),
           const SizedBox(height: 16),
-          _section(context, 'O que é um lote?', Icons.groups_outlined, [
+          _section(context, 'O que é um lote?', 'assets/images/icon_lotes.png', [
             _item(
               'Lote',
               'É um grupo de animais organizado dentro da fazenda. Uma fazenda pode ter vários lotes.',
