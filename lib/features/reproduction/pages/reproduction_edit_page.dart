@@ -214,7 +214,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
     String title,
     String? value,
     List<Map<String, dynamic>> list,
-    ValueChanged<String?> onChanged,
+    ValueChanged<String?> onChanged, {
     IconData? icon,
     String? assetPath,
     bool optional = false,
