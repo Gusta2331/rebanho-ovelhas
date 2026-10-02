@@ -232,9 +232,12 @@ class _Summary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final values = [
-      ['Reproduções', data.total], ['Prenhes', data.prenhes],
-      ['Partos', data.partos], ['Nascimentos', data.totalNascimentos],
-      ['Fêmeas', data.femeasNascidas], ['Machos', data.machosNascidos],
+      ['Reproduções', data.total, 'assets/images/icon_cobertura.png'],
+      ['Prenhes', data.prenhes, 'assets/images/icon_ovino_femea.png'],
+      ['Partos', data.partos, 'assets/images/icon_nascimento.png'],
+      ['Nascimentos', data.totalNascimentos, 'assets/images/icon_cordeiro.png'],
+      ['Fêmeas', data.femeasNascidas, 'assets/images/icon_ovino_femea.png'],
+      ['Machos', data.machosNascidos, 'assets/images/icon_ovino_macho.png'],
     ];
     return GridView.count(
       crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10,
@@ -242,7 +245,7 @@ class _Summary extends StatelessWidget {
       children: values.map((v) => Card(
         margin: EdgeInsets.zero, elevation: 0,
         child: Padding(padding: const EdgeInsets.all(12), child: Row(children: [
-          const AppAssetIcon(assetPath: 'assets/images/icon_cobertura.png', size: 26),
+          AppAssetIcon(assetPath: v[2].toString(), size: 26),
           const SizedBox(width: 9),
           Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
             Text(v[1].toString(), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
