@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/widgets/app_asset_icon.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../../animals/models/animal.dart';
 import '../../animals/services/animal_service.dart';
@@ -204,7 +205,7 @@ class _ReportsPageState extends State<ReportsPage> {
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        const Icon(Icons.pets, color: AppTheme.primaryColor),
+                        const AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 28),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -282,7 +283,7 @@ class _ReportsPageState extends State<ReportsPage> {
                             alpha: 0.10,
                           ),
                           child: const Icon(
-                            Icons.pets,
+                            Icons.description_outlined,
                             color: AppTheme.primaryColor,
                           ),
                         ),
