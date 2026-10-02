@@ -20,6 +20,15 @@ class ComposicaoRacialService {
     }).toList();
   }
 
+  Future<Map<String, List<ComposicaoRacial>>> listarPorAnimais(List<String> animalIds) async {
+    if (animalIds.isEmpty) return {};
+    final resultados = <String, List<ComposicaoRacial>>{};
+    await Future.wait(animalIds.map((id) async {
+      resultados[id] = await listarPorAnimal(id);
+    }));
+    return resultados;
+  }
+
   Future<List<ComposicaoRacial>> calcularPelosPais({
     required String maeId,
     required String paiId,
