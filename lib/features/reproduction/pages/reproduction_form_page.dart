@@ -367,7 +367,12 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: InputDecorator(
-        decoration: InputDecoration(labelText: titulo, prefixIcon: Icon(icone)),
+        decoration: InputDecoration(
+          labelText: titulo,
+          prefixIcon: assetPath != null
+              ? AppAssetIcon(assetPath: assetPath, size: 24)
+              : null,
+        ),
         child: Text(
           _formatarData(valor),
           style: TextStyle(color: valor == null ? Colors.grey.shade600 : null),
