@@ -75,7 +75,21 @@ class ReproductionReportPdfService {
   }
 
   pw.Widget _title(String text,PdfColor color)=>pw.Text(text,style:pw.TextStyle(color:color,fontSize:13,fontWeight:pw.FontWeight.bold));
-  pw.Widget _card(String label,int value,PdfColor green,PdfColor bg)=>pw.Container(width:88,padding:const pw.EdgeInsets.all(10),decoration:pw.BoxDecoration(color:bg,borderRadius:pw.BorderRadius.circular(8)),child:pw.Column(crossAxisAlignment:pw.CrossAxisAlignment.start,children:[pw.Text(value.toString(),style:pw.TextStyle(color:green,fontSize:17,fontWeight:pw.FontWeight.bold)),pw.SizedBox(height:3),pw.Text(label,style:const pw.TextStyle(fontSize:8))]);
+  pw.Widget _card(String label,int value,PdfColor green,PdfColor bg) {
+    return pw.Container(
+      width: 88,
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(color: bg, borderRadius: pw.BorderRadius.circular(8)),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(value.toString(), style: pw.TextStyle(color: green, fontSize: 17, fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 3),
+          pw.Text(label, style: const pw.TextStyle(fontSize: 8)),
+        ],
+      ),
+    );
+  }
   pw.TableRow _header(List<String> values,PdfColor green)=>pw.TableRow(decoration:pw.BoxDecoration(color:green),children:values.map((v)=>pw.Padding(padding:const pw.EdgeInsets.all(6),child:pw.Text(v,style:pw.TextStyle(color:PdfColors.white,fontSize:7.5,fontWeight:pw.FontWeight.bold)))).toList());
   pw.Widget _cell(String value)=>pw.Padding(padding:const pw.EdgeInsets.all(5),child:pw.Text(value,style:const pw.TextStyle(fontSize:7)));
   String _animal(String? id,ReproductionReportData data){if(id==null||id.trim().isEmpty)return 'Não informado';final a=data.animaisPorId[id];if(a==null)return 'Não informado';final n=a.nome?.trim();return n==null||n.isEmpty?a.brinco:a.brinco+' • '+n;}
