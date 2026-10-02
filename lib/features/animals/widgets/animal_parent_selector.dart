@@ -178,10 +178,10 @@ class _AnimalParentSelectionPageState
   List<Animal> get _animaisDisponiveis {
     final busca = _buscaController.text.trim().toLowerCase();
 
-    return _animaisPorStatus(
-      _statusSelecionado,
-      somenteAptos: _somenteAptosParaReproducao,
-    ).where((animal) {
+    return widget.animais.where((animal) {
+      if (animal.id == widget.idAnimalAtual) return false;
+      if (animal.sexo != widget.sexoPermitido) return false;
+
       if (busca.isEmpty) return true;
 
       final brinco = animal.brinco.toLowerCase();
@@ -194,6 +194,9 @@ class _AnimalParentSelectionPageState
     }).toList();
   }
 
+  String get _tipoAnimal {
+    return widget.sexoPermitido == SexoAnimal.femea ? 'fêmeas' : 'machos';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -202,13 +205,6 @@ class _AnimalParentSelectionPageState
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.titulo),
-        actions: [
-          IconButton(
-            onPressed: _abrirFiltros,
-            tooltip: 'Filtros',
-            icon: const Icon(Icons.filter_list_rounded),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -230,17 +226,6 @@ class _AnimalParentSelectionPageState
                         },
                         icon: const Icon(Icons.close_rounded),
                       ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '$_textoFiltroIdade • ${_statusLabel(_statusSelecionado)} • '
-                '${animais.length} ${animais.length == 1 ? 'animal' : 'animais'}',
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
               ),
             ),
           ),
