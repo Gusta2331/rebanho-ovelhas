@@ -761,11 +761,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
                 color: AppTheme.primaryColor.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(22),
               ),
-              child: const Icon(
-                AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 28),
-                size: 38,
-                color: AppTheme.primaryColor,
-              ),
+              child: const AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 38),
             ),
             const SizedBox(height: 20),
             const Text(
