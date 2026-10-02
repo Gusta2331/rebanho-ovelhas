@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 import '../models/rebanho.dart';
 import '../services/rebanho_service.dart';
 import '../widgets/rebanho_card.dart';
@@ -210,11 +211,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(20, 60, 20, 120),
         children: [
-          Icon(
-            const AssetImage('assets/images/icon_lotes.png'),
-            size: 72,
-            color: AppTheme.primaryColor.withValues(alpha: 0.65),
-          ),
+          const AppAssetIcon(assetPath: 'assets/images/icon_lotes.png', size: 72),
           const SizedBox(height: 18),
           const Text(
             'Nenhum lote cadastrado',
