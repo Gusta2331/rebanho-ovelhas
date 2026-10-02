@@ -7,7 +7,6 @@ import '../models/animal.dart';
 import '../services/animal_service.dart';
 import '../utils/animal_filters.dart';
 import '../utils/animal_list_logic.dart';
-import '../widgets/animal_filters.dart';
 import '../widgets/animal_list_item.dart';
 import '../widgets/animal_photo.dart';
 import 'animal_details_page.dart';
@@ -51,6 +50,8 @@ class _AnimalsPageState extends State<AnimalsPage> {
       sexo: _sexoSelecionado,
       faixaIdade: _faixaIdadeSelecionada,
       busca: _search,
+      cadastro: _cadastroSelecionado,
+      denticao: _denticaoSelecionadaFiltro,
     );
   }
 
@@ -450,12 +451,15 @@ class _AnimalsPageState extends State<AnimalsPage> {
     );
   }
 
-  bool _filtrosAbertos = false;
+  FiltroDataNascimento _cadastroSelecionado = FiltroDataNascimento.todas;
+  FiltroDenticao _denticaoSelecionadaFiltro = FiltroDenticao.todas;
 
   bool get _temFiltrosAtivos {
     return _statusSelecionado != StatusAnimal.ativo ||
         _sexoSelecionado != null ||
         _faixaIdadeSelecionada != FaixaIdade.todas ||
+        _cadastroSelecionado != FiltroDataNascimento.todas ||
+        _denticaoSelecionadaFiltro != FiltroDenticao.todas ||
         _search.trim().isNotEmpty;
   }
 
@@ -473,8 +477,154 @@ class _AnimalsPageState extends State<AnimalsPage> {
     if (_faixaIdadeSelecionada != FaixaIdade.todas) {
       partes.add(AnimalFilters.nomeFaixaIdade(_faixaIdadeSelecionada));
     }
+    if (_cadastroSelecionado != FiltroDataNascimento.todas) {
+      partes.add(_cadastroSelecionado.label);
+    }
+    if (_denticaoSelecionadaFiltro != FiltroDenticao.todas) {
+      partes.add(_denticaoSelecionadaFiltro.label);
+    }
 
     return partes.isEmpty ? 'Ativos' : partes.join(' • ');
+  }
+
+  Future<void> _abrirFiltros() async {
+    var status = _statusSelecionado;
+    var sexo = _sexoSelecionado;
+    var idade = _faixaIdadeSelecionada;
+    var cadastro = _cadastroSelecionado;
+    var denticao = _denticaoSelecionadaFiltro;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            int countStatus(StatusAnimal value) => AnimalListLogic.quantidadePorStatus(
+              _animals, value, sexo: sexo, faixaIdade: idade, busca: _search,
+              cadastro: cadastro, denticao: denticao,
+            );
+
+            int countSex(SexoAnimal? value) => value == null
+                ? AnimalListLogic.filtrar(animais: _animals, status: status, sexo: null,
+                    faixaIdade: idade, busca: _search, cadastro: cadastro, denticao: denticao).length
+                : AnimalListLogic.quantidadePorSexo(_animals, status, value,
+                    faixaIdade: idade, busca: _search, cadastro: cadastro, denticao: denticao);
+
+            int countAge(FaixaIdade value) => value == FaixaIdade.todas
+                ? AnimalListLogic.filtrar(animais: _animals, status: status, sexo: sexo,
+                    faixaIdade: FaixaIdade.todas, busca: _search, cadastro: cadastro, denticao: denticao).length
+                : AnimalListLogic.quantidadePorFaixaIdade(_animals, status, value, sexo,
+                    busca: _search, cadastro: cadastro, denticao: denticao);
+
+            int countCadastro(FiltroDataNascimento value) => AnimalListLogic.filtrar(
+              animais: _animals, status: status, sexo: sexo, faixaIdade: idade,
+              busca: _search, cadastro: value, denticao: denticao).length;
+
+            int countDenticao(FiltroDenticao value) => AnimalListLogic.filtrar(
+              animais: _animals, status: status, sexo: sexo, faixaIdade: idade,
+              busca: _search, cadastro: cadastro, denticao: value).length;
+
+            Widget chip(String label, int count, bool selected, VoidCallback onTap) {
+              return FilterChip(
+                label: Text('$label $count'),
+                selected: selected,
+                onSelected: (_) => onTap(),
+                showCheckmark: true,
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              );
+            }
+
+            Widget section(String title, List<Widget> chips) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 13),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black54)),
+                    const SizedBox(height: 5),
+                    Wrap(spacing: 5, runSpacing: 3, children: chips),
+                  ],
+                ),
+              );
+            }
+
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 2, 16, 12),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text('Filtros', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textColor)),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setSheetState(() {
+                                status = StatusAnimal.ativo;
+                                sexo = null;
+                                idade = FaixaIdade.todas;
+                                cadastro = FiltroDataNascimento.todas;
+                                denticao = FiltroDenticao.todas;
+                              });
+                            },
+                            child: const Text('Limpar'),
+                          ),
+                        ],
+                      ),
+                      section('Status', StatusAnimal.values.map((value) => chip(
+                        _statusTexto(value), countStatus(value), status == value,
+                        () => setSheetState(() => status = value),
+                      )).toList()),
+                      section('Sexo', [
+                        chip('Todos', countSex(null), sexo == null, () => setSheetState(() => sexo = null)),
+                        chip('♀ Fêmeas', countSex(SexoAnimal.femea), sexo == SexoAnimal.femea, () => setSheetState(() => sexo = SexoAnimal.femea)),
+                        chip('♂ Machos', countSex(SexoAnimal.macho), sexo == SexoAnimal.macho, () => setSheetState(() => sexo = SexoAnimal.macho)),
+                      ]),
+                      section('Idade', FaixaIdade.values.map((value) => chip(
+                        AnimalFilters.nomeFaixaIdade(value), countAge(value), idade == value,
+                        () => setSheetState(() => idade = value),
+                      )).toList()),
+                      section('Data de nascimento', FiltroDataNascimento.values.map((value) => chip(
+                        value.label, countCadastro(value), cadastro == value,
+                        () => setSheetState(() => cadastro = value),
+                      )).toList()),
+                      section('Dentição', FiltroDenticao.values.map((value) => chip(
+                        value.label, countDenticao(value), denticao == value,
+                        () => setSheetState(() => denticao = value),
+                      )).toList()),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: () {
+                            setState(() {
+                              _statusSelecionado = status;
+                              _sexoSelecionado = sexo;
+                              _faixaIdadeSelecionada = idade;
+                              _cadastroSelecionado = cadastro;
+                              _denticaoSelecionadaFiltro = denticao;
+                            });
+                            Navigator.of(sheetContext).pop();
+                          },
+                          child: const Text('Aplicar filtros'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _limparFiltros() {
@@ -483,6 +633,8 @@ class _AnimalsPageState extends State<AnimalsPage> {
       _statusSelecionado = StatusAnimal.ativo;
       _sexoSelecionado = null;
       _faixaIdadeSelecionada = FaixaIdade.todas;
+      _cadastroSelecionado = FiltroDataNascimento.todas;
+      _denticaoSelecionadaFiltro = FiltroDenticao.todas;
     });
   }
 
@@ -602,256 +754,56 @@ class _AnimalsPageState extends State<AnimalsPage> {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE0E5DC)),
-                      ),
-                      child: Column(
-                        children: [
-                          InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: () {
-                              setState(() {
-                                _filtrosAbertos = !_filtrosAbertos;
-                              });
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primaryColor.withValues(alpha: 0.10),
-                                      borderRadius: BorderRadius.circular(11),
-                                    ),
-                                    child: const Icon(
-                                      Icons.filter_list_rounded,
-                                      size: 20,
-                                      color: AppTheme.primaryColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Filtros',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppTheme.textColor,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          _temFiltrosAtivos
-                                              ? _resumoFiltros
-                                              : 'Ativos • ${animals.length} animais',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (_temFiltrosAtivos)
-                                    TextButton(
-                                      onPressed: _limparFiltros,
-                                      style: TextButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                                        minimumSize: const Size(0, 32),
-                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: const Text('Limpar'),
-                                    ),
-                                  Icon(
-                                    _filtrosAbertos
-                                        ? Icons.keyboard_arrow_up_rounded
-                                        : Icons.keyboard_arrow_down_rounded,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                ],
+                    child: InkWell(
+                      onTap: _abrirFiltros,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFE0E5DC)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.filter_list_rounded, size: 19, color: AppTheme.primaryColor),
+                            const SizedBox(width: 8),
+                            const Text('Filtros', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textColor)),
+                            if (_temFiltrosAtivos) ...[
+                              const SizedBox(width: 7),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${[
+                                    _statusSelecionado != StatusAnimal.ativo,
+                                    _sexoSelecionado != null,
+                                    _faixaIdadeSelecionada != FaixaIdade.todas,
+                                    _cadastroSelecionado != FiltroDataNascimento.todas,
+                                    _denticaoSelecionadaFiltro != FiltroDenticao.todas,
+                                  ].where((ativo) => ativo).length}',
+                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                                ),
+                              ),
+                            ],
+                            const Spacer(),
+                            Flexible(
+                              child: Text(
+                                _temFiltrosAtivos ? _resumoFiltros : 'Ativos • ${animals.length}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.right,
+                                style: const TextStyle(fontSize: 12, color: Colors.black54),
                               ),
                             ),
-                          ),
-                          if (_filtrosAbertos)
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Divider(height: 1),
-                                  const SizedBox(height: 12),
-                                  const Text(
-                                    'Status',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  SizedBox(
-                                    height: 42,
-                                    child: ListView.separated(
-                                      padding: EdgeInsets.zero,
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: StatusAnimal.values.length,
-                                      separatorBuilder: (_, _) => const SizedBox(width: 8),
-                                      itemBuilder: (context, index) {
-                                        final status = StatusAnimal.values[index];
-
-                                        return AnimalStatusFilter(
-                                          label: _statusTexto(status),
-                                          quantidade: AnimalListLogic.quantidadePorStatus(
-                                            _animals,
-                                            status,
-                                            sexo: _sexoSelecionado,
-                                            faixaIdade: _faixaIdadeSelecionada,
-                                            busca: _search,
-                                          ),
-                                          icon: _statusIcon(status),
-                                          color: _statusCor(status),
-                                          selected: _statusSelecionado == status,
-                                          onTap: () {
-                                            setState(() {
-                                              _statusSelecionado = status;
-                                            });
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  const Text(
-                                    'Sexo',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  SizedBox(
-                                    height: 40,
-                                    child: ListView(
-                                      padding: EdgeInsets.zero,
-                                      scrollDirection: Axis.horizontal,
-                                      children: [
-                                        AnimalSexFilter(
-                                          label: 'Todos',
-                                          assetPath: 'assets/images/icon_animais.png',
-                                          quantidade: AnimalListLogic.filtrar(
-                                            animais: _animals,
-                                            status: _statusSelecionado,
-                                            sexo: null,
-                                            faixaIdade: _faixaIdadeSelecionada,
-                                            busca: _search,
-                                          ).length,
-                                          selected: _sexoSelecionado == null,
-                                          onTap: () {
-                                            setState(() {
-                                              _sexoSelecionado = null;
-                                            });
-                                          },
-                                        ),
-                                        const SizedBox(width: 8),
-                                        AnimalSexFilter(
-                                          label: 'Fêmeas',
-                                          assetPath: 'assets/images/icon_ovino_femea.png',
-                                          quantidade: AnimalListLogic.quantidadePorSexo(
-                                            _animals,
-                                            _statusSelecionado,
-                                            SexoAnimal.femea,
-                                            faixaIdade: _faixaIdadeSelecionada,
-                                            busca: _search,
-                                          ),
-                                          selected: _sexoSelecionado == SexoAnimal.femea,
-                                          onTap: () {
-                                            setState(() {
-                                              _sexoSelecionado = SexoAnimal.femea;
-                                            });
-                                          },
-                                        ),
-                                        const SizedBox(width: 8),
-                                        AnimalSexFilter(
-                                          label: 'Machos',
-                                          assetPath: 'assets/images/icon_ovino_macho.png',
-                                          quantidade: AnimalListLogic.quantidadePorSexo(
-                                            _animals,
-                                            _statusSelecionado,
-                                            SexoAnimal.macho,
-                                            faixaIdade: _faixaIdadeSelecionada,
-                                            busca: _search,
-                                          ),
-                                          selected: _sexoSelecionado == SexoAnimal.macho,
-                                          onTap: () {
-                                            setState(() {
-                                              _sexoSelecionado = SexoAnimal.macho;
-                                            });
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  const Text(
-                                    'Idade',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  SizedBox(
-                                    height: 40,
-                                    child: ListView.separated(
-                                      padding: EdgeInsets.zero,
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: FaixaIdade.values.length,
-                                      separatorBuilder: (_, _) => const SizedBox(width: 8),
-                                      itemBuilder: (context, index) {
-                                        final faixa = FaixaIdade.values[index];
-
-                                        return AnimalAgeFilter(
-                                          label: AnimalFilters.nomeFaixaIdade(faixa),
-                                          quantidade: faixa == FaixaIdade.todas
-                                              ? AnimalListLogic.filtrar(
-                                                  animais: _animals,
-                                                  status: _statusSelecionado,
-                                                  sexo: _sexoSelecionado,
-                                                  faixaIdade: FaixaIdade.todas,
-                                                  busca: _search,
-                                                ).length
-                                              : AnimalListLogic.quantidadePorFaixaIdade(
-                                                  _animals,
-                                                  _statusSelecionado,
-                                                  faixa,
-                                                  _sexoSelecionado,
-                                                  busca: _search,
-                                                ),
-                                          selected: _faixaIdadeSelecionada == faixa,
-                                          onTap: () {
-                                            setState(() {
-                                              _faixaIdadeSelecionada = faixa;
-                                            });
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
+                            const SizedBox(width: 5),
+                            const Icon(Icons.tune_rounded, size: 17, color: AppTheme.primaryColor),
+                          ],
+                        ),
                       ),
                     ),
                   ),
