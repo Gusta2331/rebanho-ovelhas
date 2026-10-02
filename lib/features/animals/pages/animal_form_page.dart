@@ -62,6 +62,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
   Animal? _paiSelecionado;
 
   bool _salvando = false;
+  bool _usandoComposicaoManual = false;
+  bool _calculandoComposicao = false;
+  final List<_ComposicaoManualItem> _composicoesManuais = [];
 
   @override
   void initState() {
@@ -86,6 +89,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       _vendedorController.text = animal.vendedor ?? '';
       _maeSelecionada = _buscarAnimalPorId(animal.idMae);
       _paiSelecionado = _buscarAnimalPorId(animal.idPai);
+      _carregarComposicaoExistente();
+    } else {
+      _sincronizarComposicaoComRaca();
     }
   }
 
@@ -103,8 +109,172 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     return null;
   }
 
+  Future<void> _carregarComposicaoExistente() async {
+    try {
+      final composicoes = await _composicaoRacialService.listarPorAnimal(
+        widget.animalParaEditar!.id,
+      );
+      if (!mounted) return;
+
+      for (final item in composicoes) {
+        _composicoesManuais.add(
+          _ComposicaoManualItem(
+            racaNome: item.racaNome,
+            percentualController: TextEditingController(
+              text: _formatarPercentual(item.percentual),
+            ),
+          ),
+        );
+      }
+
+      if (composicoes.length > 1 ||
+          (composicoes.isNotEmpty && !composicoes.first.automatico)) {
+        _usandoComposicaoManual = true;
+      }
+
+      setState(() {});
+    } catch (_) {}
+  }
+
+  String _formatarPercentual(double valor) {
+    return valor % 1 == 0
+        ? valor.toStringAsFixed(0)
+        : valor.toStringAsFixed(1).replaceAll('.', ',');
+  }
+
+  void _sincronizarComposicaoComRaca() {
+    final raca = _racaController.text.trim();
+    if (raca.isEmpty) return;
+
+    if (_composicoesManuais.isEmpty) {
+      _composicoesManuais.add(
+        _ComposicaoManualItem(
+          racaNome: raca,
+          percentualController: TextEditingController(text: '100'),
+        ),
+      );
+    } else if (!_usandoComposicaoManual) {
+      _composicoesManuais.first.racaNome = raca;
+      _composicoesManuais.first.percentualController.text = '100';
+    }
+  }
+
+  Future<void> _selecionarRacaComposicao(int index) async {
+    final raca = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (context) => const RacasPage(modoSelecao: true),
+      ),
+    );
+
+    if (raca == null || !mounted) return;
+
+    setState(() {
+      _composicoesManuais[index].racaNome = raca;
+    });
+  }
+
+  void _adicionarComposicao() {
+    setState(() {
+      _usandoComposicaoManual = true;
+      _composicoesManuais.add(
+        _ComposicaoManualItem(
+          percentualController: TextEditingController(text: '0'),
+        ),
+      );
+    });
+  }
+
+  void _removerComposicao(int index) {
+    if (_composicoesManuais.length <= 1) return;
+    final item = _composicoesManuais.removeAt(index);
+    item.dispose();
+    setState(() {});
+  }
+
+  double _totalComposicaoManual() {
+    return _composicoesManuais.fold<double>(
+      0,
+      (total, item) =>
+          total +
+          (double.tryParse(
+                item.percentualController.text.trim().replaceAll(',', '.'),
+              ) ??
+              0),
+    );
+  }
+
+  Future<void> _calcularComposicaoPelosPais() async {
+    if (_maeSelecionada == null || _paiSelecionado == null) {
+      _mostrarAvisoPaisIncompletos();
+      return;
+    }
+
+    setState(() => _calculandoComposicao = true);
+
+    try {
+      final composicao = await _composicaoRacialService.calcularPelosPais(
+        maeId: _maeSelecionada!.id,
+        paiId: _paiSelecionado!.id,
+      );
+
+      if (!mounted) return;
+
+      if (composicao.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Não foi possível calcular. Verifique se mãe e pai possuem raça definida.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      for (final item in _composicoesManuais) {
+        item.dispose();
+      }
+
+      _composicoesManuais
+        ..clear()
+        ..addAll(
+          composicao.map(
+            (item) => _ComposicaoManualItem(
+              racaNome: item.racaNome,
+              percentualController: TextEditingController(
+                text: _formatarPercentual(item.percentual),
+              ),
+            ),
+          ),
+        );
+
+      _racaController.text = composicao.first.racaNome;
+      _usandoComposicaoManual = false;
+      setState(() {});
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível calcular: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _calculandoComposicao = false);
+    }
+  }
+
+  void _mostrarAvisoPaisIncompletos() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Para calcular automaticamente, defina a mãe e o pai do animal.',
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
+    for (final item in _composicoesManuais) {
+      item.dispose();
+    }
     _brincoController.dispose();
     _nomeController.dispose();
     _racaController.dispose();
@@ -181,6 +351,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
 
     setState(() {
       _racaController.text = racaSelecionada;
+      if (!_usandoComposicaoManual) {
+        _sincronizarComposicaoComRaca();
+      }
     });
   }
 
@@ -485,7 +658,26 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
 
       Map<String, dynamic> dadosSalvos;
 
-      if (animalAnterior == null) {
+  
+    if (_composicoesManuais.isEmpty) {
+      _sincronizarComposicaoComRaca();
+    }
+
+    final totalComposicao = _totalComposicaoManual();
+    if (_usandoComposicaoManual && (totalComposicao - 100).abs() > 0.01) {
+      setState(() => _salvando = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'A composição precisa totalizar 100%. '
+            'Atualmente está em ${_formatarPercentual(totalComposicao)}%.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (animalAnterior == null) {
         dadosSalvos = await _animalService.criarAnimal(
           brinco: brinco,
           rebanhoId: rebanhoSelecionado.id,
@@ -551,7 +743,22 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       final pendenteOffline = dadosSalvos['offline_pendente'] == true;
 
       if (!pendenteOffline) {
-        await _composicaoRacialService.recalcularAnimal(animalSalvo.id);
+        if (_usandoComposicaoManual) {
+          await _composicaoRacialService.salvarComposicaoManual(
+            animalId: animalSalvo.id,
+            composicoes: [
+              for (final item in _composicoesManuais)
+                {
+                  'raca_nome': item.racaNome,
+                  'percentual': double.parse(
+                    item.percentualController.text.trim().replaceAll(',', '.'),
+                  ),
+                },
+            ],
+          );
+        } else {
+          await _composicaoRacialService.recalcularAnimal(animalSalvo.id);
+        }
       }
 
       if (!mounted) {
@@ -602,6 +809,117 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
         });
       }
     }
+  }
+
+  Widget _buildComposicaoRacialSection() {
+    final temPais = _maeSelecionada != null && _paiSelecionado != null;
+    final total = _totalComposicaoManual();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE0E5DC)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Composição racial',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textColor),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Defina os percentuais ou calcule automaticamente pelos pais.',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+          const SizedBox(height: 14),
+          for (var index = 0; index < _composicoesManuais.length; index++) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: _salvando ? null : () => _selecionarRacaComposicao(index),
+                    borderRadius: BorderRadius.circular(12),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Raça',
+                        prefixIcon: Icon(Icons.category_outlined),
+                      ),
+                      child: Text(
+                        _composicoesManuais[index].racaNome.isEmpty
+                            ? 'Selecionar raça'
+                            : _composicoesManuais[index].racaNome,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 92,
+                  child: TextFormField(
+                    controller: _composicoesManuais[index].percentualController,
+                    readOnly: _salvando,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: '%'),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                if (_composicoesManuais.length > 1)
+                  IconButton(
+                    onPressed: _salvando ? null : () => _removerComposicao(index),
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    color: Colors.red,
+                  ),
+              ],
+            ),
+            if (index < _composicoesManuais.length - 1)
+              const SizedBox(height: 10),
+          ],
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: _salvando ? null : _adicionarComposicao,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Adicionar outra raça'),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Total: ${_formatarPercentual(total)}% / 100%',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: (total - 100).abs() <= 0.01 ? AppTheme.primaryColor : Colors.orange,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _salvando || _calculandoComposicao
+                  ? null
+                  : temPais
+                      ? _calcularComposicaoPelosPais
+                      : _mostrarAvisoPaisIncompletos,
+              icon: _calculandoComposicao
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.auto_awesome_rounded),
+              label: Text(
+                _calculandoComposicao ? 'Calculando...' : 'Calcular automaticamente pelos pais',
+              ),
+            ),
+          ),
+          if (!temPais)
+            const Padding(
+              padding: EdgeInsets.only(top: 6),
+              child: Text(
+                'Informe mãe e pai para usar o cálculo automático.',
+                style: TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   String _formatarData(DateTime data) {
@@ -901,6 +1219,11 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                     style: TextStyle(fontSize: 12, color: Colors.black54),
                   ),
                 ),
+
+              const SizedBox(height: 20),
+
+              // COMPOSIÇÃO RACIAL
+              _buildComposicaoRacialSection(),
 
               const SizedBox(height: 20),
 
@@ -1242,5 +1565,20 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
         ),
       ),
     );
+  }
+}
+
+
+class _ComposicaoManualItem {
+  String racaNome;
+  final TextEditingController percentualController;
+
+  _ComposicaoManualItem({
+    this.racaNome = '',
+    required this.percentualController,
+  });
+
+  void dispose() {
+    percentualController.dispose();
   }
 }
