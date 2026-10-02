@@ -1,12 +1,15 @@
 import '../../animals/models/animal.dart';
+import '../../animals/models/composicao_racial.dart';
 
 class ReportData {
   final List<Animal> animals;
   final DateTime generatedAt;
+  final Map<String, List<ComposicaoRacial>> composicoesPorAnimal;
 
   const ReportData({
     required this.animals,
     required this.generatedAt,
+    this.composicoesPorAnimal = const {},
   });
 
   int get total => animals.length;
