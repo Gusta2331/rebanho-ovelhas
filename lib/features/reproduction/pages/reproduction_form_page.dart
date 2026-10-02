@@ -361,7 +361,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
     required String titulo,
     required DateTime? valor,
     required VoidCallback onTap,
-    required IconData icone,
+    String? assetPath,
   }) {
     return InkWell(
       onTap: onTap,
@@ -554,7 +554,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
             titulo: 'Data da cobertura',
             valor: _dataCobertura,
             onTap: _selecionarDataCobertura,
-            icone: Icons.calendar_today,
+            assetPath: 'assets/images/icon_agenda.png',
           ),
 
           const SizedBox(height: 16),
@@ -563,7 +563,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
             titulo: 'Previsão de parto',
             valor: _dataPrevisaoParto,
             onTap: _selecionarPrevisaoParto,
-            icone: Icons.event,
+            assetPath: 'assets/images/icon_agenda.png',
           ),
 
           const SizedBox(height: 16),
@@ -574,7 +574,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
             titulo: 'Data da confirmação da prenhez',
             valor: _dataConfirmacaoPrenhez,
             onTap: _selecionarConfirmacaoPrenhez,
-            icone: Icons.verified_outlined,
+            assetPath: 'assets/images/icon_cobertura.png',
           ),
 
           const SizedBox(height: 16),
