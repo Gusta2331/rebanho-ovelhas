@@ -667,25 +667,25 @@ class _AnimalsPageState extends State<AnimalsPage> {
             : Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                    padding: const EdgeInsets.fromLTRB(20, 5, 20, 7),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
+                        horizontal: 11,
+                        vertical: 7,
                       ),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
                           const AppAssetIcon(
                             assetPath: 'assets/images/icon_animais.png',
-                            size: 34,
+                            size: 27,
                             color: AppTheme.primaryColor,
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -693,13 +693,16 @@ class _AnimalsPageState extends State<AnimalsPage> {
                                 const Text(
                                   'Rebanho selecionado',
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 9,
                                     color: Colors.black54,
                                   ),
                                 ),
                                 Text(
                                   rebanhoSelecionado.nome,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
+                                    fontSize: 13,
                                     fontWeight: FontWeight.bold,
                                     color: AppTheme.textColor,
                                   ),
@@ -712,7 +715,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                     child: TextField(
                       onChanged: (value) {
                         setState(() {
@@ -720,8 +723,17 @@ class _AnimalsPageState extends State<AnimalsPage> {
                         });
                       },
                       decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 9,
+                        ),
                         hintText: 'Buscar por brinco, nome ou raça',
-                        prefixIcon: Icon(Icons.search_rounded),
+                        prefixIcon: Icon(Icons.search_rounded, size: 20),
+                        prefixIconConstraints: BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
                       ),
                     ),
                   ),
