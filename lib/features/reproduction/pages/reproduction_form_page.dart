@@ -312,13 +312,19 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
     required String? valor,
     required List<Map<String, dynamic>> animais,
     required ValueChanged<String?> onChanged,
-    required IconData icone,
+    IconData? icone,
+    String? assetPath,
     String? textoVazio,
   }) {
     return DropdownButtonFormField<String>(
       initialValue: valor,
       isExpanded: true,
-      decoration: InputDecoration(labelText: titulo, prefixIcon: Icon(icone)),
+      decoration: InputDecoration(
+        labelText: titulo,
+        prefixIcon: assetPath != null
+            ? AppAssetIcon(assetPath: assetPath, size: 24)
+            : Icon(icone),
+      ),
       items: [
         if (textoVazio != null)
           DropdownMenuItem<String>(
