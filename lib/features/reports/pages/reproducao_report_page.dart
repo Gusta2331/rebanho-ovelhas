@@ -204,9 +204,9 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
               ),
               const SizedBox(height: 10),
               Row(children: [
-                Expanded(child: OutlinedButton.icon(onPressed: () => _pickDate(true), icon: const Icon(Icons.calendar_today_outlined), label: Text(_from == null ? 'Data inicial' : _date(_from)))),
+                Expanded(child: OutlinedButton.icon(onPressed: () => _pickDate(true), icon: const AppAssetIcon(assetPath: 'assets/images/icon_agenda.png', size: 20), label: Text(_from == null ? 'Data inicial' : _date(_from)))),
                 const SizedBox(width: 10),
-                Expanded(child: OutlinedButton.icon(onPressed: () => _pickDate(false), icon: const Icon(Icons.event_outlined), label: Text(_to == null ? 'Data final' : _date(_to)))),
+                Expanded(child: OutlinedButton.icon(onPressed: () => _pickDate(false), icon: const AppAssetIcon(assetPath: 'assets/images/icon_agenda.png', size: 20), label: Text(_to == null ? 'Data final' : _date(_to)))),
               ]),
               if (_from != null || _to != null)
                 Align(alignment: Alignment.centerRight, child: TextButton.icon(onPressed: () => setState(() { _from = null; _to = null; }), icon: const Icon(Icons.clear), label: const Text('Limpar datas'))),
