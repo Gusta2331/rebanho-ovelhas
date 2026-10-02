@@ -1303,11 +1303,21 @@ case TipoManejo.outro:
   }
 
   String _racaFichaTexto() {
-    if (_composicoes.isNotEmpty) {
-      return _composicoes
-          .where((item) => item.racaNome.trim().isNotEmpty && item.percentual > 0)
-          .map((item) => item.racaNome.trim())
-          .join(' + ');
+    final composicoes = _composicoes
+        .where(
+          (item) =>
+              item.racaNome.trim().isNotEmpty && item.percentual > 0,
+        )
+        .toList()
+      ..sort((a, b) => b.percentual.compareTo(a.percentual));
+
+    if (composicoes.isNotEmpty) {
+      return composicoes.map((item) {
+        final percentual = item.percentual % 1 == 0
+            ? item.percentual.toStringAsFixed(0)
+            : item.percentual.toStringAsFixed(1).replaceAll('.', ',');
+        return '${item.racaNome.trim()} $percentual%';
+      }).join(' + ');
     }
 
     return _animal.raca;
