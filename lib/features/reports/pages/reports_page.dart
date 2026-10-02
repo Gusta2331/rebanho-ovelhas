@@ -5,6 +5,7 @@ import '../../../core/widgets/app_asset_icon.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../models/report_type.dart';
 import 'rebanho_report_page.dart';
+import 'reproducao_report_page.dart';
 
 class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
@@ -18,6 +19,12 @@ class _ReportsPageState extends State<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_selectedType == ReportType.reproducao) {
+      return ReproducaoReportPage(
+        onBack: () => setState(() => _selectedType = null),
+      );
+    }
+
     if (_selectedType == ReportType.rebanho) {
       return RebanhoReportPage(
         onBack: () => setState(() => _selectedType = null),
@@ -77,7 +84,7 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   void _openType(ReportType type) {
-    if (type == ReportType.rebanho) {
+    if (type == ReportType.rebanho || type == ReportType.reproducao) {
       setState(() => _selectedType = type);
       return;
     }
