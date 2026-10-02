@@ -151,7 +151,7 @@ class _RebanhoFormPageState extends State<RebanhoFormPage> {
                 child: const Row(
                   children: [
                     Icon(
-                      Icons.pets_rounded,
+                      const AssetImage('assets/images/icon_lotes.png'),
                       color: AppTheme.primaryColor,
                       size: 30,
                     ),
@@ -176,7 +176,7 @@ class _RebanhoFormPageState extends State<RebanhoFormPage> {
                 decoration: const InputDecoration(
                   labelText: 'Nome do lote',
                   hintText: 'Ex.: Lote 01',
-                  prefixIcon: Icon(Icons.pets_outlined),
+                  prefixIcon: const AppAssetIcon(assetPath: 'assets/images/icon_lotes.png', size: 24),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
