@@ -83,8 +83,8 @@ class ReportExcelService {
           _origem(animal.origem),
           _date(animal.dataEntrada),
           _date(animal.dataSaida),
-          _idReferencia(animal.idMae),
-          _idReferencia(animal.idPai),
+          _idReferencia(animal.idMae, data.animals),
+          _idReferencia(animal.idPai, data.animals),
           _composicao(data.composicoesPorAnimal[animal.id]),
         ],
       ),
@@ -255,8 +255,22 @@ class ReportExcelService {
   String _raca(String value) =>
       value.trim().isEmpty ? 'Não informada' : value.trim();
 
-  String _idReferencia(String? value) =>
-      value == null || value.trim().isEmpty ? 'Não informado' : value.trim();
+  String _idReferencia(String? value, List<Animal> animals) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Não informado';
+    }
+
+    final animal = animals.cast<Animal?>().firstWhere(
+      (item) => item?.id == value,
+      orElse: () => null,
+    );
+
+    if (animal != null) {
+      return animal.brinco;
+    }
+
+    return 'Não informado';
+  }
 
   String _date(DateTime? value) => value == null
       ? 'Não informada'
