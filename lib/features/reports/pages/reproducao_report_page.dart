@@ -242,7 +242,7 @@ class _Summary extends StatelessWidget {
       children: values.map((v) => Card(
         margin: EdgeInsets.zero, elevation: 0,
         child: Padding(padding: const EdgeInsets.all(12), child: Row(children: [
-          const AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 26),
+          const AppAssetIcon(assetPath: 'assets/images/icon_cobertura.png', size: 26),
           const SizedBox(width: 9),
           Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
             Text(v[1].toString(), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
