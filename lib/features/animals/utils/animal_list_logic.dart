@@ -46,34 +46,89 @@ class AnimalListLogic {
     }).toList();
   }
 
-  static int quantidadePorStatus(List<Animal> animais, StatusAnimal status) {
-    return animais.where((animal) {
-      return animal.status == status;
-    }).length;
+  static int quantidadePorStatus(
+    List<Animal> animais,
+    StatusAnimal status, {
+    SexoAnimal? sexo,
+    FaixaIdade faixaIdade = FaixaIdade.todas,
+    String busca = '',
+  }) {
+    return _baseFiltrada(
+      animais,
+      sexo: sexo,
+      faixaIdade: faixaIdade,
+      busca: busca,
+    ).where((animal) => animal.status == status).length;
   }
 
   static int quantidadePorSexo(
     List<Animal> animais,
     StatusAnimal status,
-    SexoAnimal sexo,
-  ) {
-    return animais.where((animal) {
-      return animal.status == status && animal.sexo == sexo;
-    }).length;
+    SexoAnimal sexo, {
+    FaixaIdade faixaIdade = FaixaIdade.todas,
+    String busca = '',
+  }) {
+    return _baseFiltrada(
+      animais,
+      status: status,
+      faixaIdade: faixaIdade,
+      busca: busca,
+    ).where((animal) => animal.sexo == sexo).length;
   }
 
   static int quantidadePorFaixaIdade(
     List<Animal> animais,
     StatusAnimal status,
     FaixaIdade faixa,
-  ) {
-    return animais.where((animal) {
-      if (animal.status != status) {
-        return false;
-      }
+    SexoAnimal? sexo, {
+    String busca = '',
+  }) {
+    return _baseFiltrada(
+      animais,
+      status: status,
+      sexo: sexo,
+      busca: busca,
+    ).where((animal) => AnimalFilters.pertenceFaixaIdade(animal, faixa)).length;
+  }
 
-      return AnimalFilters.pertenceFaixaIdade(animal, faixa);
-    }).length;
+  static List<Animal> _baseFiltrada(
+    List<Animal> animais, {
+    StatusAnimal? status,
+    SexoAnimal? sexo,
+    FaixaIdade faixaIdade = FaixaIdade.todas,
+    String busca = '',
+  }) {
+    var resultado = animais;
+
+    if (status != null) {
+      resultado = resultado.where((animal) => animal.status == status).toList();
+    }
+
+    if (sexo != null) {
+      resultado = resultado.where((animal) => animal.sexo == sexo).toList();
+    }
+
+    if (faixaIdade != FaixaIdade.todas) {
+      resultado = resultado.where((animal) {
+        return AnimalFilters.pertenceFaixaIdade(animal, faixaIdade);
+      }).toList();
+    }
+
+    final texto = busca.trim().toLowerCase();
+
+    if (texto.isEmpty) {
+      return resultado;
+    }
+
+    return resultado.where((animal) {
+      final brinco = animal.brinco.toLowerCase();
+      final nome = animal.nome?.toLowerCase() ?? '';
+      final raca = animal.raca.toLowerCase();
+
+      return brinco.contains(texto) ||
+          nome.contains(texto) ||
+          raca.contains(texto);
+    }).toList();
   }
 
   static String normalizarBrinco(String brinco) {
