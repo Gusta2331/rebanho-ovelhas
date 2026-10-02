@@ -455,10 +455,9 @@ class _ManejosPageState extends State<ManejosPage> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(24, 70, 24, 120),
         children: [
-          Icon(
-            Icons.layers_outlined,
+          AppAssetIcon(
+            assetPath: 'assets/images/icon_lotes.png',
             size: 72,
-            color: AppTheme.primaryColor.withValues(alpha: 0.65),
           ),
           const SizedBox(height: 18),
           const Text(
@@ -481,10 +480,9 @@ class _ManejosPageState extends State<ManejosPage> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(24, 70, 24, 120),
         children: [
-          Icon(
-            Icons.assignment_outlined,
+          AppAssetIcon(
+            assetPath: 'assets/images/icon_manejo.png',
             size: 72,
-            color: AppTheme.primaryColor.withValues(alpha: 0.65),
           ),
           const SizedBox(height: 18),
           const Text(
