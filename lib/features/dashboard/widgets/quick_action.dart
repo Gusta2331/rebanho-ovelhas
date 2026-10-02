@@ -41,7 +41,7 @@ class QuickAction extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: assetPath != null
-                    ? AppAssetIcon(assetPath: assetPath!, size: 30)
+                    ? AppAssetIcon(assetPath: assetPath!, size: 38)
                     : Icon(icon, color: AppTheme.primaryColor),
               ),
               const SizedBox(width: 12),
