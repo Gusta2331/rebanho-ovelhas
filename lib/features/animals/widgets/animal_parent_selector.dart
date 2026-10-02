@@ -192,7 +192,17 @@ class _AnimalParentSelectionPageState
         (hoje.year - nascimento.year) * 12 + hoje.month - nascimento.month;
     if (hoje.day < nascimento.day) meses--;
 
-    return meses >= 12;
+    // A idade reprodutiva varia com raça, nutrição e desenvolvimento.
+    // Para o filtro do app usamos referências práticas para ovinos:
+    // fêmeas: a partir de 10 meses;
+    // machos: a partir de 12 meses.
+    final idadeMinima = animal.sexo == SexoAnimal.femea ? 10 : 12;
+
+    return meses >= idadeMinima;
+  }
+
+  int _idadeMinimaReproducao() {
+    return widget.sexoPermitido == SexoAnimal.femea ? 10 : 12;
   }
 
   List<Animal> _animaisPorStatus(
