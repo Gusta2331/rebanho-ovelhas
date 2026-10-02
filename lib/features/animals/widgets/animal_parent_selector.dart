@@ -80,9 +80,9 @@ class AnimalParentSelector extends StatelessWidget {
                           color: AppTheme.primaryColor.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
-                          Icons.pets_rounded,
-                          color: AppTheme.primaryColor,
+                        child: const AppAssetIcon(
+                          assetPath: 'assets/images/icon_animais.png',
+                          size: 30,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -398,10 +398,9 @@ class _AnimalParentAvatar extends StatelessWidget {
         color: AppTheme.primaryColor.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(
-        Icons.pets_rounded,
+      child: AppAssetIcon(
+        assetPath: 'assets/images/icon_animais.png',
         size: size * 0.48,
-        color: AppTheme.primaryColor,
       ),
     );
   }
