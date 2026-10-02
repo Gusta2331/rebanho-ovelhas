@@ -211,7 +211,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
         padding: const EdgeInsets.fromLTRB(20, 60, 20, 120),
         children: [
           Icon(
-            Icons.pets_outlined,
+            const AssetImage('assets/images/icon_lotes.png'),
             size: 72,
             color: AppTheme.primaryColor.withValues(alpha: 0.65),
           ),
