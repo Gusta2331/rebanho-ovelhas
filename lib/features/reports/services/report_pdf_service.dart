@@ -111,11 +111,12 @@ class ReportPdfService {
               2: pw.FixedColumnWidth(45),
               3: pw.FlexColumnWidth(1.6),
               4: pw.FixedColumnWidth(55),
-              5: pw.FlexColumnWidth(1.2),
+              5: pw.FlexColumnWidth(1.0),
+              6: pw.FlexColumnWidth(2.2),
             },
             children: [
               _headerRow(
-                ['Brinco', 'Nome', 'Sexo', 'Raça', 'Nascimento', 'Status'],
+                ['Brinco', 'Nome', 'Sexo', 'Raça', 'Nascimento', 'Status', 'Composição racial'],
                 green,
               ),
               ...data.animals.map(
@@ -127,6 +128,7 @@ class ReportPdfService {
                     _cell(_raca(animal.raca)),
                     _cell(_date(animal.dataNascimento), align: pw.TextAlign.center),
                     _cell(_status(animal.status), align: pw.TextAlign.center),
+                    _cell(_composicao(data.composicoesPorAnimal[animal.id])),
                   ],
                 ),
               ),
@@ -234,6 +236,17 @@ class ReportPdfService {
 
   String _sexo(SexoAnimal sexo) => sexo == SexoAnimal.femea ? 'Fêmea' : 'Macho';
 
+  String _composicao(List<dynamic>? composicoes) {
+    if (composicoes == null || composicoes.isEmpty) return 'Não informada';
+    return composicoes.map((item) {
+      final nome = item.racaNome.toString();
+      final percentual = item.percentual as double;
+      final valor = percentual.roundToDouble() == percentual
+          ? percentual.toStringAsFixed(0)
+          : percentual.toStringAsFixed(1);
+      return '$valor% $nome';
+    }).join(' + ');
+  }
   String _status(StatusAnimal status) => switch (status) {
         StatusAnimal.ativo => 'Ativo',
         StatusAnimal.vendido => 'Vendido',
