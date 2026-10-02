@@ -149,13 +149,9 @@ class _RebanhoFormPageState extends State<RebanhoFormPage> {
                   color: AppTheme.primaryColor.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(
-                      const AppAssetIcon(assetPath: 'assets/images/icon_lotes.png', size: 30),
-                      color: AppTheme.primaryColor,
-                      size: 30,
-                    ),
+                    const AppAssetIcon(assetPath: 'assets/images/icon_lotes.png', size: 30),
                     SizedBox(width: 14),
                     Expanded(
                       child: Text(
@@ -177,7 +173,7 @@ class _RebanhoFormPageState extends State<RebanhoFormPage> {
                 decoration: const InputDecoration(
                   labelText: 'Nome do lote',
                   hintText: 'Ex.: Lote 01',
-                  prefixIcon: const AppAssetIcon(assetPath: 'assets/images/icon_lotes.png', size: 24),
+                  prefixIcon: AppAssetIcon(assetPath: 'assets/images/icon_lotes.png', size: 24),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
