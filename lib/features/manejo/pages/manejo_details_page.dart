@@ -64,6 +64,8 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
         return 'Pesagem';
       case TipoManejo.famacha:
         return 'FAMACHA';
+      case TipoManejo.denticao:
+        return 'Dentição';
       case TipoManejo.outro:
         return 'Outro';
     }
@@ -152,7 +154,9 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
               Icon(
                 manejo.tipo == TipoManejo.famacha
                     ? Icons.visibility_outlined
-                    : Icons.assignment_outlined,
+                    : manejo.tipo == TipoManejo.denticao
+                        ? Icons.health_and_safety_outlined
+                        : Icons.assignment_outlined,
                 color: AppTheme.primaryColor,
                 size: 42,
               ),
@@ -189,6 +193,18 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
                 child: FamachaScoreBadge(score: manejo.famachaEscore!),
               ),
             ),
+          ),
+        if (manejo.tipo == TipoManejo.denticao && manejo.denticao != null)
+          _item(
+            'Condição da dentição',
+            manejo.denticao!,
+            Icons.health_and_safety_outlined,
+          ),
+        if (manejo.tipo == TipoManejo.denticao && manejo.denticaoData != null)
+          _item(
+            'Data da avaliação',
+            _data(manejo.denticaoData!.toIso8601String()),
+            Icons.calendar_month_outlined,
           ),
         if (manejo.tipo == TipoManejo.outro && manejo.outroNome != null)
           _item('Tipo de manejo', manejo.outroNome!, Icons.edit_note_outlined),
