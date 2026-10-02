@@ -628,7 +628,7 @@ class _DashboardPageState extends State<DashboardPage> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
-              Icons.groups_rounded,
+              assetPath: 'assets/images/icon_lotes.png',
               color: Colors.white,
               size: 30,
             ),
