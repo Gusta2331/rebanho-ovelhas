@@ -921,7 +921,7 @@ case TipoManejo.outro:
                 _buildInfoRow(
                   icon: Icons.category_outlined,
                   label: 'Raça',
-                  value: _animal.raca,
+                  value: _racaFichaTexto(),
                 ),
                 _buildInfoRow(
                   icon: Icons.health_and_safety_outlined,
@@ -1300,6 +1300,17 @@ case TipoManejo.outro:
         ],
       ),
     );
+  }
+
+  String _racaFichaTexto() {
+    if (_composicoes.isNotEmpty) {
+      return _composicoes
+          .where((item) => item.racaNome.trim().isNotEmpty && item.percentual > 0)
+          .map((item) => item.racaNome.trim())
+          .join(' + ');
+    }
+
+    return _animal.raca;
   }
 
   Widget _buildHeader(String? nome) {
