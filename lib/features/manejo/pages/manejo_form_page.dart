@@ -68,6 +68,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   DateTime _data = DateTime.now();
   DateTime? _validade;
   int? _famacha;
+  String? _denticaoSelecionada;
 
   Map<String, dynamic>? _vacinaSelecionada;
   Map<String, dynamic>? _vermifugoSelecionado;
@@ -90,6 +91,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       _tipo = manejo.tipo;
       _data = manejo.data;
       _famacha = manejo.famachaEscore;
+      _denticaoSelecionada = manejo.denticao;
       _observacoes.text = manejo.observacoes ?? '';
       _enfermidadeController.text = manejo.enfermidade ?? '';
       _vacinaLote.text = manejo.vacinaLote ?? '';
@@ -881,6 +883,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         data: _data,
         tipo: _tipo,
         famachaPorAnimal: _famachaPorAnimal,
+        denticaoPorAnimal: {
+          for (final id in _animaisSelecionados)
+            id: _denticaoSelecionada!,
+        },
         observacoes: _observacoes.text,
         vacinaId: vacinaId,
         vacinaNome: vacinaNome,
@@ -979,6 +985,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         tipo: _tipo,
         data: _data,
         famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
+        denticao: _tipo == TipoManejo.denticao ? _denticaoSelecionada : null,
+        denticaoData: _tipo == TipoManejo.denticao ? _data : null,
         observacoes: _observacoes.text,
         vacinaId: vacinaId,
         vacinaNome: vacinaNome,
@@ -1086,6 +1094,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         return 'Pesagem';
       case TipoManejo.famacha:
         return 'FAMACHA';
+      case TipoManejo.denticao:
+        return 'Dentição';
       case TipoManejo.outro:
         return 'Outro';
     }
@@ -1297,6 +1307,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                       _doseTextoPorAnimal.clear();
                                       _peso.clear();
                                       _famacha = null;
+                                      _denticaoSelecionada = null;
                                       _farmaciaProdutoSelecionado = null;
                                       if (value != TipoManejo.vacinacao) {
                                         _vacinaSelecionada = null;
@@ -1414,6 +1425,52 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                 onAdicionar: _adicionarMedicamentoCompleto,
                               ),
                             _doseCalculadora(),
+                          ],
+                          if (_tipo == TipoManejo.denticao) ...[
+                            const SizedBox(height: 16),
+                            DropdownButtonFormField<String>(
+                              value: _denticaoSelecionada,
+                              decoration: const InputDecoration(
+                                labelText: 'Condição da dentição',
+                                prefixIcon: Icon(Icons.health_and_safety_outlined),
+                                border: OutlineInputBorder(),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'leite',
+                                  child: Text('Dentes de leite'),
+                                ),
+                                DropdownMenuItem(
+                                  value: '2 dentes',
+                                  child: Text('2 dentes permanentes'),
+                                ),
+                                DropdownMenuItem(
+                                  value: '4 dentes',
+                                  child: Text('4 dentes permanentes'),
+                                ),
+                                DropdownMenuItem(
+                                  value: '6 dentes',
+                                  child: Text('6 dentes permanentes'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'boca cheia',
+                                  child: Text('Boca cheia'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'desgastada',
+                                  child: Text('Desgastada'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'outro',
+                                  child: Text('Outra condição'),
+                                ),
+                              ],
+                              onChanged: _salvando
+                                  ? null
+                                  : (value) => setState(
+                                        () => _denticaoSelecionada = value,
+                                      ),
+                            ),
                           ],
                           if (_tipo == TipoManejo.pesagem) ...[
                             const SizedBox(height: 16),
