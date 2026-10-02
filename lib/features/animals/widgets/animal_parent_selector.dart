@@ -201,9 +201,6 @@ class _AnimalParentSelectionPageState
     return meses >= idadeMinima;
   }
 
-  int _idadeMinimaReproducao() {
-    return widget.sexoPermitido == SexoAnimal.femea ? 10 : 12;
-  }
 
   List<Animal> _animaisPorStatus(
     StatusAnimal status, {
