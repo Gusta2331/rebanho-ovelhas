@@ -21,6 +21,7 @@ class RebanhoReportPage extends StatefulWidget {
 
 class _RebanhoReportPageState extends State<RebanhoReportPage> {
   final _service = AnimalService();
+  final _composicaoRacialService = ComposicaoRacialService();
   final _search = TextEditingController();
   final _pdfService = ReportPdfService();
   final _excelService = ReportExcelService();
@@ -112,8 +113,10 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
 
   String _date(DateTime? value) => value == null
       ? ''
-      : value.day.toString().padLeft(2, '0') + '/' +
-          value.month.toString().padLeft(2, '0') + '/' +
+      : value.day.toString().padLeft(2, '0') +
+          '/' +
+          value.month.toString().padLeft(2, '0') +
+          '/' +
           value.year.toString();
 
   String _statusName(StatusAnimal status) => switch (status) {
