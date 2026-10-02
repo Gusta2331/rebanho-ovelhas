@@ -391,9 +391,9 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: AppTheme.primaryColor.withValues(alpha: .10),
-          child: const Icon(
-            Icons.favorite_outline,
-            color: AppTheme.primaryColor,
+          child: const AppAssetIcon(
+            assetPath: 'assets/images/icon_cobertura.png',
+            size: 28,
           ),
         ),
         title: const Text(
