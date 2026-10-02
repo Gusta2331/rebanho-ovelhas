@@ -450,11 +450,31 @@ class _AnimalsPageState extends State<AnimalsPage> {
     );
   }
 
+  bool _filtrosAbertos = false;
+
   bool get _temFiltrosAtivos {
     return _statusSelecionado != StatusAnimal.ativo ||
         _sexoSelecionado != null ||
         _faixaIdadeSelecionada != FaixaIdade.todas ||
         _search.trim().isNotEmpty;
+  }
+
+  String get _resumoFiltros {
+    final partes = <String>[];
+
+    if (_statusSelecionado != StatusAnimal.ativo) {
+      partes.add(_statusTexto(_statusSelecionado));
+    }
+
+    if (_sexoSelecionado != null) {
+      partes.add(_sexoLabel(_sexoSelecionado!));
+    }
+
+    if (_faixaIdadeSelecionada != FaixaIdade.todas) {
+      partes.add(AnimalFilters.nomeFaixaIdade(_faixaIdadeSelecionada));
+    }
+
+    return partes.isEmpty ? 'Ativos' : partes.join(' • ');
   }
 
   void _limparFiltros() {
@@ -584,200 +604,253 @@ class _AnimalsPageState extends State<AnimalsPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0xFFE0E5DC)),
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.filter_list_rounded,
-                                size: 20,
-                                color: AppTheme.primaryColor,
-                              ),
-                              const SizedBox(width: 8),
-                              const Expanded(
-                                child: Text(
-                                  'Filtros',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.textColor,
-                                  ),
-                                ),
-                              ),
-                              if (_temFiltrosAtivos)
-                                TextButton(
-                                  onPressed: _limparFiltros,
-                                  style: TextButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
+                          InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () {
+                              setState(() {
+                                _filtrosAbertos = !_filtrosAbertos;
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryColor.withValues(alpha: 0.10),
+                                      borderRadius: BorderRadius.circular(11),
                                     ),
-                                    minimumSize: const Size(0, 32),
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
+                                    child: const Icon(
+                                      Icons.filter_list_rounded,
+                                      size: 20,
+                                      color: AppTheme.primaryColor,
+                                    ),
                                   ),
-                                  child: const Text('Limpar'),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Status',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black54,
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Filtros',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.textColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          _temFiltrosAtivos
+                                              ? _resumoFiltros
+                                              : 'Ativos • ${animals.length} animais',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (_temFiltrosAtivos)
+                                    TextButton(
+                                      onPressed: _limparFiltros,
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                                        minimumSize: const Size(0, 32),
+                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: const Text('Limpar'),
+                                    ),
+                                  Icon(
+                                    _filtrosAbertos
+                                        ? Icons.keyboard_arrow_up_rounded
+                                        : Icons.keyboard_arrow_down_rounded,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          SizedBox(
-                            height: 42,
-                            child: ListView.separated(
-                              padding: EdgeInsets.zero,
-                              scrollDirection: Axis.horizontal,
-                              itemCount: StatusAnimal.values.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(width: 8),
-                              itemBuilder: (context, index) {
-                                final status = StatusAnimal.values[index];
+                          if (_filtrosAbertos)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Divider(height: 1),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'Status',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  SizedBox(
+                                    height: 42,
+                                    child: ListView.separated(
+                                      padding: EdgeInsets.zero,
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: StatusAnimal.values.length,
+                                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                                      itemBuilder: (context, index) {
+                                        final status = StatusAnimal.values[index];
 
-                                return AnimalStatusFilter(
-                                  label: _statusTexto(status),
-                                  quantidade:
-                                      AnimalListLogic.quantidadePorStatus(
-                                    _animals,
-                                    status,
+                                        return AnimalStatusFilter(
+                                          label: _statusTexto(status),
+                                          quantidade: AnimalListLogic.quantidadePorStatus(
+                                            _animals,
+                                            status,
+                                            sexo: _sexoSelecionado,
+                                            faixaIdade: _faixaIdadeSelecionada,
+                                            busca: _search,
+                                          ),
+                                          icon: _statusIcon(status),
+                                          color: _statusCor(status),
+                                          selected: _statusSelecionado == status,
+                                          onTap: () {
+                                            setState(() {
+                                              _statusSelecionado = status;
+                                            });
+                                          },
+                                        );
+                                      },
+                                    ),
                                   ),
-                                  icon: _statusIcon(status),
-                                  color: _statusCor(status),
-                                  selected: _statusSelecionado == status,
-                                  onTap: () {
-                                    setState(() {
-                                      _statusSelecionado = status;
-                                    });
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Sexo',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          SizedBox(
-                            height: 40,
-                            child: ListView(
-                              padding: EdgeInsets.zero,
-                              scrollDirection: Axis.horizontal,
-                              children: [
-                                AnimalSexFilter(
-                                  label: 'Todos',
-                                  assetPath:
-                                      'assets/images/icon_animais.png',
-                                  quantidade: AnimalListLogic.porStatus(
-                                    _animals,
-                                    _statusSelecionado,
-                                  ).length,
-                                  selected: _sexoSelecionado == null,
-                                  onTap: () {
-                                    setState(() {
-                                      _sexoSelecionado = null;
-                                    });
-                                  },
-                                ),
-                                const SizedBox(width: 8),
-                                AnimalSexFilter(
-                                  label: 'Fêmeas',
-                                  assetPath:
-                                      'assets/images/icon_ovino_femea.png',
-                                  quantidade:
-                                      AnimalListLogic.quantidadePorSexo(
-                                    _animals,
-                                    _statusSelecionado,
-                                    SexoAnimal.femea,
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'Sexo',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black54,
+                                    ),
                                   ),
-                                  selected:
-                                      _sexoSelecionado == SexoAnimal.femea,
-                                  onTap: () {
-                                    setState(() {
-                                      _sexoSelecionado = SexoAnimal.femea;
-                                    });
-                                  },
-                                ),
-                                const SizedBox(width: 8),
-                                AnimalSexFilter(
-                                  label: 'Machos',
-                                  assetPath:
-                                      'assets/images/icon_ovino_macho.png',
-                                  quantidade:
-                                      AnimalListLogic.quantidadePorSexo(
-                                    _animals,
-                                    _statusSelecionado,
-                                    SexoAnimal.macho,
+                                  const SizedBox(height: 6),
+                                  SizedBox(
+                                    height: 40,
+                                    child: ListView(
+                                      padding: EdgeInsets.zero,
+                                      scrollDirection: Axis.horizontal,
+                                      children: [
+                                        AnimalSexFilter(
+                                          label: 'Todos',
+                                          assetPath: 'assets/images/icon_animais.png',
+                                          quantidade: AnimalListLogic.filtrar(
+                                            animais: _animals,
+                                            status: _statusSelecionado,
+                                            sexo: null,
+                                            faixaIdade: _faixaIdadeSelecionada,
+                                            busca: _search,
+                                          ).length,
+                                          selected: _sexoSelecionado == null,
+                                          onTap: () {
+                                            setState(() {
+                                              _sexoSelecionado = null;
+                                            });
+                                          },
+                                        ),
+                                        const SizedBox(width: 8),
+                                        AnimalSexFilter(
+                                          label: 'Fêmeas',
+                                          assetPath: 'assets/images/icon_ovino_femea.png',
+                                          quantidade: AnimalListLogic.quantidadePorSexo(
+                                            _animals,
+                                            _statusSelecionado,
+                                            SexoAnimal.femea,
+                                            faixaIdade: _faixaIdadeSelecionada,
+                                            busca: _search,
+                                          ),
+                                          selected: _sexoSelecionado == SexoAnimal.femea,
+                                          onTap: () {
+                                            setState(() {
+                                              _sexoSelecionado = SexoAnimal.femea;
+                                            });
+                                          },
+                                        ),
+                                        const SizedBox(width: 8),
+                                        AnimalSexFilter(
+                                          label: 'Machos',
+                                          assetPath: 'assets/images/icon_ovino_macho.png',
+                                          quantidade: AnimalListLogic.quantidadePorSexo(
+                                            _animals,
+                                            _statusSelecionado,
+                                            SexoAnimal.macho,
+                                            faixaIdade: _faixaIdadeSelecionada,
+                                            busca: _search,
+                                          ),
+                                          selected: _sexoSelecionado == SexoAnimal.macho,
+                                          onTap: () {
+                                            setState(() {
+                                              _sexoSelecionado = SexoAnimal.macho;
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  selected:
-                                      _sexoSelecionado == SexoAnimal.macho,
-                                  onTap: () {
-                                    setState(() {
-                                      _sexoSelecionado = SexoAnimal.macho;
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Idade',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          SizedBox(
-                            height: 40,
-                            child: ListView.separated(
-                              padding: EdgeInsets.zero,
-                              scrollDirection: Axis.horizontal,
-                              itemCount: FaixaIdade.values.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(width: 8),
-                              itemBuilder: (context, index) {
-                                final faixa = FaixaIdade.values[index];
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'Idade',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  SizedBox(
+                                    height: 40,
+                                    child: ListView.separated(
+                                      padding: EdgeInsets.zero,
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: FaixaIdade.values.length,
+                                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                                      itemBuilder: (context, index) {
+                                        final faixa = FaixaIdade.values[index];
 
-                                return AnimalAgeFilter(
-                                  label: AnimalFilters.nomeFaixaIdade(faixa),
-                                  quantidade:
-                                      AnimalListLogic.quantidadePorFaixaIdade(
-                                    _animals,
-                                    _statusSelecionado,
-                                    faixa,
+                                        return AnimalAgeFilter(
+                                          label: AnimalFilters.nomeFaixaIdade(faixa),
+                                          quantidade: faixa == FaixaIdade.todas
+                                              ? AnimalListLogic.filtrar(
+                                                  animais: _animals,
+                                                  status: _statusSelecionado,
+                                                  sexo: _sexoSelecionado,
+                                                  faixaIdade: FaixaIdade.todas,
+                                                  busca: _search,
+                                                ).length
+                                              : AnimalListLogic.quantidadePorFaixaIdade(
+                                                  _animals,
+                                                  _statusSelecionado,
+                                                  faixa,
+                                                  _sexoSelecionado,
+                                                  busca: _search,
+                                                ),
+                                          selected: _faixaIdadeSelecionada == faixa,
+                                          onTap: () {
+                                            setState(() {
+                                              _faixaIdadeSelecionada = faixa;
+                                            });
+                                          },
+                                        );
+                                      },
+                                    ),
                                   ),
-                                  selected:
-                                      _faixaIdadeSelecionada == faixa,
-                                  onTap: () {
-                                    setState(() {
-                                      _faixaIdadeSelecionada = faixa;
-                                    });
-                                  },
-                                );
-                              },
+                                ],
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
