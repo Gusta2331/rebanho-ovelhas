@@ -20,6 +20,55 @@ class ComposicaoRacialService {
     }).toList();
   }
 
+  Future<List<ComposicaoRacial>> calcularPelosPais({
+    required String maeId,
+    required String paiId,
+  }) async {
+    final mae = await _calcularAnimal(maeId, <String>{});
+    final pai = await _calcularAnimal(paiId, <String>{});
+
+    if (mae.isEmpty || pai.isEmpty) {
+      return [];
+    }
+
+    final resultado = <String, double>{};
+    for (final entry in mae.entries) {
+      resultado[entry.key] = (resultado[entry.key] ?? 0) + entry.value / 2;
+    }
+    for (final entry in pai.entries) {
+      resultado[entry.key] = (resultado[entry.key] ?? 0) + entry.value / 2;
+    }
+
+    final normalizado = _normalizar(resultado);
+    if (normalizado.isEmpty) return [];
+
+    final ids = normalizado.keys.toList();
+    final racas = await _client
+        .from('racas')
+        .select('id, nome')
+        .inFilter('id', ids);
+
+    final nomes = <String, String>{
+      for (final row in racas as List)
+        row['id'].toString(): row['nome'].toString(),
+    };
+
+    final composicao = normalizado.entries
+        .where((entry) => entry.value > 0.0001)
+        .map(
+          (entry) => ComposicaoRacial(
+            racaId: entry.key,
+            racaNome: nomes[entry.key] ?? 'Raça',
+            percentual: entry.value,
+            automatico: true,
+          ),
+        )
+        .toList()
+      ..sort((a, b) => b.percentual.compareTo(a.percentual));
+
+    return composicao;
+  }
+
   Future<void> salvarComposicaoManual({
     required String animalId,
     required List<Map<String, dynamic>> composicoes,
