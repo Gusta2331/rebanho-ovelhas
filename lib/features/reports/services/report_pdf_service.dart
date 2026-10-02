@@ -77,7 +77,7 @@ class ReportPdfService {
             ],
           ),
           pw.SizedBox(height: 20),
-          _sectionTitle('Composição por raça', green, text),
+          _sectionTitle('Composição por raça', text),
           pw.SizedBox(height: 8),
           pw.Table(
             border: pw.TableBorder.all(color: PdfColors.grey300, width: .5),
@@ -98,7 +98,7 @@ class ReportPdfService {
             ],
           ),
           pw.SizedBox(height: 20),
-          _sectionTitle('Animais', green, text),
+          _sectionTitle('Animais', text),
           pw.SizedBox(height: 8),
           pw.Table(
             border: pw.TableBorder.all(color: PdfColors.grey300, width: .5),
@@ -162,7 +162,7 @@ class ReportPdfService {
     );
   }
 
-  pw.Widget _sectionTitle(String title, PdfColor green, PdfColor text) {
+  pw.Widget _sectionTitle(String title, PdfColor text) {
     return pw.Text(
       title,
       style: pw.TextStyle(
