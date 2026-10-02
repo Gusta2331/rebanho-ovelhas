@@ -100,6 +100,8 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
         return 'Pesagem';
       case TipoManejo.famacha:
         return 'FAMACHA';
+      case TipoManejo.denticao:
+        return 'Dentição';
       case TipoManejo.outro:
         return 'Outro';
     }
@@ -119,6 +121,8 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
         return Icons.monitor_weight_outlined;
       case TipoManejo.famacha:
         return Icons.visibility_outlined;
+      case TipoManejo.denticao:
+        return Icons.health_and_safety_outlined;
       case TipoManejo.outro:
         return Icons.assignment_outlined;
     }
