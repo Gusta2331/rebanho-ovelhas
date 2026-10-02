@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
-
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/app_asset_icon.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../../animals/models/animal.dart';
 import '../../animals/services/animal_service.dart';
