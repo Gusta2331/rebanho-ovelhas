@@ -176,22 +176,6 @@ class _AnimalsPageState extends State<AnimalsPage> {
     }
   }
 
-  IconData _statusIcon(StatusAnimal status) {
-    switch (status) {
-      case StatusAnimal.ativo:
-        return Icons.check_circle_outline_rounded;
-
-      case StatusAnimal.vendido:
-        return Icons.sell_outlined;
-
-      case StatusAnimal.morto:
-        return Icons.remove_circle_outline_rounded;
-
-      case StatusAnimal.descartado:
-        return Icons.block_outlined;
-    }
-  }
-
   String _sexoLabel(SexoAnimal sexo) {
     switch (sexo) {
       case SexoAnimal.femea:
@@ -625,17 +609,6 @@ class _AnimalsPageState extends State<AnimalsPage> {
         );
       },
     );
-  }
-
-  void _limparFiltros() {
-    setState(() {
-      _search = '';
-      _statusSelecionado = StatusAnimal.ativo;
-      _sexoSelecionado = null;
-      _faixaIdadeSelecionada = FaixaIdade.todas;
-      _cadastroSelecionado = FiltroDataNascimento.todas;
-      _denticaoSelecionadaFiltro = FiltroDenticao.todas;
-    });
   }
 
   @override
