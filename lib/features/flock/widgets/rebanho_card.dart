@@ -43,7 +43,7 @@ class RebanhoCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: const Icon(
-                  Icons.pets_rounded,
+                  const AssetImage('assets/images/icon_lotes.png'),
                   color: AppTheme.primaryColor,
                   size: 28,
                 ),
