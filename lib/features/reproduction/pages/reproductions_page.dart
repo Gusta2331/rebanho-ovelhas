@@ -443,14 +443,14 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
               const SizedBox(height: 14),
               if (reproducao.dataCobertura != null)
                 _buildInformacao(
-                  icone: Icons.calendar_today,
+                  assetPath: 'assets/images/icon_agenda.png',
                   titulo: 'Cobertura',
                   valor: _formatarData(reproducao.dataCobertura),
                 ),
               if (reproducao.dataPrevisaoParto != null) ...[
                 const SizedBox(height: 10),
                 _buildInformacao(
-                  icone: Icons.event,
+                  assetPath: 'assets/images/icon_agenda.png',
                   titulo: 'Previsão de parto',
                   valor: _formatarData(reproducao.dataPrevisaoParto),
                 ),
@@ -458,7 +458,7 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
               if (reproducao.dataConfirmacaoPrenhez != null) ...[
                 const SizedBox(height: 10),
                 _buildInformacao(
-                  icone: Icons.verified_outlined,
+                  assetPath: 'assets/images/icon_cobertura.png',
                   titulo: 'Prenhez confirmada',
                   valor: _formatarData(reproducao.dataConfirmacaoPrenhez),
                 ),
@@ -466,7 +466,7 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
               if (reproducao.dataParto != null) ...[
                 const SizedBox(height: 10),
                 _buildInformacao(
-                  icone: Icons.child_friendly,
+                  assetPath: 'assets/images/icon_nascimento.png',
                   titulo: 'Parto realizado',
                   valor: _formatarData(reproducao.dataParto),
                 ),
@@ -475,14 +475,14 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
                   reproducao.dataPrevisaoParto == null &&
                   reproducao.dataParto == null) ...[
                 _buildInformacao(
-                  icone: Icons.hourglass_empty,
+                  assetPath: 'assets/images/icon_agenda.png',
                   titulo: 'Próximo passo',
                   valor: 'Registrar a cobertura',
                 ),
               ],
               const SizedBox(height: 10),
               _buildInformacao(
-                icone: Icons.male,
+                assetPath: 'assets/images/icon_ovino_macho.png',
                 titulo: 'Pai',
                 valor: reproducao.paiId == null
                     ? 'Ainda não definido'
