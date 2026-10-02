@@ -219,7 +219,12 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
     return DropdownButtonFormField<String>(
       initialValue: value,
       isExpanded: true,
-      decoration: InputDecoration(labelText: title, prefixIcon: Icon(icon)),
+      decoration: InputDecoration(
+         labelText: title,
+         prefixIcon: assetPath != null
+             ? AppAssetIcon(assetPath: assetPath, size: 24)
+             : Icon(icon),
+       ),
       items: [
         if (optional)
           const DropdownMenuItem<String>(
