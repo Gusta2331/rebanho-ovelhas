@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../models/monta.dart';
@@ -558,10 +559,7 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
               ..._nascimentosLista.map(
                 (n) => ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(
-                    Icons.pets_outlined,
-                    color: AppTheme.primaryColor,
-                  ),
+                  leading: const AppAssetIcon(assetPath: 'assets/images/icon_cordeiro.png', size: 28),
                   title: Text(_animal(n.animalId)),
                   subtitle: Text(
                     '${n.sexo == SexoNascimento.femea ? 'Fêmea' : 'Macho'} • ${_data(n.dataNascimento)}',
