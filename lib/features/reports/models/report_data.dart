@@ -28,6 +28,9 @@ class ReportData {
     );
   }
 
+  double percentualRaca(int quantidade) =>
+      total == 0 ? 0 : (quantidade / total) * 100;
+
   int _count(StatusAnimal status) =>
       animals.where((animal) => animal.status == status).length;
 }
