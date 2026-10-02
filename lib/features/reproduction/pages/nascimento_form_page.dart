@@ -103,7 +103,7 @@ class _NascimentoFormPageState extends State<NascimentoFormPage> {
             const SizedBox(height: 20),
             DropdownButtonFormField<String>(
               initialValue: _sexo,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Sexo *',
                 prefixIcon: AppAssetIcon(
                    assetPath: _sexo == 'femea'
