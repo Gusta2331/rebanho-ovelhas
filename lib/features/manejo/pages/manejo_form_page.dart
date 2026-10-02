@@ -883,10 +883,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         data: _data,
         tipo: _tipo,
         famachaPorAnimal: _famachaPorAnimal,
-        denticaoPorAnimal: {
-          for (final id in _animaisSelecionados)
-            id: _denticaoSelecionada!,
-        },
+        denticaoPorAnimal: _tipo == TipoManejo.denticao
+            ? {
+                for (final id in _animaisSelecionados)
+                  id: _denticaoSelecionada!,
+              }
+            : const {},
         observacoes: _observacoes.text,
         vacinaId: vacinaId,
         vacinaNome: vacinaNome,
@@ -955,6 +957,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         _vacinaSelecionada == null &&
         _farmaciaProdutoSelecionado == null) {
       _mensagem('Selecione a vacina aplicada ou um produto da Farmácia.');
+      return;
+    }
+
+    if (_tipo == TipoManejo.denticao &&
+        (_denticaoSelecionada == null || _denticaoSelecionada!.trim().isEmpty)) {
+      _mensagem('Informe a condição da dentição.');
       return;
     }
 
