@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-
+import '../../../core/widgets/app_asset_icon.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../models/reproducao.dart';
@@ -307,7 +307,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
                     _maeId,
                     _femeas,
                     (v) => setState(() => _maeId = v),
-                    AppAssetIcon(assetPath: 'assets/images/icon_ovino_femea.png', size: 28),
+                    Icons.female,
                   ),
                   const SizedBox(height: 16),
                   _animalField(
@@ -315,7 +315,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
                     _paiId,
                     _machos,
                     (v) => setState(() => _paiId = v),
-                    AppAssetIcon(assetPath: 'assets/images/icon_ovino_macho.png', size: 28),
+                    Icons.male,
                     optional: true,
                   ),
                   const SizedBox(height: 16),
