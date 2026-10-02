@@ -40,7 +40,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
   final _observacoesController = TextEditingController();
   final _valorAquisicaoController = TextEditingController();
   final _vendedorController = TextEditingController();
-  final _denticaoObservacoesController = TextEditingController();
 
   final ImagePicker _imagePicker = ImagePicker();
   final ImageCropper _imageCropper = ImageCropper();
@@ -55,8 +54,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
 
   DateTime? _dataNascimento;
   DateTime? _dataAquisicao;
-  DateTime? _denticaoData;
-  String? _denticaoSelecionada;
   String? _fotoPath;
 
   OrigemAnimal _origemSelecionada = OrigemAnimal.nascido;
@@ -87,9 +84,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
           ? ''
           : animal.valorAquisicao!.toStringAsFixed(2).replaceAll('.', ',');
       _vendedorController.text = animal.vendedor ?? '';
-      _denticaoSelecionada = animal.denticao;
-      _denticaoData = animal.denticaoData;
-      _denticaoObservacoesController.text = animal.denticaoObservacoes ?? '';
       _maeSelecionada = _buscarAnimalPorId(animal.idMae);
       _paiSelecionado = _buscarAnimalPorId(animal.idPai);
     }
@@ -117,7 +111,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     _observacoesController.dispose();
     _valorAquisicaoController.dispose();
     _vendedorController.dispose();
-    _denticaoObservacoesController.dispose();
     super.dispose();
   }
 
@@ -209,17 +202,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
         _dataNascimento = data;
       });
     }
-  }
-
-  Future<void> _selecionarDataDenticao() async {
-    final data = await showDatePicker(
-      context: context,
-      initialDate: _denticaoData ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-      helpText: 'Data da avaliação dentária',
-    );
-    if (data != null && mounted) setState(() => _denticaoData = data);
   }
 
   Future<void> _selecionarDataAquisicao() async {
@@ -526,9 +508,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
           dataAquisicao: _dataAquisicao,
           valorAquisicao: valorAquisicao,
           vendedor: _vendedorController.text,
-          denticao: _denticaoSelecionada,
-          denticaoData: _denticaoData,
-          denticaoObservacoes: _denticaoObservacoesController.text,
         );
       } else {
         dadosSalvos = await _animalService.atualizarAnimal(
@@ -562,9 +541,9 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
           dataAquisicao: _dataAquisicao,
           valorAquisicao: valorAquisicao,
           vendedor: _vendedorController.text,
-          denticao: _denticaoSelecionada,
-          denticaoData: _denticaoData,
-          denticaoObservacoes: _denticaoObservacoesController.text,
+          denticao: animalAnterior.denticao,
+          denticaoData: animalAnterior.denticaoData,
+          denticaoObservacoes: animalAnterior.denticaoObservacoes,
         );
       }
 
@@ -951,79 +930,6 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                 ),
               ),
 
-              const SizedBox(height: 20),
-
-              const Text(
-                'Dentição',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: _denticaoSelecionada,
-                decoration: const InputDecoration(
-                  labelText: 'Condição dentária',
-                  prefixIcon: Icon(Icons.health_and_safety_outlined),
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'leite',
-                    child: Text('Dentes de leite'),
-                  ),
-                  DropdownMenuItem(
-                    value: '2 dentes',
-                    child: Text('2 dentes permanentes'),
-                  ),
-                  DropdownMenuItem(
-                    value: '4 dentes',
-                    child: Text('4 dentes permanentes'),
-                  ),
-                  DropdownMenuItem(
-                    value: '6 dentes',
-                    child: Text('6 dentes permanentes'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'boca cheia',
-                    child: Text('Boca cheia'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'desgastada',
-                    child: Text('Desgastada / avaliar'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'outro',
-                    child: Text('Outra condição'),
-                  ),
-                ],
-                onChanged: _salvando
-                    ? null
-                    : (value) => setState(() => _denticaoSelecionada = value),
-              ),
-              const SizedBox(height: 10),
-              InkWell(
-                onTap: _salvando ? null : _selecionarDataDenticao,
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Data da avaliação dentária',
-                    prefixIcon: Icon(Icons.calendar_month_outlined),
-                  ),
-                  child: Text(
-                    _denticaoData == null
-                        ? 'Selecionar data'
-                        : _formatarData(_denticaoData!),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _denticaoObservacoesController,
-                enabled: !_salvando,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Observações da dentição',
-                  hintText: 'Ex.: dentes gastos ou quebrados',
-                  prefixIcon: Icon(Icons.notes_outlined),
-                ),
-              ),
               const SizedBox(height: 20),
 
               // ORIGEM
