@@ -62,6 +62,7 @@ class ReportExcelService {
 
     if (excel.tables.containsKey('Sheet1') && excel.tables.length > 1) {
       excel.delete('Sheet1');
+      excel.setDefaultSheet('Resumo');
     }
 
     final bytes = excel.save();
