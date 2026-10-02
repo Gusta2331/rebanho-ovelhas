@@ -314,28 +314,28 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
                 child: _buildResumoItem(
                   valor: _reproducoes.length.toString(),
                   legenda: 'Total',
-                  icone: Icons.sync_alt_rounded,
+                  assetPath: 'assets/images/icon_reproducao.png',
                 ),
               ),
               Expanded(
                 child: _buildResumoItem(
                   valor: planejadas.toString(),
                   legenda: 'Planejadas',
-                  icone: Icons.event_note,
+                  assetPath: 'assets/images/icon_agenda.png',
                 ),
               ),
               Expanded(
                 child: _buildResumoItem(
                   valor: prenhes.toString(),
                   legenda: 'Prenhes',
-                  icone: Icons.favorite,
+                  assetPath: 'assets/images/icon_reproducao.png',
                 ),
               ),
               Expanded(
                 child: _buildResumoItem(
                   valor: partos.toString(),
                   legenda: 'Partos',
-                  icone: Icons.child_friendly,
+                  assetPath: 'assets/images/icon_cordeiro.png',
                 ),
               ),
             ],
@@ -348,11 +348,14 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
   Widget _buildResumoItem({
     required String valor,
     required String legenda,
-    required IconData icone,
+    IconData? icone,
+    String? assetPath,
   }) {
     return Column(
       children: [
-        Icon(icone, size: 22, color: AppTheme.primaryColor),
+        assetPath != null
+            ? AppAssetIcon(assetPath: assetPath, size: 22)
+            : Icon(icone, size: 22, color: AppTheme.primaryColor),
         const SizedBox(height: 6),
         Text(
           valor,
@@ -515,13 +518,16 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
   }
 
   Widget _buildInformacao({
-    required IconData icone,
+    IconData? icone,
+    String? assetPath,
     required String titulo,
     required String valor,
   }) {
     return Row(
       children: [
-        Icon(icone, size: 18, color: Colors.grey.shade600),
+        assetPath != null
+            ? AppAssetIcon(assetPath: assetPath, size: 20)
+            : Icon(icone, size: 18, color: Colors.grey.shade600),
         const SizedBox(width: 10),
         Text(
           '$titulo: ',
