@@ -164,7 +164,12 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
           partes.add('Princípio ativo: ${manejo.medicamentoPrincipioAtivo}');
         }
       case TipoManejo.tosquia:
-      case TipoManejo.outro:
+      case TipoManejo.denticao:
+        if (manejo.denticao != null) partes.add(manejo.denticao!);
+        if (manejo.denticaoData != null) {
+          partes.add('Avaliada em ${_dataTexto(manejo.denticaoData)}');
+        }
+case TipoManejo.outro:
         if (manejo.outroNome != null) partes.add(manejo.outroNome!);
       case TipoManejo.pesagem:
         if (manejo.pesoKg != null) {
