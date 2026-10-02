@@ -249,12 +249,15 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
     String title,
     DateTime? value,
     String campo,
-    IconData icon,
+    String assetPath,
   ) {
     return InkWell(
       onTap: () => _dataPicker(campo),
       child: InputDecorator(
-        decoration: InputDecoration(labelText: title, prefixIcon: Icon(icon)),
+        decoration: InputDecoration(
+          labelText: title,
+          prefixIcon: AppAssetIcon(assetPath: assetPath, size: 24),
+        ),
         child: Text(
           _data(value),
           style: TextStyle(color: value == null ? Colors.grey.shade600 : null),
@@ -330,21 +333,21 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
                     'Data da cobertura',
                     _cobertura,
                     'cobertura',
-                    Icons.calendar_today,
+                    'assets/images/icon_agenda.png',
                   ),
                   const SizedBox(height: 16),
                   _dateField(
                     'Previsão de parto',
                     _previsao,
                     'previsao',
-                    Icons.event,
+                    'assets/images/icon_agenda.png',
                   ),
                   const SizedBox(height: 16),
                   _dateField(
                     'Data do parto',
                     _parto,
                     'parto',
-                    Icons.child_friendly,
+                    'assets/images/icon_nascimento.png',
                   ),
                   const SizedBox(height: 16),
                   if (_statusSelecionado == StatusReproducao.prenhe ||
@@ -353,7 +356,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
                       'Data da confirmação da prenhez',
                       _confirmacaoPrenhez,
                       'confirmacao',
-                      Icons.verified_outlined,
+                      'assets/images/icon_cobertura.png',
                     ),
                     const SizedBox(height: 16),
                   ],
