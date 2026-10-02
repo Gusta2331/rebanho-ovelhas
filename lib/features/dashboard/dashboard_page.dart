@@ -705,7 +705,7 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Row(
               children: [
-                const Icon(Icons.account_balance_wallet_outlined),
+                const AppAssetIcon(assetPath: 'assets/images/icon_financeiro.png', size: 30),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
