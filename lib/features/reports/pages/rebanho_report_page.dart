@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
 import '../../animals/models/animal.dart';
+import '../../animals/services/composicao_racial_service.dart';
 import '../../animals/services/animal_service.dart';
 import '../models/report_data.dart';
 import '../services/report_excel_service.dart';
@@ -171,9 +172,15 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
     setState(() => _generating = true);
 
     try {
+      final animals = List<Animal>.from(_filtered);
+      final composicoes = await _composicaoRacialService.listarPorAnimais(
+        animals.map((animal) => animal.id).toList(),
+      );
+
       final data = ReportData(
-        animals: List<Animal>.from(_filtered),
+        animals: animals,
         generatedAt: DateTime.now(),
+        composicoesPorAnimal: composicoes,
       );
 
       if (format == 'pdf') {
