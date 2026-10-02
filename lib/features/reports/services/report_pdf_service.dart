@@ -88,12 +88,13 @@ class ReportPdfService {
               1: pw.FlexColumnWidth(1),
             },
             children: [
-              _headerRow(['Raça', 'Quantidade'], green),
+              _headerRow(['Raça', 'Quantidade', '%'], green),
               ...data.porRaca.entries.map(
                 (entry) => pw.TableRow(
                   children: [
                     _cell(entry.key),
                     _cell(entry.value.toString(), align: pw.TextAlign.center),
+                    _cell('${data.percentualRaca(entry.value).toStringAsFixed(1)}%', align: pw.TextAlign.center),
                   ],
                 ),
               ),
