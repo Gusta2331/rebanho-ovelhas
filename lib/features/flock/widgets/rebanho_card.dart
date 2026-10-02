@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 import '../models/rebanho.dart';
 
 class RebanhoCard extends StatelessWidget {
@@ -42,11 +43,7 @@ class RebanhoCard extends StatelessWidget {
                   color: AppTheme.primaryColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: const Icon(
-                  const AssetImage('assets/images/icon_lotes.png'),
-                  color: AppTheme.primaryColor,
-                  size: 28,
-                ),
+                child: const AppAssetIcon(assetPath: 'assets/images/icon_lotes.png', size: 28),
               ),
               const SizedBox(width: 14),
               Expanded(
