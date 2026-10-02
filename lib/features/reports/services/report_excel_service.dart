@@ -35,11 +35,15 @@ class ReportExcelService {
     _writeRows(
       racas,
       [
-        ['RAÇA', 'QUANTIDADE'],
-        ...data.porRaca.entries.map((e) => [e.key, e.value]),
+        ['RAÇA', 'QUANTIDADE', '%'],
+        ...data.porRaca.entries.map((e) => [
+              e.key,
+              e.value,
+              data.percentualRaca(e.value) / 100,
+            ]),
       ],
       headerRows: {0},
-      widths: {0: 30, 1: 16},
+      widths: {0: 30, 1: 16, 2: 12},
     );
 
     final animais = excel['Animais'];
