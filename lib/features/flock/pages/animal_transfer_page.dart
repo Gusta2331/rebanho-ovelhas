@@ -432,10 +432,9 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.groups_outlined,
+            AppAssetIcon(
+              assetPath: 'assets/images/icon_lotes.png',
               size: 64,
-              color: AppTheme.primaryColor.withValues(alpha: 0.65),
             ),
             const SizedBox(height: 16),
             const Text(
