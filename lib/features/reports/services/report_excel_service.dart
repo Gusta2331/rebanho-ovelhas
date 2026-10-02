@@ -89,9 +89,6 @@ class ReportExcelService {
         9: 18,
         10: 18,
       },
-      autoFilterEndColumn: 10,
-      autoFilterEndRow: data.animals.length,
-      freezeHeader: true,
     );
 
     if (excel.tables.containsKey('Sheet1') && excel.tables.length > 1) {
@@ -119,8 +116,8 @@ class ReportExcelService {
     bool freezeHeader = false,
   }) {
     final titleStyle = CellStyle(
-      backgroundColorHex: '#367C2B',
-      fontColorHex: '#FFFFFF',
+      backgroundColorHex: ExcelColor.fromHexString('#367C2B'),
+      fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
       fontSize: 16,
       bold: true,
       verticalAlign: VerticalAlign.Center,
@@ -133,12 +130,11 @@ class ReportExcelService {
       bold: true,
       horizontalAlign: HorizontalAlign.Center,
       verticalAlign: VerticalAlign.Center,
-      wrap: TextWrapping.WrapText,
     );
 
     final accentStyle = CellStyle(
-      backgroundColorHex: '#EAF3E7',
-      fontColorHex: '#263323',
+      backgroundColorHex: ExcelColor.fromHexString('#EAF3E7'),
+      fontColorHex: ExcelColor.fromHexString('#263323'),
       bold: true,
     );
 
@@ -148,7 +144,7 @@ class ReportExcelService {
     );
 
     final alternateStyle = CellStyle(
-      backgroundColorHex: '#F7F9F5',
+      backgroundColorHex: ExcelColor.fromHexString('#F7F9F5'),
       fontColorHex: '#263323',
       verticalAlign: VerticalAlign.Center,
     );
@@ -184,19 +180,6 @@ class ReportExcelService {
       sheet.setColumnWidth(entry.key, entry.value);
     }
 
-    if (autoFilterEndColumn != null && autoFilterEndRow != null) {
-      sheet.setAutoFilter(
-        CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0),
-        CellIndex.indexByColumnRow(
-          columnIndex: autoFilterEndColumn,
-          rowIndex: autoFilterEndRow,
-        ),
-      );
-    }
-
-    if (freezeHeader) {
-      sheet.frozenRows = 1;
-    }
   }
 
   CellValue _cellValue(dynamic value) {
