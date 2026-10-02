@@ -172,7 +172,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
       appBar: AppBar(
         leading: IconButton(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back_rounded)),
         title: const Row(mainAxisSize: MainAxisSize.min, children: [
-          AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 26),
+          AppAssetIcon(assetPath: 'assets/images/icon_cobertura.png', size: 26),
           SizedBox(width: 8), Text('Relatório de reprodução'),
         ]),
         actions: [IconButton(
@@ -242,7 +242,7 @@ class _Summary extends StatelessWidget {
       children: values.map((v) => Card(
         margin: EdgeInsets.zero, elevation: 0,
         child: Padding(padding: const EdgeInsets.all(12), child: Row(children: [
-          const Icon(Icons.pets_outlined, color: AppTheme.primaryColor),
+          const AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 26),
           const SizedBox(width: 9),
           Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
             Text(v[1].toString(), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
@@ -287,7 +287,7 @@ class _Card extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(padding: const EdgeInsets.all(15), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Container(width: 44, height: 44, decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: .10), borderRadius: BorderRadius.circular(13)), child: const AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 26)),
+          Container(width: 44, height: 44, decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: .10), borderRadius: BorderRadius.circular(13)), child: const AppAssetIcon(assetPath: 'assets/images/icon_cobertura.png', size: 26)),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Mãe: ' + mae, style: const TextStyle(fontWeight: FontWeight.w800)),
