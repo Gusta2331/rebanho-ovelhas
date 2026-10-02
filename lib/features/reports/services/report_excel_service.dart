@@ -115,9 +115,6 @@ class ReportExcelService {
     Set<int> headerRows = const {},
     Set<int> accentRows = const {},
     Map<int, double> widths = const {},
-    int? autoFilterEndColumn,
-    int? autoFilterEndRow,
-    bool freezeHeader = false,
   }) {
     final titleStyle = CellStyle(
       backgroundColorHex: ExcelColor.fromHexString('#367C2B'),
@@ -149,7 +146,7 @@ class ReportExcelService {
 
     final alternateStyle = CellStyle(
       backgroundColorHex: ExcelColor.fromHexString('#F7F9F5'),
-      fontColorHex: '#263323',
+      fontColorHex: ExcelColor.fromHexString('#263323'),
       verticalAlign: VerticalAlign.Center,
     );
 
