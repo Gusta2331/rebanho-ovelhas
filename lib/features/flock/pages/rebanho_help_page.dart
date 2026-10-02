@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 
 class RebanhoHelpPage extends StatelessWidget {
   const RebanhoHelpPage({super.key});
@@ -14,7 +15,7 @@ class RebanhoHelpPage extends StatelessWidget {
         children: [
           _intro(context),
           const SizedBox(height: 16),
-          _section(context, 'O que é um lote?', 'assets/images/icon_lotes.png', [
+          _section(context, 'O que é um lote?', Icons.groups_outlined, [
             _item(
               'Lote',
               'É um grupo de animais organizado dentro da fazenda. Uma fazenda pode ter vários lotes.',
