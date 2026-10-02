@@ -174,27 +174,50 @@ class _AnimalParentSelectionPageState
     extends State<_AnimalParentSelectionPage> {
   final TextEditingController _buscaController = TextEditingController();
 
+  StatusAnimal _statusSelecionado = StatusAnimal.ativo;
+  bool _somenteAptosParaReproducao = true;
+
   @override
   void dispose() {
     _buscaController.dispose();
     super.dispose();
   }
 
-  List<Animal> get _animaisDisponiveis {
-    final busca = _buscaController.text.trim().toLowerCase();
+  bool _idadeApta(Animal animal) {
+    final nascimento = animal.dataNascimento;
+    if (nascimento == null) return false;
 
+    final hoje = DateTime.now();
+    var meses =
+        (hoje.year - nascimento.year) * 12 + hoje.month - nascimento.month;
+    if (hoje.day < nascimento.day) meses--;
+
+    return meses >= 12;
+  }
+
+  List<Animal> _animaisPorStatus(
+    StatusAnimal status, {
+    required bool somenteAptos,
+  }) {
     return widget.animais.where((animal) {
-      if (animal.sexo != widget.sexoPermitido) {
-        return false;
-      }
-
+      if (animal.sexo != widget.sexoPermitido) return false;
       if (widget.idAnimalAtual != null && animal.id == widget.idAnimalAtual) {
         return false;
       }
+      if (animal.status != status) return false;
+      if (somenteAptos && !_idadeApta(animal)) return false;
+      return true;
+    }).toList();
+  }
 
-      if (busca.isEmpty) {
-        return true;
-      }
+  List<Animal> get _animaisDisponiveis {
+    final busca = _buscaController.text.trim().toLowerCase();
+
+    return _animaisPorStatus(
+      _statusSelecionado,
+      somenteAptos: _somenteAptosParaReproducao,
+    ).where((animal) {
+      if (busca.isEmpty) return true;
 
       final brinco = animal.brinco.toLowerCase();
       final nome = animal.nome?.toLowerCase() ?? '';
@@ -210,21 +233,191 @@ class _AnimalParentSelectionPageState
     return widget.sexoPermitido == SexoAnimal.femea ? 'fêmeas' : 'machos';
   }
 
+  String get _textoFiltroIdade {
+    return _somenteAptosParaReproducao
+        ? 'Aptos para reprodução'
+        : 'Todas as idades';
+  }
+
+  String _statusLabel(StatusAnimal status) {
+    switch (status) {
+      case StatusAnimal.ativo:
+        return 'Ativos';
+      case StatusAnimal.vendido:
+        return 'Vendidos';
+      case StatusAnimal.morto:
+        return 'Mortos';
+      case StatusAnimal.descartado:
+        return 'Descartados';
+    }
+  }
+
+  Future<void> _abrirFiltros() async {
+    var status = _statusSelecionado;
+    var somenteAptos = _somenteAptosParaReproducao;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            Widget chip(
+              String label,
+              int count,
+              bool selected,
+              VoidCallback onTap,
+            ) {
+              return FilterChip(
+                label: Text('$label $count'),
+                selected: selected,
+                onSelected: (_) => onTap(),
+                showCheckmark: true,
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 1,
+                ),
+              );
+            }
+
+            final statusChips = StatusAnimal.values.map((value) {
+              return chip(
+                _statusLabel(value),
+                _animaisPorStatus(
+                  value,
+                  somenteAptos: somenteAptos,
+                ).length,
+                status == value,
+                () => setSheetState(() => status = value),
+              );
+            }).toList();
+
+            final aptosCount =
+                _animaisPorStatus(status, somenteAptos: true).length;
+            final todasIdadesCount =
+                _animaisPorStatus(status, somenteAptos: false).length;
+
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 2, 16, 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Filtros de seleção',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textColor,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setSheetState(() {
+                              status = StatusAnimal.ativo;
+                              somenteAptos = true;
+                            });
+                          },
+                          child: const Text('Limpar'),
+                        ),
+                      ],
+                    ),
+                    const Text(
+                      'Status',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Wrap(
+                      spacing: 5,
+                      runSpacing: 3,
+                      children: statusChips,
+                    ),
+                    const SizedBox(height: 13),
+                    const Text(
+                      'Idade',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Wrap(
+                      spacing: 5,
+                      runSpacing: 3,
+                      children: [
+                        chip(
+                          'Aptos para reprodução',
+                          aptosCount,
+                          somenteAptos,
+                          () => setSheetState(() => somenteAptos = true),
+                        ),
+                        chip(
+                          'Todas as idades',
+                          todasIdadesCount,
+                          !somenteAptos,
+                          () => setSheetState(() => somenteAptos = false),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () {
+                          setState(() {
+                            _statusSelecionado = status;
+                            _somenteAptosParaReproducao = somenteAptos;
+                          });
+                          Navigator.of(sheetContext).pop();
+                        },
+                        child: const Text('Aplicar filtros'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final animais = _animaisDisponiveis;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.titulo)),
+      appBar: AppBar(
+        title: Text(widget.titulo),
+        actions: [
+          IconButton(
+            onPressed: _abrirFiltros,
+            tooltip: 'Filtros',
+            icon: const Icon(Icons.filter_list_rounded),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 5),
             child: TextField(
               controller: _buscaController,
-              onChanged: (_) {
-                setState(() {});
-              },
+              onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'Buscar por brinco, nome ou raça',
                 prefixIcon: const Icon(Icons.search_rounded),
@@ -241,15 +434,25 @@ class _AnimalParentSelectionPageState
               ),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '$_textoFiltroIdade • ${_statusLabel(_statusSelecionado)} • '
+                '${animais.length} ${animais.length == 1 ? 'animal' : 'animais'}',
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+            ),
+          ),
           Expanded(
             child: animais.isEmpty
                 ? _EmptyParentList(tipoAnimal: _tipoAnimal)
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                     itemCount: animais.length,
-                    separatorBuilder: (context, index) {
-                      return const SizedBox(height: 8);
-                    },
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final animal = animais[index];
                       final selecionado =
@@ -258,9 +461,7 @@ class _AnimalParentSelectionPageState
                       return _AnimalParentTile(
                         animal: animal,
                         selecionado: selecionado,
-                        onTap: () {
-                          Navigator.of(context).pop(animal);
-                        },
+                        onTap: () => Navigator.of(context).pop(animal),
                       );
                     },
                   ),
@@ -270,7 +471,6 @@ class _AnimalParentSelectionPageState
     );
   }
 }
-
 class _AnimalParentTile extends StatelessWidget {
   final Animal animal;
   final bool selecionado;
