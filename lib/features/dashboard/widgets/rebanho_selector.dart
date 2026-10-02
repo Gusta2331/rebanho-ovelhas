@@ -85,7 +85,7 @@ class RebanhoSelector extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
-                  Icons.groups_rounded,
+                  const AssetImage('assets/images/icon_lotes.png'),
                   color: AppTheme.primaryColor,
                 ),
               ),
@@ -147,7 +147,7 @@ class RebanhoSelector extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
-              Icons.groups_rounded,
+              const AssetImage('assets/images/icon_lotes.png'),
               color: AppTheme.primaryColor,
             ),
           ),
