@@ -474,7 +474,7 @@ class _Summary extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       children: [
         _SummaryCard('Total', total.toString(), 'assets/images/icon_animais.png'),
-        _SummaryCard('Filtrados', filtered.toString(), Icons.filter_alt_outlined),
+        _SummaryCard('Filtrados', filtered.toString(), 'assets/images/icon_lotes.png'),
         _SummaryCard('Fêmeas', femeas.toString(), 'assets/images/icon_ovino_femea.png'),
         _SummaryCard('Machos', machos.toString(), 'assets/images/icon_ovino_macho.png'),
       ],
