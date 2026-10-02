@@ -48,6 +48,7 @@ flutter:
     - assets/images/icon_estoque.png
     - assets/images/icon_farmacia.png
     - assets/images/icon_financeiro.png
+    - assets/images/icon_lotes.png
     - assets/images/icon_manejo.png
     - assets/images/icon_nascimento.png
     - assets/images/icon_ovino_femea.png
