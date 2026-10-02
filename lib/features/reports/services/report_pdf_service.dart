@@ -121,9 +121,9 @@ class ReportPdfService {
                 (animal) => pw.TableRow(
                   children: [
                     _cell(animal.brinco, align: pw.TextAlign.center),
-                    _cell(animal.nome ?? ''),
+                    _cell(_nome(animal.nome)),
                     _cell(_sexo(animal.sexo), align: pw.TextAlign.center),
-                    _cell(animal.raca),
+                    _cell(_raca(animal.raca)),
                     _cell(_date(animal.dataNascimento), align: pw.TextAlign.center),
                     _cell(_status(animal.status), align: pw.TextAlign.center),
                   ],
@@ -210,8 +210,14 @@ class ReportPdfService {
     );
   }
 
+  String _nome(String? value) =>
+      value == null || value.trim().isEmpty ? 'Não informado' : value.trim();
+
+  String _raca(String value) =>
+      value.trim().isEmpty ? 'Não informada' : value.trim();
+
   String _date(DateTime? value) => value == null
-      ? ''
+      ? 'Não informada'
       : value.day.toString().padLeft(2, '0') +
           '/' +
           value.month.toString().padLeft(2, '0') +
