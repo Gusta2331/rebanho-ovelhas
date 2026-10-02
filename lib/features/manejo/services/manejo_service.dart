@@ -487,7 +487,11 @@ class ManejoService {
     required String animalId,
     required TipoManejo tipo,
     required DateTime data,
+    String? denticao,
+    DateTime? denticaoData,
     int? famachaEscore,
+    String? denticao,
+    DateTime? denticaoData,
     String? observacoes,
     String? vacinaId,
     String? vacinaNome,
@@ -546,6 +550,8 @@ class ManejoService {
       tipo: tipo,
       data: data,
       famachaEscore: famachaEscore,
+      denticao: tipo == TipoManejo.denticao ? _text(denticao) : null,
+      denticaoData: tipo == TipoManejo.denticao ? denticaoData : null,
       observacoes: observacoes,
       vacinaId: vacinaId,
       vacinaNome: vacinaNome,
@@ -601,6 +607,7 @@ class ManejoService {
     required DateTime data,
     required TipoManejo tipo,
     Map<String, int> famachaPorAnimal = const {},
+    Map<String, String> denticaoPorAnimal = const {},
     Map<String, double> pesoPorAnimal = const {},
     Map<String, double> dosePorAnimal = const {},
     String? observacoes,
@@ -700,6 +707,10 @@ class ManejoService {
             famachaEscore: tipo == TipoManejo.famacha
                 ? famachaPorAnimal[animalId]
                 : null,
+            denticao: tipo == TipoManejo.denticao
+                ? denticaoPorAnimal[animalId]
+                : null,
+            denticaoData: tipo == TipoManejo.denticao ? data : null,
             observacoes: observacoes,
             vacinaId: vacinaId,
             vacinaNome: vacinaNome,
@@ -831,6 +842,8 @@ class ManejoService {
             tipo: tipo,
             data: data,
             famachaEscore: famachaEscore,
+            denticao: tipo == TipoManejo.denticao ? denticao : null,
+            denticaoData: tipo == TipoManejo.denticao ? denticaoData : null,
             observacoes: observacoes,
             vacinaId: vacinaId,
             vacinaNome: vacinaNome,
