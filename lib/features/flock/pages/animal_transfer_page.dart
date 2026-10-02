@@ -309,7 +309,7 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.groups_rounded, color: AppTheme.primaryColor),
+            const AppAssetIcon(assetPath: 'assets/images/icon_lotes.png', size: 26),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
