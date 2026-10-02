@@ -310,7 +310,9 @@ class _DashboardPageState extends State<DashboardPage> {
         return 'Pesagem';
       case TipoManejo.famacha:
         return 'FAMACHA';
-      case TipoManejo.outro:
+      case TipoManejo.denticao:
+        return 'Dentição';
+case TipoManejo.outro:
         return 'Outro';
     }
   }
