@@ -28,7 +28,7 @@ extension ReportTypeX on ReportType {
 
   String get iconAsset => switch (this) {
     ReportType.rebanho => 'assets/images/icon_animais.png',
-    ReportType.reproducao => 'assets/images/icon_reproducao.png',
+    ReportType.reproducao => 'assets/images/icon_cobertura.png',
     ReportType.manejo => 'assets/images/icon_manejo.png',
     ReportType.farmacia => 'assets/images/icon_farmacia.png',
     ReportType.financeiro => 'assets/images/icon_financeiro.png',
