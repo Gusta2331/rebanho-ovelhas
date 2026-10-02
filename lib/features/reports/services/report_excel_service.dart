@@ -10,42 +10,57 @@ class ReportExcelService {
     final excel = Excel.createExcel();
 
     final resumo = excel['Resumo'];
-    _writeRows(resumo, [
-      ['RELATÓRIO DO REBANHO'],
-      ['Gerado em', _dateTime(data.generatedAt)],
-      [],
-      ['Indicador', 'Quantidade'],
-      ['Total', data.total],
-      ['Ativos', data.ativos],
-      ['Vendidos', data.vendidos],
-      ['Mortos', data.mortos],
-      ['Descartados', data.descartados],
-      ['Fêmeas', data.femeas],
-      ['Machos', data.machos],
-    ]);
+    _writeRows(
+      resumo,
+      [
+        ['RELATÓRIO DO REBANHO'],
+        ['Gerado em', _dateTime(data.generatedAt)],
+        [],
+        ['Indicador', 'Quantidade'],
+        ['Total', data.total],
+        ['Ativos', data.ativos],
+        ['Vendidos', data.vendidos],
+        ['Mortos', data.mortos],
+        ['Descartados', data.descartados],
+        ['Fêmeas', data.femeas],
+        ['Machos', data.machos],
+      ],
+      titleRows: {0},
+      headerRows: {3},
+      accentRows: {4},
+      widths: {0: 24, 1: 18},
+    );
 
     final racas = excel['Por raça'];
-    _writeRows(racas, [
-      ['RAÇA', 'QUANTIDADE'],
-      ...data.porRaca.entries.map((e) => [e.key, e.value]),
-    ]);
+    _writeRows(
+      racas,
+      [
+        ['RAÇA', 'QUANTIDADE'],
+        ...data.porRaca.entries.map((e) => [e.key, e.value]),
+      ],
+      headerRows: {0},
+      widths: {0: 30, 1: 16},
+    );
 
     final animais = excel['Animais'];
-    _writeRows(animais, [
+    _writeRows(
+      animais,
       [
-        'Brinco',
-        'Nome',
-        'Sexo',
-        'Raça',
-        'Nascimento',
-        'Status',
-        'Origem',
-        'Entrada',
-        'Saída',
-        'Mãe',
-        'Pai',
-      ],
-      ...data.animals.map((animal) => [
+        [
+          'Brinco',
+          'Nome',
+          'Sexo',
+          'Raça',
+          'Nascimento',
+          'Status',
+          'Origem',
+          'Entrada',
+          'Saída',
+          'Mãe',
+          'Pai',
+        ],
+        ...data.animals.map(
+          (animal) => [
             animal.brinco,
             _nome(animal.nome),
             _sexo(animal.sexo),
@@ -57,8 +72,27 @@ class ReportExcelService {
             _date(animal.dataSaida),
             _idReferencia(animal.idMae),
             _idReferencia(animal.idPai),
-          ]),
-    ]);
+          ],
+        ),
+      ],
+      headerRows: {0},
+      widths: {
+        0: 12,
+        1: 24,
+        2: 12,
+        3: 22,
+        4: 15,
+        5: 15,
+        6: 14,
+        7: 15,
+        8: 15,
+        9: 18,
+        10: 18,
+      },
+      autoFilterEndColumn: 10,
+      autoFilterEndRow: data.animals.length,
+      freezeHeader: true,
+    );
 
     if (excel.tables.containsKey('Sheet1') && excel.tables.length > 1) {
       excel.delete('Sheet1');
@@ -69,18 +103,99 @@ class ReportExcelService {
     if (bytes == null) {
       throw Exception('Não foi possível gerar o arquivo Excel.');
     }
+
     return Uint8List.fromList(bytes);
   }
 
-  void _writeRows(Sheet sheet, List<List<dynamic>> rows) {
+  void _writeRows(
+    Sheet sheet,
+    List<List<dynamic>> rows, {
+    Set<int> titleRows = const {},
+    Set<int> headerRows = const {},
+    Set<int> accentRows = const {},
+    Map<int, double> widths = const {},
+    int? autoFilterEndColumn,
+    int? autoFilterEndRow,
+    bool freezeHeader = false,
+  }) {
+    final titleStyle = CellStyle(
+      backgroundColorHex: '#367C2B',
+      fontColorHex: '#FFFFFF',
+      fontSize: 16,
+      bold: true,
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    final headerStyle = CellStyle(
+      backgroundColorHex: '#367C2B',
+      fontColorHex: '#FFFFFF',
+      fontSize: 10,
+      bold: true,
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+      wrap: TextWrapping.WrapText,
+    );
+
+    final accentStyle = CellStyle(
+      backgroundColorHex: '#EAF3E7',
+      fontColorHex: '#263323',
+      bold: true,
+    );
+
+    final bodyStyle = CellStyle(
+      fontColorHex: '#263323',
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    final alternateStyle = CellStyle(
+      backgroundColorHex: '#F7F9F5',
+      fontColorHex: '#263323',
+      verticalAlign: VerticalAlign.Center,
+    );
+
     for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-      for (var columnIndex = 0; columnIndex < rows[rowIndex].length; columnIndex++) {
-        final value = rows[rowIndex][columnIndex];
-        sheet.cell(CellIndex.indexByColumnRow(
-          columnIndex: columnIndex,
-          rowIndex: rowIndex,
-        )).value = _cellValue(value);
+      final row = rows[rowIndex];
+
+      for (var columnIndex = 0; columnIndex < row.length; columnIndex++) {
+        final cell = sheet.cell(
+          CellIndex.indexByColumnRow(
+            columnIndex: columnIndex,
+            rowIndex: rowIndex,
+          ),
+        );
+
+        final value = row[columnIndex];
+        cell.value = _cellValue(value);
+
+        if (titleRows.contains(rowIndex)) {
+          cell.cellStyle = titleStyle;
+        } else if (headerRows.contains(rowIndex)) {
+          cell.cellStyle = headerStyle;
+        } else if (accentRows.contains(rowIndex)) {
+          cell.cellStyle = accentStyle;
+        } else {
+          cell.cellStyle =
+              rowIndex.isEven ? bodyStyle : alternateStyle;
+        }
       }
+    }
+
+    for (final entry in widths.entries) {
+      sheet.setColumnWidth(entry.key, entry.value);
+    }
+
+    if (autoFilterEndColumn != null && autoFilterEndRow != null) {
+      sheet.setAutoFilter(
+        CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0),
+        CellIndex.indexByColumnRow(
+          columnIndex: autoFilterEndColumn,
+          rowIndex: autoFilterEndRow,
+        ),
+      );
+    }
+
+    if (freezeHeader) {
+      sheet.frozenRows = 1;
     }
   }
 
@@ -102,16 +217,21 @@ class ReportExcelService {
 
   String _date(DateTime? value) => value == null
       ? 'Não informada'
-      : value.day.toString().padLeft(2, '0') + '/' +
-          value.month.toString().padLeft(2, '0') + '/' +
+      : value.day.toString().padLeft(2, '0') +
+          '/' +
+          value.month.toString().padLeft(2, '0') +
+          '/' +
           value.year.toString();
 
   String _dateTime(DateTime value) =>
-      _date(value) + ' ' +
-      value.hour.toString().padLeft(2, '0') + ':' +
+      _date(value) +
+      ' ' +
+      value.hour.toString().padLeft(2, '0') +
+      ':' +
       value.minute.toString().padLeft(2, '0');
 
-  String _sexo(SexoAnimal sexo) => sexo == SexoAnimal.femea ? 'Fêmea' : 'Macho';
+  String _sexo(SexoAnimal sexo) =>
+      sexo == SexoAnimal.femea ? 'Fêmea' : 'Macho';
 
   String _status(StatusAnimal status) => switch (status) {
         StatusAnimal.ativo => 'Ativo',
