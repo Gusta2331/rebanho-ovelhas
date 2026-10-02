@@ -157,7 +157,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
         title: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppAssetIcon(icone: Icons.account_balance_wallet_outlined, size: 26),
+            AppAssetIcon(assetPath: 'assets/images/icon_financeiro.png', size: 26),
             SizedBox(width: 8),
             Text('Despesas e lucro'),
           ],
