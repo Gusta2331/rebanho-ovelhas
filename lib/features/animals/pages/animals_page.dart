@@ -762,7 +762,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
                 borderRadius: BorderRadius.circular(22),
               ),
               child: const Icon(
-                Icons.groups_outlined,
+                AppAssetIcon(assetPath: 'assets/images/icon_animais.png', size: 28),
                 size: 38,
                 color: AppTheme.primaryColor,
               ),
