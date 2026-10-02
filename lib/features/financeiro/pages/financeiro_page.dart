@@ -341,12 +341,14 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
 class _ResumoCard extends StatelessWidget {
   final String titulo;
   final String valor;
-  final IconData icone;
+  final IconData? icone;
+  final String? assetPath;
 
   const _ResumoCard({
     required this.titulo,
     required this.valor,
-    required this.icone,
+    this.icone,
+    this.assetPath,
   });
 
   @override
@@ -355,7 +357,12 @@ class _ResumoCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       child: Column(
         children: [
-          Icon(icone, color: AppTheme.primaryColor),
+          assetPath != null
+              ? AppAssetIcon(
+                  assetPath: assetPath!,
+                  size: 24,
+                )
+              : Icon(icone, color: AppTheme.primaryColor),
           const SizedBox(height: 5),
           Text(
             titulo,
