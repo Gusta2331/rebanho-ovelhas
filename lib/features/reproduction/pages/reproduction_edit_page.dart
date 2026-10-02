@@ -215,7 +215,8 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
     String? value,
     List<Map<String, dynamic>> list,
     ValueChanged<String?> onChanged,
-    IconData icon, {
+    IconData? icon, {
+    String? assetPath,
     bool optional = false,
   }) {
     return DropdownButtonFormField<String>(
