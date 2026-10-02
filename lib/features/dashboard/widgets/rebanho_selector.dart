@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
 import '../../flock/models/rebanho.dart';
 
 class RebanhoSelector extends StatelessWidget {
@@ -84,10 +85,7 @@ class RebanhoSelector extends StatelessWidget {
                   color: AppTheme.primaryColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  const AssetImage('assets/images/icon_lotes.png'),
-                  color: AppTheme.primaryColor,
-                ),
+                child: const AppAssetIcon(assetPath: 'assets/images/icon_lotes.png', size: 30),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -146,10 +144,7 @@ class RebanhoSelector extends StatelessWidget {
               color: AppTheme.primaryColor.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              const AssetImage('assets/images/icon_lotes.png'),
-              color: AppTheme.primaryColor,
-            ),
+            child: const AppAssetIcon(assetPath: 'assets/images/icon_lotes.png', size: 30),
           ),
           const SizedBox(width: 12),
           Expanded(
