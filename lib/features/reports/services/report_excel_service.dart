@@ -62,6 +62,7 @@ class ReportExcelService {
           'Saída',
           'Mãe',
           'Pai',
+          'Composição racial',
         ],
         ...data.animals.map(
           (animal) => [
@@ -76,6 +77,7 @@ class ReportExcelService {
             _date(animal.dataSaida),
             _idReferencia(animal.idMae),
             _idReferencia(animal.idPai),
+            _composicao(data.composicoesPorAnimal[animal.id]),
           ],
         ),
       ],
@@ -92,6 +94,7 @@ class ReportExcelService {
         8: 15,
         9: 18,
         10: 18,
+        11: 42,
       },
     );
 
@@ -224,6 +227,17 @@ class ReportExcelService {
         StatusAnimal.descartado => 'Descartado',
       };
 
+  String _composicao(List<dynamic>? composicoes) {
+    if (composicoes == null || composicoes.isEmpty) return 'Não informada';
+    return composicoes.map((item) {
+      final nome = item.racaNome.toString();
+      final percentual = item.percentual as double;
+      final valor = percentual.roundToDouble() == percentual
+          ? percentual.toStringAsFixed(0)
+          : percentual.toStringAsFixed(1);
+      return '$valor% $nome';
+    }).join(' + ');
+  }
   String _origem(OrigemAnimal origem) =>
       origem == OrigemAnimal.nascido ? 'Nascido' : 'Comprado';
 }
