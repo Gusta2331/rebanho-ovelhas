@@ -268,7 +268,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                             child: _ResumoCard(
                               titulo: 'Saldo',
                               valor: _moeda(_resumo['saldo']!),
-                              assetPath: 'assets/images/icon_financeiro.png',
+                              icone: Icons.account_balance_wallet_outlined,
                             ),
                           ),
                         ],
