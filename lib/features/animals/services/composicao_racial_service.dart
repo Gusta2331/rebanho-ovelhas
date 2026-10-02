@@ -20,6 +20,68 @@ class ComposicaoRacialService {
     }).toList();
   }
 
+  Future<void> salvarComposicaoManual({
+    required String animalId,
+    required List<Map<String, dynamic>> composicoes,
+  }) async {
+    if (composicoes.isEmpty) {
+      throw Exception('Informe pelo menos uma raça na composição.');
+    }
+
+    final dados = <Map<String, dynamic>>[];
+
+    for (final item in composicoes) {
+      final nome = item['raca_nome']?.toString().trim() ?? '';
+      final percentual = item['percentual'] is num
+          ? (item['percentual'] as num).toDouble()
+          : double.tryParse(
+              item['percentual']?.toString().replaceAll(',', '.') ?? '',
+            ) ?? 0;
+
+      if (nome.isEmpty || percentual <= 0) {
+        throw Exception('Informe uma raça e um percentual válido.');
+      }
+
+      final raca = await _client
+          .from('racas')
+          .select('id')
+          .eq('nome', nome)
+          .eq('ativo', true)
+          .limit(1)
+          .maybeSingle();
+
+      if (raca == null) {
+        throw Exception('A raça "$nome" não foi encontrada na biblioteca.');
+      }
+
+      dados.add({
+        'animal_id': animalId,
+        'raca_id': raca['id'].toString(),
+        'percentual': percentual,
+        'automatico': false,
+      });
+    }
+
+    final total = dados.fold<double>(
+      0,
+      (soma, item) => soma + (item['percentual'] as double),
+    );
+
+    if ((total - 100).abs() > 0.01) {
+      throw Exception(
+        'A composição manual precisa totalizar 100%. '
+        'Atualmente está em ${total.toStringAsFixed(1)}%.',
+      );
+    }
+
+    await _client
+        .from('animal_composicoes_raciais')
+        .delete()
+        .eq('animal_id', animalId);
+
+    await _client.from('animal_composicoes_raciais').insert(dados);
+  }
+
   Future<void> recalcularAnimal(String animalId) async {
     final composicao = await _calcularAnimal(animalId, <String>{});
     if (composicao.isEmpty) return;
