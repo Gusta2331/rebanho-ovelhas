@@ -47,16 +47,16 @@ class ReportExcelService {
       ],
       ...data.animals.map((animal) => [
             animal.brinco,
-            animal.nome ?? '',
+            _nome(animal.nome),
             _sexo(animal.sexo),
-            animal.raca,
+            _raca(animal.raca),
             _date(animal.dataNascimento),
             _status(animal.status),
             _origem(animal.origem),
             _date(animal.dataEntrada),
             _date(animal.dataSaida),
-            animal.idMae ?? '',
-            animal.idPai ?? '',
+            _idReferencia(animal.idMae),
+            _idReferencia(animal.idPai),
           ]),
     ]);
 
@@ -91,8 +91,17 @@ class ReportExcelService {
     return TextCellValue(value?.toString() ?? '');
   }
 
+  String _nome(String? value) =>
+      value == null || value.trim().isEmpty ? 'Não informado' : value.trim();
+
+  String _raca(String value) =>
+      value.trim().isEmpty ? 'Não informada' : value.trim();
+
+  String _idReferencia(String? value) =>
+      value == null || value.trim().isEmpty ? 'Não informado' : value.trim();
+
   String _date(DateTime? value) => value == null
-      ? ''
+      ? 'Não informada'
       : value.day.toString().padLeft(2, '0') + '/' +
           value.month.toString().padLeft(2, '0') + '/' +
           value.year.toString();
