@@ -152,7 +152,7 @@ class _RebanhoFormPageState extends State<RebanhoFormPage> {
                 child: const Row(
                   children: [
                     Icon(
-                      const AssetImage('assets/images/icon_lotes.png'),
+                      const AppAssetIcon(assetPath: 'assets/images/icon_lotes.png', size: 30),
                       color: AppTheme.primaryColor,
                       size: 30,
                     ),
