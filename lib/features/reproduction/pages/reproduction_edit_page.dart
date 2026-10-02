@@ -313,7 +313,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
                     _maeId,
                     _femeas,
                     (v) => setState(() => _maeId = v),
-                    Icons.female,
+                    assetPath: 'assets/images/icon_ovino_femea.png',
                   ),
                   const SizedBox(height: 16),
                   _animalField(
@@ -321,7 +321,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
                     _paiId,
                     _machos,
                     (v) => setState(() => _paiId = v),
-                    Icons.male,
+                    assetPath: 'assets/images/icon_ovino_macho.png',
                     optional: true,
                   ),
                   const SizedBox(height: 16),
