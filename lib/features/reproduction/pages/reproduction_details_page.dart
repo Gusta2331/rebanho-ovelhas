@@ -506,7 +506,7 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
               ..._montasLista.map(
                 (m) => ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.male, color: AppTheme.primaryColor),
+                  leading: const AppAssetIcon(assetPath: 'assets/images/icon_ovino_macho.png', size: 28),
                   title: Text(_animal(m.carneiroId)),
                   subtitle: Text(
                     'Data: ${_data(m.dataMonta)}${m.observacoes?.trim().isNotEmpty == true ? '\n${m.observacoes!.trim()}' : ''}',
