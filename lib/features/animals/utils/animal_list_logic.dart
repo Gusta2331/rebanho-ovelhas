@@ -114,6 +114,8 @@ class AnimalListLogic {
     SexoAnimal? sexo,
     FaixaIdade faixaIdade = FaixaIdade.todas,
     String busca = '',
+    FiltroDataNascimento cadastro = FiltroDataNascimento.todas,
+    FiltroDenticao denticao = FiltroDenticao.todas,
   }) {
     var resultado = animais;
 
