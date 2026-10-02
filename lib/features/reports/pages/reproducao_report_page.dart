@@ -61,7 +61,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
 
   DateTime _day(DateTime d) => DateTime(d.year, d.month, d.day);
 
-  String _status(StatusReproducao s) => switch (s) {
+  String _statusLabel(StatusReproducao s) => switch (s) {
     StatusReproducao.planejada => 'Planejada',
     StatusReproducao.coberta => 'Coberta',
     StatusReproducao.prenhe => 'Prenhe',
@@ -91,7 +91,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
     return statusOk && fromOk && toOk;
   }).toList();
 
-  String _statusName(StatusReproducao s) => _status(s);
+  String _statusName(StatusReproducao s) => _statusLabel(s);
 
   Future<void> _pickDate(bool from) async {
     final d = await showDatePicker(
