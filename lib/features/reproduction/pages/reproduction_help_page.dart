@@ -16,7 +16,7 @@ class ReproductionHelpPage extends StatelessWidget {
         children: [
           _intro(context),
           const SizedBox(height: 16),
-          _section(context, 'Como funciona', 'assets/images/icon_reproducao.png', [
+          _section(context, 'Como funciona', Icons.sync_alt_rounded, [
             _item(
               'Mãe',
               'É a ovelha que está sendo acompanhada nessa reprodução.',
