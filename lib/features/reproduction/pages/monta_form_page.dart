@@ -150,7 +150,7 @@ class _MontaFormPageState extends State<MontaFormPage> {
                     isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'Carneiro *',
-                      prefixIcon: Icon(Icons.male),
+                      prefixIcon: AppAssetIcon(assetPath: 'assets/images/icon_ovino_macho.png', size: 24),
                     ),
                     items: _machos
                         .map(
