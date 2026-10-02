@@ -52,6 +52,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   String? _animalId;
   final Set<String> _animaisSelecionados = {};
   final Map<String, int> _famachaPorAnimal = {};
+  final Map<String, String> _denticaoPorAnimal = {};
   final Map<String, double> _pesos = {};
   final Map<String, double> _dosesCalculadas = {};
   final Map<String, String> _pesoTextoPorAnimal = {};
@@ -92,6 +93,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       _data = manejo.data;
       _famacha = manejo.famachaEscore;
       _denticaoSelecionada = manejo.denticao;
+      _denticaoPorAnimal[manejo.animalId] = manejo.denticao ?? '';
       _observacoes.text = manejo.observacoes ?? '';
       _enfermidadeController.text = manejo.enfermidade ?? '';
       _vacinaLote.text = manejo.vacinaLote ?? '';
@@ -749,6 +751,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     setState(() {
       _animaisSelecionados.clear();
       _famachaPorAnimal.clear();
+      _denticaoPorAnimal.clear();
       _pesos.clear();
       _dosesCalculadas.clear();
       _pesoTextoPorAnimal.clear();
@@ -761,6 +764,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       if (_animaisSelecionados.contains(id)) {
         _animaisSelecionados.remove(id);
         _famachaPorAnimal.remove(id);
+        _denticaoPorAnimal.remove(id);
         _pesoTextoPorAnimal.remove(id);
         _doseTextoPorAnimal.remove(id);
         _pesos.remove(id);
@@ -803,6 +807,17 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       );
       if (faltando.isNotEmpty) {
         _mensagem('Informe o FAMACHA de todos os animais selecionados.');
+        return;
+      }
+    }
+
+    if (_tipo == TipoManejo.denticao) {
+      final faltando = _animaisSelecionados.where((id) {
+        final valor = _denticaoPorAnimal[id]?.trim();
+        return valor == null || valor.isEmpty;
+      });
+      if (faltando.isNotEmpty) {
+        _mensagem('Informe a dentição de cada animal selecionado.');
         return;
       }
     }
@@ -886,7 +901,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         denticaoPorAnimal: _tipo == TipoManejo.denticao
             ? {
                 for (final id in _animaisSelecionados)
-                  id: _denticaoSelecionada!,
+                  id: _denticaoPorAnimal[id]!,
               }
             : const {},
         observacoes: _observacoes.text,
@@ -1235,6 +1250,120 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     );
   }
 
+  Widget _denticaoPorAnimalField() {
+    const opcoes = [
+      DropdownMenuItem(
+        value: 'leite',
+        child: Text('Dentes de leite'),
+      ),
+      DropdownMenuItem(
+        value: '2 dentes',
+        child: Text('2 dentes permanentes'),
+      ),
+      DropdownMenuItem(
+        value: '4 dentes',
+        child: Text('4 dentes permanentes'),
+      ),
+      DropdownMenuItem(
+        value: '6 dentes',
+        child: Text('6 dentes permanentes'),
+      ),
+      DropdownMenuItem(
+        value: 'boca cheia',
+        child: Text('Boca cheia'),
+      ),
+      DropdownMenuItem(
+        value: 'desgastada',
+        child: Text('Desgastada'),
+      ),
+      DropdownMenuItem(
+        value: 'outro',
+        child: Text('Outra condição'),
+      ),
+    ];
+
+    final selecionados = _animais
+        .where((animal) {
+          final id = animal['id']?.toString();
+          return id != null && _animaisSelecionados.contains(id);
+        })
+        .toList();
+
+    if (selecionados.isEmpty) {
+      return const Text(
+        'Selecione pelo menos um animal para informar a dentição.',
+        style: TextStyle(color: Colors.black54),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.14),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Dentição por animal',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 5),
+          const Text(
+            'Defina a condição individualmente para cada animal selecionado.',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.black54,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ...selecionados.map((animal) {
+            final id = animal['id']!.toString();
+            final brinco = animal['brinco']?.toString() ?? 'Sem brinco';
+            final nome = animal['nome']?.toString().trim();
+            final titulo = nome == null || nome.isEmpty
+                ? 'Animal $brinco'
+                : '$nome • Brinco $brinco';
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: DropdownButtonFormField<String>(
+                value: (_denticaoPorAnimal[id]?.trim().isEmpty ?? true)
+                    ? null
+                    : _denticaoPorAnimal[id],
+                decoration: InputDecoration(
+                  labelText: titulo,
+                  prefixIcon: const Icon(Icons.health_and_safety_outlined),
+                  border: const OutlineInputBorder(),
+                ),
+                items: opcoes,
+                onChanged: _salvando
+                    ? null
+                    : (value) {
+                        setState(() {
+                          if (value == null) {
+                            _denticaoPorAnimal.remove(id);
+                          } else {
+                            _denticaoPorAnimal[id] = value;
+                          }
+                        });
+                      },
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1310,6 +1439,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                       _tipo = value;
                                       _animaisSelecionados.clear();
                                       _famachaPorAnimal.clear();
+                                      _denticaoPorAnimal.clear();
                                       _pesos.clear();
                                       _pesoTextoPorAnimal.clear();
                                       _doseTextoPorAnimal.clear();
@@ -1365,6 +1495,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                   _rebanhoId = id;
                                   _animaisSelecionados.clear();
                                   _famachaPorAnimal.clear();
+                                  _denticaoPorAnimal.clear();
                                   _pesos.clear();
                                   _pesoTextoPorAnimal.clear();
                                   _doseTextoPorAnimal.clear();
@@ -1436,49 +1567,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                           ],
                           if (_tipo == TipoManejo.denticao) ...[
                             const SizedBox(height: 16),
-                            DropdownButtonFormField<String>(
-                              value: _denticaoSelecionada,
-                              decoration: const InputDecoration(
-                                labelText: 'Condição da dentição',
-                                prefixIcon: Icon(Icons.health_and_safety_outlined),
-                                border: OutlineInputBorder(),
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'leite',
-                                  child: Text('Dentes de leite'),
-                                ),
-                                DropdownMenuItem(
-                                  value: '2 dentes',
-                                  child: Text('2 dentes permanentes'),
-                                ),
-                                DropdownMenuItem(
-                                  value: '4 dentes',
-                                  child: Text('4 dentes permanentes'),
-                                ),
-                                DropdownMenuItem(
-                                  value: '6 dentes',
-                                  child: Text('6 dentes permanentes'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'boca cheia',
-                                  child: Text('Boca cheia'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'desgastada',
-                                  child: Text('Desgastada'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'outro',
-                                  child: Text('Outra condição'),
-                                ),
-                              ],
-                              onChanged: _salvando
-                                  ? null
-                                  : (value) => setState(
-                                        () => _denticaoSelecionada = value,
-                                      ),
-                            ),
+                            _denticaoPorAnimalField(),
                           ],
                           if (_tipo == TipoManejo.pesagem) ...[
                             const SizedBox(height: 16),
