@@ -314,7 +314,7 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
                 child: _buildResumoItem(
                   valor: _reproducoes.length.toString(),
                   legenda: 'Total',
-                  icone: Icons.pets,
+                  icone: AppAssetIcon(assetPath: 'assets/images/icon_reproducao.png', size: 28),
                 ),
               ),
               Expanded(
