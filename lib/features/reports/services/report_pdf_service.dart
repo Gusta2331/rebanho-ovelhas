@@ -27,8 +27,10 @@ class ReportPdfService {
               style: pw.TextStyle(fontSize: 8, color: muted),
             ),
             pw.Text(
-              'Página ' + context.pageNumber.toString() +
-                  ' de ' + context.pagesCount.toString(),
+              'Página ' +
+                  context.pageNumber.toString() +
+                  ' de ' +
+                  context.pagesCount.toString(),
               style: pw.TextStyle(fontSize: 8, color: muted),
             ),
           ],
@@ -54,7 +56,7 @@ class ReportPdfService {
                 pw.SizedBox(height: 5),
                 pw.Text(
                   'Fazenda Baixinha • gerado em ' + _dateTime(data.generatedAt),
-                  style: const pw.TextStyle(
+                  style: pw.TextStyle(
                     color: PdfColors.white,
                     fontSize: 9,
                   ),
@@ -136,7 +138,12 @@ class ReportPdfService {
     return document.save();
   }
 
-  pw.Widget _card(String label, String value, PdfColor green, PdfColor background) {
+  pw.Widget _card(
+    String label,
+    String value,
+    PdfColor green,
+    PdfColor background,
+  ) {
     return pw.Container(
       width: 88,
       padding: const pw.EdgeInsets.all(10),
@@ -181,7 +188,7 @@ class ReportPdfService {
           padding: const pw.EdgeInsets.all(6),
           child: pw.Text(
             value,
-            style: const pw.TextStyle(
+            style: pw.TextStyle(
               color: PdfColors.white,
               fontSize: 7.5,
               fontWeight: pw.FontWeight.bold,
@@ -205,13 +212,17 @@ class ReportPdfService {
 
   String _date(DateTime? value) => value == null
       ? ''
-      : value.day.toString().padLeft(2, '0') + '/' +
-          value.month.toString().padLeft(2, '0') + '/' +
+      : value.day.toString().padLeft(2, '0') +
+          '/' +
+          value.month.toString().padLeft(2, '0') +
+          '/' +
           value.year.toString();
 
   String _dateTime(DateTime value) =>
-      _date(value) + ' ' +
-      value.hour.toString().padLeft(2, '0') + ':' +
+      _date(value) +
+      ' ' +
+      value.hour.toString().padLeft(2, '0') +
+      ':' +
       value.minute.toString().padLeft(2, '0');
 
   String _sexo(SexoAnimal sexo) => sexo == SexoAnimal.femea ? 'Fêmea' : 'Macho';
