@@ -170,6 +170,10 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
 
     setState(() {
       _composicoesManuais[index].racaNome = raca;
+      _usandoComposicaoManual = true;
+      if (index == 0) {
+        _racaController.text = raca;
+      }
     });
   }
 
@@ -863,7 +867,11 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                     readOnly: _salvando,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(labelText: '%'),
-                    onChanged: (_) => setState(() {}),
+                    onChanged: (_) {
+                      setState(() {
+                        _usandoComposicaoManual = true;
+                      });
+                    },
                   ),
                 ),
                 if (_composicoesManuais.length > 1)
