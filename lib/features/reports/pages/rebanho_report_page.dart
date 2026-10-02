@@ -395,9 +395,11 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                               leading: CircleAvatar(
                                 backgroundColor:
                                     AppTheme.primaryColor.withValues(alpha: .10),
-                                child: const Icon(
-                                  Icons.description_outlined,
-                                  color: AppTheme.primaryColor,
+                                child: AppAssetIcon(
+                                  assetPath: animal.sexo == SexoAnimal.femea
+                                      ? 'assets/images/icon_ovino_femea.png'
+                                      : 'assets/images/icon_ovino_macho.png',
+                                  size: 24,
                                 ),
                               ),
                               title: Text(
@@ -471,10 +473,10 @@ class _Summary extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: [
-        _SummaryCard('Total', total.toString(), Icons.groups_rounded),
+        _SummaryCard('Total', total.toString(), 'assets/images/icon_animais.png'),
         _SummaryCard('Filtrados', filtered.toString(), Icons.filter_alt_outlined),
-        _SummaryCard('Fêmeas', femeas.toString(), Icons.female_rounded),
-        _SummaryCard('Machos', machos.toString(), Icons.male_rounded),
+        _SummaryCard('Fêmeas', femeas.toString(), 'assets/images/icon_ovino_femea.png'),
+        _SummaryCard('Machos', machos.toString(), 'assets/images/icon_ovino_macho.png'),
       ],
     );
   }
@@ -483,9 +485,9 @@ class _Summary extends StatelessWidget {
 class _SummaryCard extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
+  final String iconAsset;
 
-  const _SummaryCard(this.label, this.value, this.icon);
+  const _SummaryCard(this.label, this.value, this.iconAsset);
 
   @override
   Widget build(BuildContext context) {
@@ -496,7 +498,7 @@ class _SummaryCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            Icon(icon, color: AppTheme.primaryColor),
+            AppAssetIcon(assetPath: iconAsset, size: 24),
             const SizedBox(width: 9),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
