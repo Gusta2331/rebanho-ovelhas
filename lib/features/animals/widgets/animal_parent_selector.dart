@@ -125,6 +125,7 @@ class AnimalParentSelector extends StatelessWidget {
                             Text(
                               'Brinco ${animal.brinco} • ${animal.raca}',
                               maxLines: 1,
+                              softWrap: false,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 13,
