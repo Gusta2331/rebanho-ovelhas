@@ -252,14 +252,19 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
           icon: const Icon(Icons.arrow_back_rounded),
         ),
         title: const Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             AppAssetIcon(
               assetPath: 'assets/images/icon_animais.png',
               size: 26,
             ),
             SizedBox(width: 8),
-            Text('Relatório do rebanho'),
+            Flexible(
+              child: Text(
+                'Relatório do rebanho',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         actions: [
