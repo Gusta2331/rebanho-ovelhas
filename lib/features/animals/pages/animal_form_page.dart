@@ -840,28 +840,11 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
           ),
           const SizedBox(height: 14),
           for (var index = 0; index < _composicoesManuais.length; index++) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: _salvando ? null : () => _selecionarRacaComposicao(index),
-                    borderRadius: BorderRadius.circular(12),
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Raça',
-                        prefixIcon: Icon(Icons.category_outlined),
-                      ),
-                      child: Text(
-                        _composicoesManuais[index].racaNome.isEmpty
-                            ? 'Selecionar raça'
-                            : _composicoesManuais[index].racaNome,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 92,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compacto = constraints.maxWidth < 360;
+                final campoPercentual = SizedBox(
+                  width: compacto ? 78 : 92,
                   child: TextFormField(
                     controller: _composicoesManuais[index].percentualController,
                     readOnly: _salvando,
@@ -873,23 +856,79 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
                       });
                     },
                   ),
-                ),
-                if (_composicoesManuais.length > 1)
-                  IconButton(
-                    onPressed: _salvando ? null : () => _removerComposicao(index),
-                    icon: const Icon(Icons.delete_outline_rounded),
-                    color: Colors.red,
+                );
+
+                final campoRaca = InkWell(
+                  onTap: _salvando ? null : () => _selecionarRacaComposicao(index),
+                  borderRadius: BorderRadius.circular(12),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Raça',
+                      prefixIcon: Icon(Icons.category_outlined),
+                    ),
+                    child: Text(
+                      _composicoesManuais[index].racaNome.isEmpty
+                          ? 'Selecionar raça'
+                          : _composicoesManuais[index].racaNome,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-              ],
+                );
+
+                final remover = _composicoesManuais.length > 1
+                    ? IconButton(
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
+                        padding: EdgeInsets.zero,
+                        onPressed: _salvando ? null : () => _removerComposicao(index),
+                        icon: const Icon(Icons.delete_outline_rounded),
+                        color: Colors.red,
+                      )
+                    : null;
+
+                if (compacto) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      campoRaca,
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          campoPercentual,
+                          if (remover != null) ...[
+                            const Spacer(),
+                            remover,
+                          ],
+                        ],
+                      ),
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: campoRaca),
+                    const SizedBox(width: 8),
+                    campoPercentual,
+                    if (remover != null) remover,
+                  ],
+                );
+              },
             ),
             if (index < _composicoesManuais.length - 1)
               const SizedBox(height: 10),
           ],
           const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: _salvando ? null : _adicionarComposicao,
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Adicionar outra raça'),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _salvando ? null : _adicionarComposicao,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Adicionar outra raça'),
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -903,17 +942,32 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
+            child: OutlinedButton(
               onPressed: _salvando || _calculandoComposicao
                   ? null
                   : temPais
                       ? _calcularComposicaoPelosPais
                       : _mostrarAvisoPaisIncompletos,
-              icon: _calculandoComposicao
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.auto_awesome_rounded),
-              label: Text(
-                _calculandoComposicao ? 'Calculando...' : 'Calcular automaticamente pelos pais',
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _calculandoComposicao
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.auto_awesome_rounded),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      _calculandoComposicao
+                          ? 'Calculando...'
+                          : 'Calcular automaticamente pelos pais',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
