@@ -171,9 +171,16 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back_rounded)),
-        title: const Row(mainAxisSize: MainAxisSize.min, children: [
+        title: const Row(children: [
           AppAssetIcon(assetPath: 'assets/images/icon_cobertura.png', size: 26),
-          SizedBox(width: 8), Text('Relatório de reprodução'),
+          SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              'Relatório de reprodução',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ]),
         actions: [IconButton(
           tooltip: 'Gerar relatório',
