@@ -163,20 +163,27 @@ class RebanhoSelector extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          rebanho.nome,
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: rebanho.nome,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textColor,
+                                ),
+                              ),
+                              TextSpan(
+                                text: ' • ${rebanho.quantidadeAnimais} ativos',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textColor,
-                          ),
-                        ),
-                        Text(
-                          '${rebanho.quantidadeAnimais} animais ativos',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black54,
-                          ),
                         ),
                       ],
                     ),
