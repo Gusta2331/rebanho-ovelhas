@@ -23,7 +23,7 @@ class ReportPdfService {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(
-              'Fazenda Baixinha • OviGestão',
+              'Fazenda Baixinha - OviGestão',
               style: pw.TextStyle(fontSize: 8, color: muted),
             ),
             pw.Text(
@@ -55,7 +55,7 @@ class ReportPdfService {
                 ),
                 pw.SizedBox(height: 5),
                 pw.Text(
-                  'Fazenda Baixinha • gerado em ' + _dateTime(data.generatedAt),
+                  'Fazenda Baixinha - gerado em ' + _dateTime(data.generatedAt),
                   style: pw.TextStyle(
                     color: PdfColors.white,
                     fontSize: 9,
@@ -273,7 +273,7 @@ class ReportPdfService {
         footer: (context) => pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Text('Fazenda Baixinha • OviGestão', style: pw.TextStyle(fontSize: 8, color: muted)),
+            pw.Text('Fazenda Baixinha - OviGestão', style: pw.TextStyle(fontSize: 8, color: muted)),
             pw.Text('Página ' + context.pageNumber.toString() + ' de ' + context.pagesCount.toString(), style: pw.TextStyle(fontSize: 8, color: muted)),
           ],
         ),
@@ -286,7 +286,7 @@ class ReportPdfService {
               children: [
                 pw.Text('RELATÓRIO DE MANEJO', style: pw.TextStyle(color: PdfColors.white, fontSize: 20, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 5),
-                pw.Text('Fazenda Baixinha • gerado em ' + _manejoDateTime(generatedAt), style: pw.TextStyle(color: PdfColors.white, fontSize: 9)),
+                pw.Text('Fazenda Baixinha - gerado em ' + _manejoDateTime(generatedAt), style: pw.TextStyle(color: PdfColors.white, fontSize: 9)),
               ],
             ),
           ),
@@ -359,7 +359,7 @@ class ReportPdfService {
     if (value is! Map) return 'Animal não identificado';
     final brinco = value['brinco']?.toString().trim() ?? '';
     final nome = value['nome']?.toString().trim() ?? '';
-    if (brinco.isNotEmpty && nome.isNotEmpty) return brinco + ' • ' + nome;
+    if (brinco.isNotEmpty && nome.isNotEmpty) return brinco + ' - ' + nome;
     if (brinco.isNotEmpty) return brinco;
     if (nome.isNotEmpty) return nome;
     return 'Animal não identificado';
@@ -383,17 +383,17 @@ class ReportPdfService {
       case 'famacha': return 'Escore FAMACHA: ' + _manejoText(r['famacha_escore']);
       case 'vacinacao':
         return 'Vacina: ' + _manejoText(r['vacina_nome']) +
-            ' • Dose: ' + _manejoDose(r) +
-            ' • Via: ' + _manejoText(r['via_aplicacao']);
+            ' - Dose: ' + _manejoDose(r) +
+            ' - Via: ' + _manejoText(r['via_aplicacao']);
       case 'vermifugacao':
         return 'Vermífugo: ' + _manejoText(r['vermifugo_nome']) +
-            ' • Dose: ' + _manejoDose(r) +
-            ' • Via: ' + _manejoText(r['via_aplicacao']);
+            ' - Dose: ' + _manejoDose(r) +
+            ' - Via: ' + _manejoText(r['via_aplicacao']);
       case 'tratamento':
         return 'Medicamento: ' + _manejoText(r['medicamento_nome']) +
-            ' • Enfermidade: ' + _manejoText(r['enfermidade']) +
-            ' • Dose: ' + _manejoDose(r) +
-            ' • Via: ' + _manejoText(r['via_aplicacao']);
+            ' - Enfermidade: ' + _manejoText(r['enfermidade']) +
+            ' - Dose: ' + _manejoDose(r) +
+            ' - Via: ' + _manejoText(r['via_aplicacao']);
       case 'denticao':
         return 'Dentição: ' + _manejoText(r['denticao']);
       case 'tosquia':
