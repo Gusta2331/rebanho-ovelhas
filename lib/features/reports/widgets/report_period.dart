@@ -62,9 +62,9 @@ class ReportPeriod {
   }
 
   static DateTime _subtractMonths(DateTime date, int months) {
-    final targetMonth = date.month - months;
-    final year = date.year + ((targetMonth - 1) ~/ 12);
-    final month = ((targetMonth - 1) % 12) + 1;
+    final totalMonths = date.year * 12 + (date.month - 1) - months;
+    final year = totalMonths ~/ 12;
+    final month = (totalMonths % 12) + 1;
     final lastDay = DateTime(year, month + 1, 0).day;
     return DateTime(year, month, date.day > lastDay ? lastDay : date.day);
   }
