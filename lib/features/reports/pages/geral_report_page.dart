@@ -29,6 +29,7 @@ class _GeralReportPageState extends State<GeralReportPage> {
   final List<Map<String, dynamic>> _cacheProdutos = [];
   final List<Map<String, dynamic>> _cacheLotes = [];
   final List<Map<String, dynamic>> _cacheAlertas = [];
+  final List<Map<String, dynamic>> _cacheFarmaciaMovimentacoes = [];
   final List<Map<String, dynamic>> _cacheFinanceiro = [];
   String _period = 'all';
   DateTime? _customStart;
@@ -64,7 +65,7 @@ class _GeralReportPageState extends State<GeralReportPage> {
 
       final firstResults = await Future.wait([
         SupabaseService.client.from('animais').select(
-              'id,status,sexo,data_nascimento,origem,racas(nome)',
+              'id,status,sexo,data_nascimento,data_entrada,data_saida,data_aquisicao,origem,racas(nome)',
             ).eq('fazenda_id', farmId),
         SupabaseService.client.from('reproducoes').select(
               'id,status,data_cobertura,data_confirmacao_prenhez,data_parto',
@@ -78,8 +79,11 @@ class _GeralReportPageState extends State<GeralReportPage> {
         SupabaseService.client.from('farmacia_lotes').select(
               'id,produto_id,quantidade_atual,validade,codigo_lote',
             ).eq('fazenda_id', farmId).gt('quantidade_atual', 0),
+        SupabaseService.client.from('farmacia_movimentacoes').select(
+              'id,produto_id,tipo,quantidade,data,observacoes,farmacia_produtos(nome,categoria,unidade,unidade_estoque),farmacia_lotes(codigo_lote,validade),animais(brinco,nome)',
+            ).eq('fazenda_id', farmId),
         SupabaseService.client.from('farmacia_alertas').select(
-              'id,produto_id,tipo,aberto',
+              'id,produto_id,tipo,aberto,created_at,resolvido_em',
             ).eq('fazenda_id', farmId).eq('aberto', true),
         SupabaseService.client.from('financeiro_lancamentos').select(
               'id,tipo,categoria,descricao,valor,data',
@@ -128,7 +132,7 @@ class _GeralReportPageState extends State<GeralReportPage> {
         ..addAll(List<Map<String, dynamic>>.from(firstResults[4] as List));
       _cacheAlertas
         ..clear()
-        ..addAll(List<Map<String, dynamic>>.from(firstResults[5] as List));
+        ..addAll(List<Map<String, dynamic>>.from(firstResults[7] as List));
       _cacheFinanceiro
         ..clear()
         ..addAll(List<Map<String, dynamic>>.from(firstResults[6] as List));
@@ -141,6 +145,7 @@ class _GeralReportPageState extends State<GeralReportPage> {
         manejos: _cacheManejos,
         produtos: _cacheProdutos,
         lotes: _cacheLotes,
+        farmaciaMovimentacoes: _cacheFarmaciaMovimentacoes,
         alertas: _cacheAlertas,
         financeiro: _cacheFinanceiro,
       );
@@ -164,6 +169,7 @@ class _GeralReportPageState extends State<GeralReportPage> {
     required List<Map<String, dynamic>> manejos,
     required List<Map<String, dynamic>> produtos,
     required List<Map<String, dynamic>> lotes,
+    required List<Map<String, dynamic>> farmaciaMovimentacoes,
     required List<Map<String, dynamic>> alertas,
     required List<Map<String, dynamic>> financeiro,
   }) {
@@ -174,6 +180,12 @@ class _GeralReportPageState extends State<GeralReportPage> {
     if (range != null) {
       final inicio = range.$1;
       final fim = range.$2;
+      animais = _filterByDate(
+        animais,
+        ['data_entrada', 'data_saida', 'data_aquisicao'],
+        inicio,
+        fim,
+      );
       reproducoes = _filterByDate(reproducoes, [
         'data_cobertura',
         'data_confirmacao_prenhez',
@@ -192,6 +204,14 @@ class _GeralReportPageState extends State<GeralReportPage> {
         fim,
       );
       manejos = _filterByDate(manejos, ['data'], inicio, fim);
+      farmaciaMovimentacoes =
+          _filterByDate(farmaciaMovimentacoes, ['data'], inicio, fim);
+      alertas = _filterByDate(
+        alertas,
+        ['created_at'],
+        inicio,
+        fim,
+      );
       financeiro = _filterByDate(financeiro, ['data'], inicio, fim);
     }
 
@@ -246,6 +266,13 @@ class _GeralReportPageState extends State<GeralReportPage> {
     }
     final pesoMedio =
         pesos.isEmpty ? null : pesos.reduce((a, b) => a + b) / pesos.length;
+
+    final farmaciaEntradas = farmaciaMovimentacoes
+        .where((e) => e['tipo'] == 'entrada')
+        .fold<double>(0, (s, e) => s + _number(e['quantidade']));
+    final farmaciaSaidas = farmaciaMovimentacoes
+        .where((e) => e['tipo'] == 'saida')
+        .fold<double>(0, (s, e) => s + _number(e['quantidade']));
 
     final estoqueBaixo = produtos
         .where((e) => _number(e['estoque']) <= _number(e['estoque_minimo']))
@@ -326,7 +353,7 @@ class _GeralReportPageState extends State<GeralReportPage> {
           title: 'Rebanho',
           icon: 'assets/images/icon_animais.png',
           items: [
-            _Metric('Total cadastrado', animais.length.toString()),
+            _Metric('Animais registrados no período', animais.length.toString()),
             _Metric('Ativos', ativos.length.toString()),
             _Metric('Fêmeas ativas', femeas.toString()),
             _Metric('Machos ativos', machos.toString()),
@@ -381,8 +408,11 @@ class _GeralReportPageState extends State<GeralReportPage> {
           title: 'Farmácia',
           icon: 'assets/images/icon_farmacia.png',
           items: [
-            _Metric('Produtos ativos', produtos.length.toString()),
-            _Metric('Estoque baixo', estoqueBaixo.toString()),
+            _Metric('Produtos ativos atuais', produtos.length.toString()),
+            _Metric('Movimentações no período', farmaciaMovimentacoes.length.toString()),
+            _Metric('Entradas no período', _formatQuantidade(farmaciaEntradas)),
+            _Metric('Saídas no período', _formatQuantidade(farmaciaSaidas)),
+            _Metric('Estoque baixo atual', estoqueBaixo.toString()),
             _Metric('Lotes com estoque', lotes.length.toString()),
             _Metric('Lotes vencidos', lotesVencidos.toString()),
             _Metric('Vencendo em até 30 dias', lotesVencendo.toString()),
@@ -850,6 +880,7 @@ class _GeralReportPageState extends State<GeralReportPage> {
       manejos: _cacheManejos,
       produtos: _cacheProdutos,
       lotes: _cacheLotes,
+      farmaciaMovimentacoes: _cacheFarmaciaMovimentacoes,
       alertas: _cacheAlertas,
       financeiro: _cacheFinanceiro,
     );
@@ -1042,6 +1073,43 @@ class _GeralReportPageState extends State<GeralReportPage> {
   }
 
   String _money(double value) => value.toStringAsFixed(2).replaceAll('.', ',');
+
+  String _formatQuantidade(double value) {
+    return value % 1 == 0
+        ? value.toInt().toString()
+        : value.toStringAsFixed(3).replaceFirst(RegExp(r'0+
+
+class _ReportSection {
+  final String id;
+  final String title;
+  final String icon;
+  final List<_Metric> items;
+
+  const _ReportSection({
+    required this.id,
+    required this.title,
+    required this.icon,
+    required this.items,
+  });
+}
+
+class _Metric {
+  final String label;
+  final String value;
+
+  const _Metric(this.label, this.value);
+}
+
+
+class _PeriodChoice {
+  final String type;
+  final DateTime? start;
+  final DateTime? end;
+
+  const _PeriodChoice(this.type, this.start, this.end);
+}
+), '');
+  }
 }
 
 class _ReportSection {
