@@ -21,6 +21,18 @@ class _GeralReportPageState extends State<GeralReportPage> {
   String? _error;
   final Set<String> _selectedIds = <String>{};
   final List<_ReportSection> _sections = [];
+  final List<Map<String, dynamic>> _cacheAnimais = [];
+  final List<Map<String, dynamic>> _cacheReproducoes = [];
+  final List<Map<String, dynamic>> _cacheNascimentos = [];
+  final List<Map<String, dynamic>> _cacheCoberturas = [];
+  final List<Map<String, dynamic>> _cacheManejos = [];
+  final List<Map<String, dynamic>> _cacheProdutos = [];
+  final List<Map<String, dynamic>> _cacheLotes = [];
+  final List<Map<String, dynamic>> _cacheAlertas = [];
+  final List<Map<String, dynamic>> _cacheFinanceiro = [];
+  String _period = 'all';
+  DateTime? _customStart;
+  DateTime? _customEnd;
 
   @override
   void initState() {
@@ -93,18 +105,44 @@ class _GeralReportPageState extends State<GeralReportPage> {
       final reproductionDetails =
           await Future.wait([nascimentoFuture, coberturaFuture]);
 
+      _cacheAnimais
+        ..clear()
+        ..addAll(List<Map<String, dynamic>>.from(firstResults[0] as List));
+      _cacheReproducoes
+        ..clear()
+        ..addAll(reproducoes);
+      _cacheNascimentos
+        ..clear()
+        ..addAll(List<Map<String, dynamic>>.from(reproductionDetails[0] as List));
+      _cacheCoberturas
+        ..clear()
+        ..addAll(List<Map<String, dynamic>>.from(reproductionDetails[1] as List));
+      _cacheManejos
+        ..clear()
+        ..addAll(List<Map<String, dynamic>>.from(firstResults[2] as List));
+      _cacheProdutos
+        ..clear()
+        ..addAll(List<Map<String, dynamic>>.from(firstResults[3] as List));
+      _cacheLotes
+        ..clear()
+        ..addAll(List<Map<String, dynamic>>.from(firstResults[4] as List));
+      _cacheAlertas
+        ..clear()
+        ..addAll(List<Map<String, dynamic>>.from(firstResults[5] as List));
+      _cacheFinanceiro
+        ..clear()
+        ..addAll(List<Map<String, dynamic>>.from(firstResults[6] as List));
+
       _buildSections(
-        animais: List<Map<String, dynamic>>.from(firstResults[0] as List),
-        reproducoes: reproducoes,
-        nascimentos:
-            List<Map<String, dynamic>>.from(reproductionDetails[0] as List),
-        coberturas:
-            List<Map<String, dynamic>>.from(reproductionDetails[1] as List),
-        manejos: List<Map<String, dynamic>>.from(firstResults[2] as List),
-        produtos: List<Map<String, dynamic>>.from(firstResults[3] as List),
-        lotes: List<Map<String, dynamic>>.from(firstResults[4] as List),
-        alertas: List<Map<String, dynamic>>.from(firstResults[5] as List),
-        financeiro: List<Map<String, dynamic>>.from(firstResults[6] as List),
+        animais: _cacheAnimais,
+        reproducoes: _cacheReproducoes,
+        nascimentos: _cacheNascimentos,
+        coberturas: _cacheCoberturas,
+        manejos: _cacheManejos,
+        produtos: _cacheProdutos,
+        lotes: _cacheLotes,
+        alertas: _cacheAlertas,
+        financeiro: _cacheFinanceiro,
       );
 
       if (mounted) setState(() => _loading = false);
@@ -131,6 +169,31 @@ class _GeralReportPageState extends State<GeralReportPage> {
   }) {
     final hoje = DateTime.now();
     final dia = DateTime(hoje.year, hoje.month, hoje.day);
+    final range = _periodRange(hoje);
+
+    if (range != null) {
+      final inicio = range.$1;
+      final fim = range.$2;
+      reproducoes = _filterByDate(reproducoes, [
+        'data_cobertura',
+        'data_confirmacao_prenhez',
+        'data_parto',
+      ], inicio, fim);
+      nascimentos = _filterByDate(
+        nascimentos,
+        ['data_nascimento'],
+        inicio,
+        fim,
+      );
+      coberturas = _filterByDate(
+        coberturas,
+        ['data_cobertura'],
+        inicio,
+        fim,
+      );
+      manejos = _filterByDate(manejos, ['data'], inicio, fim);
+      financeiro = _filterByDate(financeiro, ['data'], inicio, fim);
+    }
 
     final ativos = animais.where((e) => e['status'] == 'ativo').toList();
     final femeas = ativos.where((e) => _sexo(e['sexo']) == 'femea').length;
@@ -434,6 +497,8 @@ class _GeralReportPageState extends State<GeralReportPage> {
                   children: [
                     _heroCard(),
                     const SizedBox(height: 12),
+                    _periodCard(),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
                         TextButton.icon(
@@ -595,6 +660,264 @@ class _GeralReportPageState extends State<GeralReportPage> {
     );
   }
 
+  Widget _periodCard() {
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: _choosePeriod,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF367C2B).withValues(alpha: .10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.date_range_rounded,
+                  color: Color(0xFF367C2B),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Período do relatório',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _periodLabel(),
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _periodLabel() {
+    switch (_period) {
+      case 'week':
+        return 'Última semana';
+      case 'month':
+        return 'Último mês';
+      case 'year':
+        return 'Último ano';
+      case 'custom':
+        if (_customStart != null && _customEnd != null) {
+          return _formatDate(_customStart!) + ' a ' + _formatDate(_customEnd!);
+        }
+        return 'Período personalizado';
+      default:
+        return 'Todo o período';
+    }
+  }
+
+  Future<void> _choosePeriod() async {
+    var selected = _period;
+    var start = _customStart;
+    var end = _customEnd;
+
+    final result = await showDialog<_PeriodChoice>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Período do relatório'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<String>(
+                value: 'all',
+                groupValue: selected,
+                title: const Text('Todo o período'),
+                onChanged: (value) =>
+                    setDialogState(() => selected = value!),
+              ),
+              RadioListTile<String>(
+                value: 'week',
+                groupValue: selected,
+                title: const Text('Última semana'),
+                onChanged: (value) =>
+                    setDialogState(() => selected = value!),
+              ),
+              RadioListTile<String>(
+                value: 'month',
+                groupValue: selected,
+                title: const Text('Último mês'),
+                onChanged: (value) =>
+                    setDialogState(() => selected = value!),
+              ),
+              RadioListTile<String>(
+                value: 'year',
+                groupValue: selected,
+                title: const Text('Último ano'),
+                onChanged: (value) =>
+                    setDialogState(() => selected = value!),
+              ),
+              RadioListTile<String>(
+                value: 'custom',
+                groupValue: selected,
+                title: const Text('Período personalizado'),
+                onChanged: (value) =>
+                    setDialogState(() => selected = value!),
+              ),
+              if (selected == 'custom')
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.event_rounded),
+                  title: Text(
+                    start == null || end == null
+                        ? 'Escolher datas'
+                        : _formatDate(start!) + ' a ' + _formatDate(end!),
+                  ),
+                  onTap: () async {
+                    final picked = await showDateRangePicker(
+                      context: ctx,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime.now(),
+                      initialDateRange: start != null && end != null
+                          ? DateTimeRange(start: start!, end: end!)
+                          : null,
+                      locale: const Locale('pt', 'BR'),
+                    );
+                    if (picked != null) {
+                      setDialogState(() {
+                        start = picked.start;
+                        end = picked.end;
+                      });
+                    }
+                  },
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: selected == 'custom' && (start == null || end == null)
+                  ? null
+                  : () => Navigator.pop(
+                        ctx,
+                        _PeriodChoice(
+                          selected,
+                          start,
+                          end,
+                        ),
+                      ),
+              child: const Text('Aplicar'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == null || !mounted) return;
+
+    setState(() {
+      _period = result.type;
+      _customStart = result.start;
+      _customEnd = result.end;
+    });
+    _rebuildCurrentReport();
+  }
+
+  void _rebuildCurrentReport() {
+    _buildSections(
+      animais: _cacheAnimais,
+      reproducoes: _cacheReproducoes,
+      nascimentos: _cacheNascimentos,
+      coberturas: _cacheCoberturas,
+      manejos: _cacheManejos,
+      produtos: _cacheProdutos,
+      lotes: _cacheLotes,
+      alertas: _cacheAlertas,
+      financeiro: _cacheFinanceiro,
+    );
+    setState(() {});
+  }
+
+  DateTime? _date(dynamic value) {
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
+  }
+
+  List<Map<String, dynamic>> _filterByDate(
+    List<Map<String, dynamic>> source,
+    List<String> fields,
+    DateTime start,
+    DateTime end,
+  ) {
+    final endExclusive = end.add(const Duration(days: 1));
+    return source.where((item) {
+      for (final field in fields) {
+        final value = _date(item[field]);
+        if (value != null &&
+            !value.isBefore(start) &&
+            value.isBefore(endExclusive)) {
+          return true;
+        }
+      }
+      return false;
+    }).toList();
+  }
+
+  (DateTime, DateTime)? _periodRange(DateTime now) {
+    final today = DateTime(now.year, now.month, now.day);
+    switch (_period) {
+      case 'week':
+        return (today.subtract(const Duration(days: 7)), today);
+      case 'month':
+        return (DateTime(today.year, today.month - 1, today.day), today);
+      case 'year':
+        return (DateTime(today.year - 1, today.month, today.day), today);
+      case 'custom':
+        if (_customStart != null && _customEnd != null) {
+          return (
+            DateTime(
+              _customStart!.year,
+              _customStart!.month,
+              _customStart!.day,
+            ),
+            DateTime(
+              _customEnd!.year,
+              _customEnd!.month,
+              _customEnd!.day,
+            ),
+          );
+        }
+        return null;
+      default:
+        return null;
+    }
+  }
+
+  String _formatDate(DateTime value) =>
+      value.day.toString().padLeft(2, '0') +
+      '/' +
+      value.month.toString().padLeft(2, '0') +
+      '/' +
+      value.year.toString();
+
   Future<void> _chooseFormat() async {
     if (_selectedIds.isEmpty || _generating) return;
     final format = await showModalBottomSheet<String>(
@@ -740,4 +1063,13 @@ class _Metric {
   final String value;
 
   const _Metric(this.label, this.value);
+}
+
+
+class _PeriodChoice {
+  final String type;
+  final DateTime? start;
+  final DateTime? end;
+
+  const _PeriodChoice(this.type, this.start, this.end);
 }
