@@ -112,21 +112,6 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
     return ['Todas', ...values];
   }
 
-  String _date(DateTime? value) => value == null
-      ? ''
-      : value.day.toString().padLeft(2, '0') +
-          '/' +
-          value.month.toString().padLeft(2, '0') +
-          '/' +
-          value.year.toString();
-
-  String _statusName(StatusAnimal status) => switch (status) {
-        StatusAnimal.ativo => 'Ativo',
-        StatusAnimal.vendido => 'Vendido',
-        StatusAnimal.morto => 'Morto',
-        StatusAnimal.descartado => 'Descartado',
-      };
-
   List<Animal> get _selectedAnimals => _filtered.where((a) => _selectedIds.contains(a.id.toString())).toList();
 
   void _selectAll() => setState(() => _selectedIds.addAll(_filtered.map((a) => a.id.toString())));
