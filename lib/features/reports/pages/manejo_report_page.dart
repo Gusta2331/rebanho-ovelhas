@@ -24,16 +24,12 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
   String _tipo = 'Todos';
   DateTime? _from;
   DateTime? _to;
-  final Set<String> _selectedManejoIds = <String>{};
-
   @override
   void initState() {
     super.initState();
     _search.addListener(_refresh);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _load();
-    });
+    _load();
   }
 
   @override
@@ -61,9 +57,6 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
 
       setState(() {
         _items = items;
-        _selectedManejoIds.removeWhere(
-          (id) => !items.any((item) => item.manejo.id == id),
-        );
         _loading = false;
       });
     } catch (error) {
@@ -98,39 +91,6 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
       return matchesTipo && matchesFrom && matchesTo && matchesSearch;
     }).toList();
   }
-
-  List<_ManejoItem> get _selectedManejos => _items
-      .where((item) => _selectedManejoIds.contains(item.manejo.id))
-      .toList();
-
-  bool _isSelected(_ManejoItem item) =>
-      _selectedManejoIds.contains(item.manejo.id);
-
-  void _toggleSelection(_ManejoItem item) {
-    setState(() {
-      if (_selectedManejoIds.contains(item.manejo.id)) {
-        _selectedManejoIds.remove(item.manejo.id);
-      } else {
-        _selectedManejoIds.add(item.manejo.id);
-      }
-    });
-  }
-
-  void _selectAllFiltered() {
-    setState(() {
-      _selectedManejoIds.addAll(
-        _filtered.map((item) => item.manejo.id),
-      );
-    });
-  }
-
-  void _clearSelection() {
-    setState(() => _selectedManejoIds.clear());
-  }
-
-  bool get _allFilteredSelected =>
-      _filtered.isNotEmpty &&
-      _filtered.every((item) => _selectedManejoIds.contains(item.manejo.id));
 
   String _tipoFromLabel(TipoManejo tipo) {
     switch (tipo) {
@@ -272,7 +232,6 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
                       _Summary(
                         total: _items.length,
                         filtered: filtered.length,
-                        selected: _selectedManejos.length,
                         types: filtered
                             .map((item) => item.manejo.tipo)
                             .toSet()
@@ -348,10 +307,6 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
                       const SizedBox(height: 8),
                       _SelectionCard(
                         filteredCount: filtered.length,
-                        selectedCount: _selectedManejos.length,
-                        allSelected: _allFilteredSelected,
-                        onSelectAll: _selectAllFiltered,
-                        onClear: _clearSelection,
                       ),
                       const SizedBox(height: 12),
                       if (filtered.isEmpty)
@@ -439,13 +394,11 @@ class _ManejoItem {
 class _Summary extends StatelessWidget {
   final int total;
   final int filtered;
-  final int selected;
   final int types;
 
   const _Summary({
     required this.total,
     required this.filtered,
-    required this.selected,
     required this.types,
   });
 
@@ -470,10 +423,6 @@ class _Summary extends StatelessWidget {
           iconAsset: 'assets/images/icon_lotes.png',
         ),
         _SummaryCard(
-          value: selected.toString(),
-          label: 'Selecionados',
-          iconAsset: 'assets/images/icon_manejo.png',
-        ),
         _SummaryCard(
           value: types.toString(),
           label: 'Tipos',
@@ -528,55 +477,6 @@ class _SummaryCard extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SelectionCard extends StatelessWidget {
-  final int filteredCount;
-  final int selectedCount;
-  final bool allSelected;
-  final VoidCallback onSelectAll;
-  final VoidCallback onClear;
-
-  const _SelectionCard({
-    required this.filteredCount,
-    required this.selectedCount,
-    required this.allSelected,
-    required this.onSelectAll,
-    required this.onClear,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 8,
-          runSpacing: 6,
-          children: [
-            const AppAssetIcon(
-              assetPath: 'assets/images/icon_manejo.png',
-              size: 24,
-            ),
-            Text(
-              selectedCount.toString() + ' manejo(s) selecionado(s)',
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            TextButton(
-              onPressed: filteredCount == 0 || allSelected ? null : onSelectAll,
-              child: const Text('Selecionar todos'),
-            ),
-            TextButton(
-              onPressed: selectedCount == 0 ? null : onClear,
-              child: const Text('Limpar'),
             ),
           ],
         ),
