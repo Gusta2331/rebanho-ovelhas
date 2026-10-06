@@ -141,6 +141,7 @@ class ReportExcelService {
       fontColorHex: ExcelColor.fromHexString('#263323'),
       fontSize: 12,
       bold: true,
+      horizontalAlign: HorizontalAlign.Center,
       verticalAlign: VerticalAlign.Center,
     );
 
@@ -156,6 +157,7 @@ class ReportExcelService {
       fontColorHex: ExcelColor.fromHexString('#24551D'),
       fontSize: 12,
       bold: true,
+      horizontalAlign: HorizontalAlign.Center,
       verticalAlign: VerticalAlign.Center,
     );
 
