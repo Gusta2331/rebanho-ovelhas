@@ -11,6 +11,9 @@ class ReportPeriod {
 
   const ReportPeriod.all() : this._(ReportPeriodType.all, null, null);
 
+  const ReportPeriod.custom(DateTime start, DateTime end)
+      : this._(ReportPeriodType.custom, start, end);
+
   ReportPeriod copyWith({
     ReportPeriodType? type,
     DateTime? start,
