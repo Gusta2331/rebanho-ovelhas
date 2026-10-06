@@ -91,22 +91,33 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   void _openType(ReportType type) {
-    if (type == ReportType.manejo ||
-        type == ReportType.rebanho ||
-        type == ReportType.reproducao) {
-      setState(() => _selectedType = type);
-      return;
+    switch (type) {
+      case ReportType.rebanho:
+        setState(() => _selectedType = ReportType.rebanho);
+        return;
+      case ReportType.reproducao:
+        setState(() => _selectedType = ReportType.reproducao);
+        return;
+      case ReportType.manejo:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => ManejoReportPage(
+              onBack: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
+        return;
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'O relatório de ' +
+                  type.title.toLowerCase() +
+                  ' será disponibilizado na próxima etapa.',
+            ),
+          ),
+        );
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'O relatório de ' +
-              type.title.toLowerCase() +
-              ' será disponibilizado na próxima etapa.',
-        ),
-      ),
-    );
   }
 }
 
