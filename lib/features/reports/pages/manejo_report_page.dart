@@ -6,6 +6,7 @@ import '../../manejo/models/manejo.dart';
 import '../../manejo/services/manejo_service.dart';
 import '../services/report_excel_service.dart';
 import '../services/report_pdf_service.dart';
+import '../widgets/report_period.dart';
 
 class ManejoReportPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -26,6 +27,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
   TipoManejo? _type;
   DateTime? _from;
   DateTime? _to;
+  ReportPeriod _period = const ReportPeriod.all();
   final Set<String> _selectedIds = <String>{};
 
   @override
@@ -88,7 +90,13 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
     _filter();
   }
 
-  void _clear() { setState(() { _type = null; _from = null; _to = null; }); _filter(); }
+  void _applyPeriod(ReportPeriod value) {
+    final range = value.range();
+    setState(() { _period = value; _from = range?.$1; _to = range?.$2; _selectedIds.clear(); });
+    _filter();
+  }
+
+  void _clear() { setState(() { _type = null; _from = null; _to = null; _period = const ReportPeriod.all(); }); _filter(); }
 
   @override
   Widget build(BuildContext context) {
