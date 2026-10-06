@@ -50,18 +50,12 @@ class _GeralReportPageState extends State<GeralReportPage> {
         throw Exception('Nenhuma fazenda ativa foi encontrada.');
       }
 
-      final results = await Future.wait([
+      final firstResults = await Future.wait([
         SupabaseService.client.from('animais').select(
               'id,status,sexo,data_nascimento,origem,racas(nome)',
             ).eq('fazenda_id', farmId),
         SupabaseService.client.from('reproducoes').select(
               'id,status,data_cobertura,data_confirmacao_prenhez,data_parto',
-            ).eq('fazenda_id', farmId),
-        SupabaseService.client.from('reproducao_nascimentos').select(
-              'id,reproducao_id,sexo,data_nascimento',
-            ).eq('fazenda_id', farmId),
-        SupabaseService.client.from('reproducao_coberturas').select(
-              'id,reproducao_id,carneiro_id,data_cobertura',
             ).eq('fazenda_id', farmId),
         SupabaseService.client.from('manejos').select(
               'id,tipo,data,peso_kg,famacha_escore',
@@ -80,16 +74,37 @@ class _GeralReportPageState extends State<GeralReportPage> {
             ).eq('fazenda_id', farmId),
       ]);
 
+      final reproducoes =
+          List<Map<String, dynamic>>.from(firstResults[1] as List);
+      final reproducaoIds =
+          reproducoes.map((e) => e['id'].toString()).toList();
+
+      final nascimentoFuture = reproducaoIds.isEmpty
+          ? Future.value(<Map<String, dynamic>>[])
+          : SupabaseService.client.from('reproducao_nascimentos').select(
+              'id,reproducao_id,sexo,data_nascimento',
+            ).inFilter('reproducao_id', reproducaoIds);
+      final coberturaFuture = reproducaoIds.isEmpty
+          ? Future.value(<Map<String, dynamic>>[])
+          : SupabaseService.client.from('reproducao_coberturas').select(
+              'id,reproducao_id,carneiro_id,data_cobertura',
+            ).inFilter('reproducao_id', reproducaoIds);
+
+      final reproductionDetails =
+          await Future.wait([nascimentoFuture, coberturaFuture]);
+
       _buildSections(
-        animais: List<Map<String, dynamic>>.from(results[0] as List),
-        reproducoes: List<Map<String, dynamic>>.from(results[1] as List),
-        nascimentos: List<Map<String, dynamic>>.from(results[2] as List),
-        coberturas: List<Map<String, dynamic>>.from(results[3] as List),
-        manejos: List<Map<String, dynamic>>.from(results[4] as List),
-        produtos: List<Map<String, dynamic>>.from(results[5] as List),
-        lotes: List<Map<String, dynamic>>.from(results[6] as List),
-        alertas: List<Map<String, dynamic>>.from(results[7] as List),
-        financeiro: List<Map<String, dynamic>>.from(results[8] as List),
+        animais: List<Map<String, dynamic>>.from(firstResults[0] as List),
+        reproducoes: reproducoes,
+        nascimentos:
+            List<Map<String, dynamic>>.from(reproductionDetails[0] as List),
+        coberturas:
+            List<Map<String, dynamic>>.from(reproductionDetails[1] as List),
+        manejos: List<Map<String, dynamic>>.from(firstResults[2] as List),
+        produtos: List<Map<String, dynamic>>.from(firstResults[3] as List),
+        lotes: List<Map<String, dynamic>>.from(firstResults[4] as List),
+        alertas: List<Map<String, dynamic>>.from(firstResults[5] as List),
+        financeiro: List<Map<String, dynamic>>.from(firstResults[6] as List),
       );
 
       if (mounted) setState(() => _loading = false);
