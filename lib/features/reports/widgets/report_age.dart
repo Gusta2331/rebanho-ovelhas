@@ -74,7 +74,7 @@ class ReportAge {
         return minMonths != null &&
             maxMonths != null &&
             months >= minMonths! &&
-            months < maxMonths!;
+            months <= maxMonths!;
     }
   }
 
