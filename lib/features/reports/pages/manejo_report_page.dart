@@ -268,25 +268,113 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
 
   Future<void> _details(Map<String, dynamic> r) async {
     final type = Manejo.tipoFromString(r['tipo']?.toString());
-    final animal = r['animais'] is Map ? Map<String, dynamic>.from(r['animais']) : <String, dynamic>{};
-    final date = DateTime.tryParse(r['data']?.toString() ?? '') ?? DateTime.now();
-    final details = <String, String>{'Data': _dateText(date), 'Animal': _animal(animal), 'Tipo': _typeName(type)};
-    void add(String key, dynamic value) { final v = value?.toString().trim(); if (v != null && v.isNotEmpty) details[key] = v; }
-    if (type == TipoManejo.pesagem) add('Peso', _weight(r['peso_kg']));
-    if (type == TipoManejo.famacha) add('FAMACHA', r['famacha_escore']);
-    if (type == TipoManejo.vacinacao) { add('Vacina', r['vacina_nome']); add('Fabricante', r['vacina_fabricante']); add('Lote', r['vacina_lote']); add('Dose', _dose(r)); add('Via', r['via_aplicacao']); }
-    if (type == TipoManejo.vermifugacao) { add('Vermífugo', r['vermifugo_nome']); add('Princípio ativo', r['vermifugo_principio_ativo']); add('Dose', _dose(r)); add('Via', r['via_aplicacao']); }
-    if (type == TipoManejo.tratamento) { add('Medicamento', r['medicamento_nome']); add('Princípio ativo', r['medicamento_principio_ativo']); add('Enfermidade', r['enfermidade']); add('Dose', _dose(r)); add('Via', r['via_aplicacao']); }
-    if (type == TipoManejo.denticao) { add('Dentição', r['denticao']); add('Data da dentição', _parsedDate(r['denticao_data'])); }
-    if (type == TipoManejo.outro) add('Descrição', r['outro_nome']);
-    add('Carência', r['carencia_dias'] == null ? null : r['carencia_dias'].toString() + ' dia(s)');
+    final animal = r['animais'] is Map
+        ? Map<String, dynamic>.from(r['animais'])
+        : <String, dynamic>{};
+    final date =
+        DateTime.tryParse(r['data']?.toString() ?? '') ?? DateTime.now();
+
+    final details = <String, String>{
+      'Data': _dateText(date),
+      'Animal': _animal(animal),
+      'Tipo': _typeName(type),
+    };
+
+    void add(String key, dynamic value) {
+      final v = value?.toString().trim();
+      if (v != null && v.isNotEmpty) {
+        details[key] = v;
+      }
+    }
+
+    if (type == TipoManejo.pesagem) {
+      add('Peso', _weight(r['peso_kg']));
+    }
+    if (type == TipoManejo.famacha) {
+      add('FAMACHA', r['famacha_escore']);
+    }
+    if (type == TipoManejo.vacinacao) {
+      add('Vacina', r['vacina_nome']);
+      add('Fabricante', r['vacina_fabricante']);
+      add('Lote', r['vacina_lote']);
+      add('Dose', _dose(r));
+      add('Via', r['via_aplicacao']);
+    }
+    if (type == TipoManejo.vermifugacao) {
+      add('Vermífugo', r['vermifugo_nome']);
+      add('Princípio ativo', r['vermifugo_principio_ativo']);
+      add('Dose', _dose(r));
+      add('Via', r['via_aplicacao']);
+    }
+    if (type == TipoManejo.tratamento) {
+      add('Medicamento', r['medicamento_nome']);
+      add('Princípio ativo', r['medicamento_principio_ativo']);
+      add('Enfermidade', r['enfermidade']);
+      add('Dose', _dose(r));
+      add('Via', r['via_aplicacao']);
+    }
+    if (type == TipoManejo.denticao) {
+      add('Dentição', r['denticao']);
+      add('Data da dentição', _parsedDate(r['denticao_data']));
+    }
+    if (type == TipoManejo.outro) {
+      add('Descrição', r['outro_nome']);
+    }
+
+    add(
+      'Carência',
+      r['carencia_dias'] == null
+          ? null
+          : r['carencia_dias'].toString() + ' dia(s)',
+    );
     add('Observações', r['observacoes']);
+
     if (!mounted) return;
-    await showModalBottomSheet<void>(context: context, showDragHandle: true, isScrollControlled: true, builder: (ctx) => SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(20, 4, 20, 24), child: ListView(shrinkWrap: true, children: [
-      const Text('Detalhes do manejo', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800)), const SizedBox(height: 16),
-      ...details.entries.map((e) => Padding(padding: const EdgeInsets.only(bottom: 12), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [SizedBox(width: 120, child: Text(e.key, style: const TextStyle(fontWeight: FontWeight.w700))), Expanded(child: Text(e.value))]))),
-      FilledButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Fechar')),
-    ]))));
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                const Text(
+                  'Detalhes do manejo',
+                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 16),
+                ...details.entries.map(
+                  (e) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 120,
+                          child: Text(
+                            e.key,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        Expanded(child: Text(e.value)),
+                      ],
+                    ),
+                  ),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Fechar'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   String _short(Map<String, dynamic> r, TipoManejo type) {
