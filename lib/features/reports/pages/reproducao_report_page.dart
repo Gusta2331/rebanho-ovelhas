@@ -32,6 +32,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
   bool _generating = false;
   String? _error;
   String _status = 'Todos';
+  final Set<String> _selectedIds = <String>{};
   DateTime? _from;
   DateTime? _to;
 
@@ -107,8 +108,19 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
     });
   }
 
+  List<Reproducao> get _selectedReproducoes => _filtered.where((r) => _selectedIds.contains(r.id.toString())).toList();
+
+  void _selectAll() => setState(() => _selectedIds.addAll(_filtered.map((r) => r.id.toString())));
+  void _clearSelection() => setState(() => _selectedIds.clear());
+  void _toggleSelection(Reproducao r) {
+    setState(() {
+      final id = r.id.toString();
+      if (_selectedIds.contains(id)) { _selectedIds.remove(id); } else { _selectedIds.add(id); }
+    });
+  }
+
   Future<void> _chooseFormat() async {
-    if (_filtered.isEmpty || _generating) return;
+    if (_filtered.isEmpty || _generating || _selectedReproducoes.isEmpty) return;
     final format = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -130,7 +142,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
   Future<void> _generate(String format) async {
     setState(() => _generating = true);
     try {
-      final selected = _filtered;
+      final selected = _selectedReproducoes;
       final data = ReproductionReportData(
         reproducoes: selected,
         nascimentosPorReproducao: {for (final r in selected) r.id: _births[r.id] ?? const []},
@@ -211,10 +223,14 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
               if (_from != null || _to != null)
                 Align(alignment: Alignment.centerRight, child: TextButton.icon(onPressed: () => setState(() { _from = null; _to = null; }), icon: const Icon(Icons.clear), label: const Text('Limpar datas'))),
               const SizedBox(height: 8),
+              _selectionBar(),
+              const SizedBox(height: 8),
               Text(list.isEmpty ? 'Nenhuma reprodução encontrada' : list.length.toString() + ' reprodução(ões) no relatório', style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
               ...list.map((r) => _Card(
                 r: r,
+                selected: _selectedIds.contains(r.id.toString()),
+                onToggle: () => _toggleSelection(r),
                 mae: _animal(r.maeId),
                 pai: _animal(r.paiId),
                 births: _births[r.id] ?? const [],
@@ -224,6 +240,23 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
         ),
     );
   }
+  Widget _selectionBar() {
+    final total = _filtered.length;
+    final selected = _selectedReproducoes.length;
+    final allSelected = total > 0 && selected == total;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(children: [
+          Expanded(child: Text(selected == 0 ? 'Nenhuma selecionada' : selected.toString() + ' selecionada(s)', style: const TextStyle(fontWeight: FontWeight.w700))),
+          TextButton(onPressed: total == 0 || allSelected ? null : _selectAll, child: const Text('Selecionar tudo')),
+          TextButton(onPressed: selected == 0 ? null : _clearSelection, child: const Text('Limpar')),
+        ]),
+      ),
+    );
+  }
+
 }
 
 class _Summary extends StatelessWidget {
@@ -262,7 +295,9 @@ class _Card extends StatelessWidget {
   final String mae;
   final String pai;
   final List<ReproducaoNascimento> births;
-  const _Card({required this.r, required this.mae, required this.pai, required this.births});
+  final bool selected;
+  final VoidCallback onToggle;
+  const _Card({required this.r, required this.mae, required this.pai, required this.births, required this.selected, required this.onToggle});
 
   String _date(DateTime? d) => d == null ? 'Não informada' :
       d.day.toString().padLeft(2,'0') + '/' + d.month.toString().padLeft(2,'0') + '/' + d.year.toString();
@@ -290,6 +325,7 @@ class _Card extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(padding: const EdgeInsets.all(15), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
+          Checkbox(value: selected, onChanged: (_) => onToggle()),
           Container(width: 44, height: 44, decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: .10), borderRadius: BorderRadius.circular(13)), child: const AppAssetIcon(assetPath: 'assets/images/icon_cobertura.png', size: 26)),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
