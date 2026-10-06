@@ -370,10 +370,10 @@ class AdditionalReportService {
         )
         ..cellStyle = subtitleStyle;
       sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 3))
-        ..value = const TextCellValue('Indicador')
+        ..value = TextCellValue('Indicador')
         ..cellStyle = headerStyle;
       sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 3))
-        ..value = const TextCellValue('Resultado')
+        ..value = TextCellValue('Resultado')
         ..cellStyle = headerStyle;
 
       for (var row = 0; row < sectionRows.length; row++) {
