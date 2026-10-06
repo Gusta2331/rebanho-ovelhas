@@ -31,9 +31,9 @@ class ReportPeriod {
       case ReportPeriodType.week:
         return (day.subtract(const Duration(days: 6)), day);
       case ReportPeriodType.month:
-        return (DateTime(day.year, day.month - 1, day.day), day);
+        return (_subtractMonths(day, 1), day);
       case ReportPeriodType.year:
-        return (DateTime(day.year - 1, day.month, day.day), day);
+        return (_subtractYears(day, 1), day);
       case ReportPeriodType.custom:
         if (start == null || end == null) return null;
         return (
@@ -59,6 +59,20 @@ class ReportPeriod {
         }
         return 'Período personalizado';
     }
+  }
+
+  static DateTime _subtractMonths(DateTime date, int months) {
+    final targetMonth = date.month - months;
+    final year = date.year + ((targetMonth - 1) ~/ 12);
+    final month = ((targetMonth - 1) % 12) + 1;
+    final lastDay = DateTime(year, month + 1, 0).day;
+    return DateTime(year, month, date.day > lastDay ? lastDay : date.day);
+  }
+
+  static DateTime _subtractYears(DateTime date, int years) {
+    final year = date.year - years;
+    final lastDay = DateTime(year, date.month + 1, 0).day;
+    return DateTime(year, date.month, date.day > lastDay ? lastDay : date.day);
   }
 
   static String formatDate(DateTime value) =>
