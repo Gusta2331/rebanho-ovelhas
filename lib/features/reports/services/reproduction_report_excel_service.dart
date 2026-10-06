@@ -9,16 +9,45 @@ import '../../reproduction/models/reproducao_nascimento.dart';
 class ReproductionReportExcelService {
   Future<Uint8List> gerar(ReproductionReportData data) async {
     final excel = Excel.createExcel();
-    final sheet = excel['Relatório de reprodução'];
+
+    final resumo = excel['Resumo'];
+    final reproducoes = excel['Reproduções'];
+    final nascimentos = excel['Nascimentos'];
+
+    _buildResumo(resumo, data);
+    _buildReproducoes(reproducoes, data);
+    _buildNascimentos(nascimentos, data);
+
+    if (excel.sheets.containsKey('Sheet1')) {
+      excel.delete('Sheet1');
+    }
+
+    excel.setDefaultSheet('Resumo');
+
+    final bytes = excel.save();
+    if (bytes == null) {
+      throw Exception('Não foi possível gerar o arquivo Excel.');
+    }
+
+    return Uint8List.fromList(bytes);
+  }
+
+  void _buildResumo(Sheet sheet, ReproductionReportData data) {
+    final title = _titleStyle();
+    final subtitle = _subtitleStyle();
+    final section = _sectionStyle();
+    final label = _labelStyle();
+    final value = _valueStyle();
+    final muted = _mutedStyle();
 
     final rows = <List<dynamic>>[
       ['RELATÓRIO DE REPRODUÇÃO'],
       ['Fazenda Baixinha'],
       ['Gerado em', _dateTime(data.generatedAt)],
       [],
-      ['RESUMO'],
+      ['RESUMO DO REBANHO REPRODUTIVO'],
       ['Indicador', 'Quantidade'],
-      ['Reproduções', data.total],
+      ['Total de reproduções', data.total],
       ['Planejadas', data.planejadas],
       ['Cobertas', data.cobertas],
       ['Prenhes', data.prenhes],
@@ -28,136 +57,239 @@ class ReproductionReportExcelService {
       ['Nascimentos', data.totalNascimentos],
       ['Fêmeas nascidas', data.femeasNascidas],
       ['Machos nascidos', data.machosNascidos],
-      [],
-      ['DETALHAMENTO DAS REPRODUÇÕES'],
-      ['Mãe','Pai','Status','Cobertura','Parto previsto','Prenhez confirmada','Parto','Nascimentos'],
-      ...data.reproducoes.map((r) => [
-        _animal(r.maeId, data), _animal(r.paiId, data), _status(r.status),
-        _date(r.dataCobertura), _date(r.dataPrevisaoParto),
-        _date(r.dataConfirmacaoPrenhez), _date(r.dataParto),
-        (data.nascimentosPorReproducao[r.id] ?? const []).length,
-      ]),
-      [],
-      ['NASCIMENTOS'],
-      ['Mãe', 'Brinco', 'Sexo', 'Data de nascimento'],
-      ...data.reproducoes.expand((r) =>
-        (data.nascimentosPorReproducao[r.id] ?? const []).map((n) => [
-          _animal(r.maeId, data),
-          _animal(n.animalId, data),
-          n.sexo == SexoNascimento.femea ? 'Fêmea' : 'Macho',
-          _date(n.dataNascimento),
-        ])),
     ];
 
-    final titleStyle = CellStyle(
-      backgroundColorHex: ExcelColor.fromHexString('#367C2B'),
-      fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
-      fontSize: 18, bold: true,
-      horizontalAlign: HorizontalAlign.Center,
-      verticalAlign: VerticalAlign.Center,
-    );
-    final subtitleStyle = CellStyle(
-      backgroundColorHex: ExcelColor.fromHexString('#EAF3E7'),
-      fontColorHex: ExcelColor.fromHexString('#263323'),
-      fontSize: 12, bold: true,
-      horizontalAlign: HorizontalAlign.Center,
-      verticalAlign: VerticalAlign.Center,
-    );
-    final metadataStyle = CellStyle(
-      fontColorHex: ExcelColor.fromHexString('#5B6558'),
-      fontSize: 10, italic: true,
-      verticalAlign: VerticalAlign.Center,
-    );
-    final sectionStyle = CellStyle(
-      backgroundColorHex: ExcelColor.fromHexString('#DCEBD7'),
-      fontColorHex: ExcelColor.fromHexString('#24551D'),
-      fontSize: 13, bold: true,
-      verticalAlign: VerticalAlign.Center,
-    );
-    final headerStyle = CellStyle(
-      backgroundColorHex: ExcelColor.fromHexString('#367C2B'),
-      fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
-      fontSize: 10, bold: true,
-      horizontalAlign: HorizontalAlign.Center,
-      verticalAlign: VerticalAlign.Center,
-    );
-    final bodyStyle = CellStyle(
-      fontColorHex: ExcelColor.fromHexString('#263323'),
-      verticalAlign: VerticalAlign.Center,
-    );
-    final alternateStyle = CellStyle(
-      backgroundColorHex: ExcelColor.fromHexString('#F7F9F5'),
-      fontColorHex: ExcelColor.fromHexString('#263323'),
-      verticalAlign: VerticalAlign.Center,
-    );
-    final numberStyle = CellStyle(
-      fontColorHex: ExcelColor.fromHexString('#263323'),
-      bold: true,
-      horizontalAlign: HorizontalAlign.Center,
-      verticalAlign: VerticalAlign.Center,
-    );
+    for (var row = 0; row < rows.length; row++) {
+      for (var col = 0; col < rows[row].length; col++) {
+        final cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row),
+        );
+        cell.value = _cellValue(rows[row][col]);
 
-    for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-      final row = rows[rowIndex];
-      for (var columnIndex = 0; columnIndex < row.length; columnIndex++) {
-        final cell = sheet.cell(CellIndex.indexByColumnRow(
-          columnIndex: columnIndex, rowIndex: rowIndex));
-        cell.value = _cellValue(row[columnIndex]);
-
-        if (rowIndex == 0) {
-          cell.cellStyle = titleStyle;
-        } else if (rowIndex == 1) {
-          cell.cellStyle = subtitleStyle;
-        } else if (rowIndex == 2) {
-          cell.cellStyle = metadataStyle;
-        } else if (rowIndex == 4 || rowIndex == 17 || rowIndex == 23) {
-          cell.cellStyle = sectionStyle;
-        } else if (rowIndex == 5 || rowIndex == 18 || rowIndex == 24) {
-          cell.cellStyle = headerStyle;
-        } else if (rowIndex >= 6 && rowIndex <= 15) {
-          cell.cellStyle = columnIndex == 1 ? numberStyle : bodyStyle;
+        if (row == 0) {
+          cell.cellStyle = title;
+        } else if (row == 1) {
+          cell.cellStyle = subtitle;
+        } else if (row == 2) {
+          cell.cellStyle = muted;
+        } else if (row == 4) {
+          cell.cellStyle = section;
+        } else if (row == 5) {
+          cell.cellStyle = _headerStyle();
+        } else if (col == 0) {
+          cell.cellStyle = label;
         } else {
-          cell.cellStyle = rowIndex.isEven ? bodyStyle : alternateStyle;
+          cell.cellStyle = value;
         }
       }
     }
 
-    final widths = <int, double>{
-      0: 27, 1: 27, 2: 19, 3: 18,
-      4: 20, 5: 23, 6: 18, 7: 15,
-    };
+    _merge(sheet, 0, 5, 0);
+    _merge(sheet, 0, 5, 1);
+    _merge(sheet, 0, 5, 4);
+
+    sheet.setColumnWidth(0, 34);
+    sheet.setColumnWidth(1, 18);
+
+    sheet.setRowHeight(0, 36);
+    sheet.setRowHeight(1, 24);
+    sheet.setRowHeight(2, 20);
+    sheet.setRowHeight(4, 28);
+    sheet.setRowHeight(5, 30);
+
+    sheet.freezeRows(5);
+  }
+
+  void _buildReproducoes(Sheet sheet, ReproductionReportData data) {
+    final rows = <List<dynamic>>[
+      ['DETALHAMENTO DAS REPRODUÇÕES'],
+      ['Mãe', 'Pai', 'Status', 'Cobertura', 'Parto previsto', 'Prenhez confirmada', 'Parto', 'Nascimentos'],
+      ...data.reproducoes.map(
+        (r) => [
+          _animal(r.maeId, data),
+          _animal(r.paiId, data),
+          _status(r.status),
+          _date(r.dataCobertura),
+          _date(r.dataPrevisaoParto),
+          _date(r.dataConfirmacaoPrenhez),
+          _date(r.dataParto),
+          (data.nascimentosPorReproducao[r.id] ?? const []).length,
+        ],
+      ),
+    ];
+
+    _writeTable(
+      sheet,
+      rows,
+      sectionRow: 0,
+      headerRow: 1,
+      widths: const {
+        0: 28,
+        1: 28,
+        2: 19,
+        3: 16,
+        4: 18,
+        5: 21,
+        6: 16,
+        7: 15,
+      },
+    );
+
+    sheet.freezeRows(2);
+  }
+
+  void _buildNascimentos(Sheet sheet, ReproductionReportData data) {
+    final rows = <List<dynamic>>[
+      ['NASCIMENTOS'],
+      ['Mãe', 'Brinco', 'Sexo', 'Data de nascimento'],
+      ...data.reproducoes.expand(
+        (r) => (data.nascimentosPorReproducao[r.id] ?? const []).map(
+          (n) => [
+            _animal(r.maeId, data),
+            _animal(n.animalId, data),
+            n.sexo == SexoNascimento.femea ? 'Fêmea' : 'Macho',
+            _date(n.dataNascimento),
+          ],
+        ),
+      ),
+    ];
+
+    _writeTable(
+      sheet,
+      rows,
+      sectionRow: 0,
+      headerRow: 1,
+      widths: const {
+        0: 30,
+        1: 30,
+        2: 16,
+        3: 22,
+      },
+    );
+
+    sheet.freezeRows(2);
+  }
+
+  void _writeTable(
+    Sheet sheet,
+    List<List<dynamic>> rows, {
+    required int sectionRow,
+    required int headerRow,
+    required Map<int, double> widths,
+  }) {
+    final section = _sectionStyle();
+    final header = _headerStyle();
+    final body = _bodyStyle();
+    final alternate = _alternateStyle();
+
+    for (var row = 0; row < rows.length; row++) {
+      for (var col = 0; col < rows[row].length; col++) {
+        final cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row),
+        );
+        cell.value = _cellValue(rows[row][col]);
+
+        if (row == sectionRow) {
+          cell.cellStyle = section;
+        } else if (row == headerRow) {
+          cell.cellStyle = header;
+        } else {
+          cell.cellStyle = row.isEven ? body : alternate;
+        }
+      }
+    }
+
+    final lastColumn = widths.keys.reduce((a, b) => a > b ? a : b);
+
+    _merge(sheet, 0, lastColumn, sectionRow);
+
     for (final entry in widths.entries) {
       sheet.setColumnWidth(entry.key, entry.value);
     }
 
-    for (final rowIndex in [0, 1, 4, 17, 23]) {
-      sheet.merge(
-        CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex),
-        CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowIndex),
-      );
-    }
-
-    sheet.setRowHeight(0, 34);
-    sheet.setRowHeight(1, 23);
-    sheet.setRowHeight(2, 20);
-    sheet.setRowHeight(4, 27);
-    sheet.setRowHeight(5, 30);
-    sheet.setRowHeight(17, 27);
-    sheet.setRowHeight(18, 34);
-    sheet.setRowHeight(23, 27);
-    sheet.setRowHeight(24, 30);
-
-    if (excel.sheets.containsKey('Sheet1')) {
-      excel.delete('Sheet1');
-    }
-    excel.setDefaultSheet('Relatório de reprodução');
-
-    final bytes = excel.save();
-    if (bytes == null) {
-      throw Exception('Não foi possível gerar o arquivo Excel.');
-    }
-    return Uint8List.fromList(bytes);
+    sheet.setRowHeight(sectionRow, 30);
+    sheet.setRowHeight(headerRow, 34);
   }
+
+  void _merge(Sheet sheet, int firstColumn, int lastColumn, int row) {
+    sheet.merge(
+      CellIndex.indexByColumnRow(
+        columnIndex: firstColumn,
+        rowIndex: row,
+      ),
+      CellIndex.indexByColumnRow(
+        columnIndex: lastColumn,
+        rowIndex: row,
+      ),
+    );
+  }
+
+  CellStyle _titleStyle() => CellStyle(
+        backgroundColorHex: ExcelColor.fromHexString('#367C2B'),
+        fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+        fontSize: 18,
+        bold: true,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+  CellStyle _subtitleStyle() => CellStyle(
+        backgroundColorHex: ExcelColor.fromHexString('#EAF3E7'),
+        fontColorHex: ExcelColor.fromHexString('#263323'),
+        fontSize: 12,
+        bold: true,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+  CellStyle _sectionStyle() => CellStyle(
+        backgroundColorHex: ExcelColor.fromHexString('#DCEBD7'),
+        fontColorHex: ExcelColor.fromHexString('#24551D'),
+        fontSize: 13,
+        bold: true,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+  CellStyle _headerStyle() => CellStyle(
+        backgroundColorHex: ExcelColor.fromHexString('#367C2B'),
+        fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+        fontSize: 10,
+        bold: true,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+  CellStyle _labelStyle() => CellStyle(
+        backgroundColorHex: ExcelColor.fromHexString('#F1F6EF'),
+        fontColorHex: ExcelColor.fromHexString('#263323'),
+        bold: true,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+  CellStyle _valueStyle() => CellStyle(
+        fontColorHex: ExcelColor.fromHexString('#263323'),
+        bold: true,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+  CellStyle _bodyStyle() => CellStyle(
+        fontColorHex: ExcelColor.fromHexString('#263323'),
+        verticalAlign: VerticalAlign.Center,
+      );
+
+  CellStyle _alternateStyle() => CellStyle(
+        backgroundColorHex: ExcelColor.fromHexString('#F7F9F5'),
+        fontColorHex: ExcelColor.fromHexString('#263323'),
+        verticalAlign: VerticalAlign.Center,
+      );
+
+  CellStyle _mutedStyle() => CellStyle(
+        fontColorHex: ExcelColor.fromHexString('#5B6558'),
+        fontSize: 10,
+        italic: true,
+        verticalAlign: VerticalAlign.Center,
+      );
 
   CellValue _cellValue(dynamic value) {
     if (value is int) return IntCellValue(value);
@@ -168,32 +300,41 @@ class ReproductionReportExcelService {
 
   String _animal(String? id, ReproductionReportData data) {
     if (id == null || id.trim().isEmpty) return 'Não informado';
+
     final animal = data.animaisPorId[id];
     if (animal == null) return 'Não informado';
+
     final nome = animal.nome?.trim();
     if (nome == null || nome.isEmpty) return animal.brinco;
+
     return animal.brinco + ' • ' + nome;
   }
 
   String _status(StatusReproducao status) => switch (status) {
-    StatusReproducao.planejada => 'Planejada',
-    StatusReproducao.coberta => 'Coberta',
-    StatusReproducao.prenhe => 'Prenhe',
-    StatusReproducao.naoPrenhe => 'Não prenhe',
-    StatusReproducao.abortou => 'Abortou',
-    StatusReproducao.partoRealizado => 'Parto realizado',
-    StatusReproducao.encerrada => 'Encerrada',
-  };
+        StatusReproducao.planejada => 'Planejada',
+        StatusReproducao.coberta => 'Coberta',
+        StatusReproducao.prenhe => 'Prenhe',
+        StatusReproducao.naoPrenhe => 'Não prenhe',
+        StatusReproducao.abortou => 'Abortou',
+        StatusReproducao.partoRealizado => 'Parto realizado',
+        StatusReproducao.encerrada => 'Encerrada',
+      };
 
   String _date(DateTime? date) {
     if (date == null) return 'Não informada';
-    return date.day.toString().padLeft(2, '0') + '/' +
-        date.month.toString().padLeft(2, '0') + '/' + date.year.toString();
+
+    return date.day.toString().padLeft(2, '0') +
+        '/' +
+        date.month.toString().padLeft(2, '0') +
+        '/' +
+        date.year.toString();
   }
 
   String _dateTime(DateTime date) {
-    return _date(date) + ' ' +
-        date.hour.toString().padLeft(2, '0') + ':' +
+    return _date(date) +
+        ' ' +
+        date.hour.toString().padLeft(2, '0') +
+        ':' +
         date.minute.toString().padLeft(2, '0');
   }
 }
