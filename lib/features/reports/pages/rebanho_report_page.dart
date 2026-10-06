@@ -152,7 +152,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
   bool get _allFilteredSelected =>
       _filtered.isNotEmpty && _filtered.every(_selectedAnimalIds.contains);
 
-  String _statusName(StatusAnimal status) => switch (_status) {
+  String _statusName(StatusAnimal status) => switch (status) {
         StatusAnimal.ativo => 'Ativo',
         StatusAnimal.vendido => 'Vendido',
         StatusAnimal.morto => 'Morto',
