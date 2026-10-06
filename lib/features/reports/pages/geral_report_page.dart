@@ -624,28 +624,27 @@ class _GeralReportPageState extends State<GeralReportPage> {
 
   Future<void> _generate(String format) async {
     setState(() => _generating = true);
+
     try {
-      final rows = <List<String>>[];
+      final sections = <String, List<List<String>>>{};
+
       for (final section in _sections) {
         if (!_selectedIds.contains(section.id)) continue;
-        for (final item in section.items) {
-          rows.add([section.title, item.label, item.value]);
-        }
+        sections[section.title] = section.items
+            .map((item) => [item.label, item.value])
+            .toList();
       }
 
-      const headers = ['Área', 'Indicador', 'Resultado'];
       final bytes = format == 'pdf'
-          ? await _service.gerarPdf(
+          ? await _service.gerarPdfSecoes(
               title: 'Relatório geral da Fazenda',
               subtitle: 'Visão consolidada dos dados registrados',
-              headers: headers,
-              rows: rows,
+              sections: sections,
             )
-          : await _service.gerarExcel(
+          : await _service.gerarExcelAbas(
               title: 'Relatório geral da Fazenda',
               subtitle: 'Visão consolidada dos dados registrados',
-              headers: headers,
-              rows: rows,
+              sections: sections,
             );
 
       final mime = format == 'pdf'
@@ -671,8 +670,8 @@ class _GeralReportPageState extends State<GeralReportPage> {
             content: Text(
               (format == 'pdf' ? 'PDF' : 'Excel') +
                   ' gerado com ' +
-                  rows.length.toString() +
-                  ' indicador(es).',
+                  sections.length.toString() +
+                  ' seção(ões).',
             ),
           ),
         );
