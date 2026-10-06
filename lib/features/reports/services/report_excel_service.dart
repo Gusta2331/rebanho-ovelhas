@@ -330,17 +330,22 @@ class ReportExcelService {
       ['TRATAMENTOS', count('tratamento'), 'FAMACHA', count('famacha'), 'DENTIÇÃO', count('denticao'), 'TOSQUIAS', count('tosquia')],
       ['OUTROS', count('outro')],
       [],
-      ['DETALHAMENTO DOS MANEJOS'],
+      ['DETALHAMENTO DOS MANEJOS POR TIPO'],
       ['Data', 'Tipo', 'Animal', 'Detalhamento', 'Dose', 'Via', 'Carência', 'Observações'],
-      ...registros.map((r) => [
-        _manejoDate(r['data']),
-        _manejoType(r['tipo']),
-        _manejoAnimal(r['animais']),
-        _manejoDetail(r),
-        _manejoDose(r),
-        _manejoText(r['via_aplicacao']),
-        r['carencia_dias'] == null ? 'Não informada' : r['carencia_dias'].toString() + ' dia(s)',
-        _manejoText(r['observacoes']),
+      ..._manejoGroups(registros).entries.expand((entry) => [
+        [entry.key + ' - ' + entry.value.length.toString() + ' registro(s)'],
+        ['Data', 'Tipo', 'Animal', 'Detalhamento', 'Dose', 'Via', 'Carência', 'Observações'],
+        ...entry.value.map((r) => [
+          _manejoDate(r['data']),
+          _manejoType(r['tipo']),
+          _manejoAnimal(r['animais']),
+          _manejoDetail(r),
+          _manejoDose(r),
+          _manejoText(r['via_aplicacao']),
+          r['carencia_dias'] == null ? 'Não informada' : r['carencia_dias'].toString() + ' dia(s)',
+          _manejoText(r['observacoes']),
+        ]),
+        [],
       ]),
     ];
     _writeManejoRows(sheet, rows, titleRows: {0}, subtitleRows: {1}, metadataRows: {2}, sectionRows: {8}, headerRows: {9}, summaryRows: {4, 5, 6}, widths: {0: 14, 1: 18, 2: 28, 3: 34, 4: 16, 5: 18, 6: 16, 7: 40});
@@ -349,6 +354,16 @@ class ReportExcelService {
     final bytes = excel.save();
     if (bytes == null) throw Exception('Não foi possível gerar o arquivo Excel.');
     return Uint8List.fromList(bytes);
+  }
+
+  Map<String, List<Map<String, dynamic>>> _manejoGroups(List<Map<String, dynamic>> registros) {
+    const order = ['pesagem', 'vacinacao', 'vermifugacao', 'tratamento', 'famacha', 'denticao', 'tosquia', 'outro'];
+    final groups = <String, List<Map<String, dynamic>>>{};
+    for (final tipo in order) {
+      final items = registros.where((r) => r['tipo']?.toString() == tipo).toList();
+      if (items.isNotEmpty) groups[_manejoType(tipo)] = items;
+    }
+    return groups;
   }
 
   void _writeManejoRows(Sheet sheet, List<List<dynamic>> rows, {Set<int> titleRows = const {}, Set<int> subtitleRows = const {}, Set<int> metadataRows = const {}, Set<int> sectionRows = const {}, Set<int> headerRows = const {}, Set<int> summaryRows = const {}, Map<int, double> widths = const {}}) {
