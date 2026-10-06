@@ -10,6 +10,7 @@ import '../models/report_data.dart';
 import '../services/report_excel_service.dart';
 import '../services/report_pdf_service.dart';
 import '../widgets/report_period.dart';
+import '../widgets/report_age.dart';
 
 class RebanhoReportPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -36,6 +37,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
   String _raca = 'Todas';
   final Set<String> _selectedIds = <String>{};
   ReportPeriod _period = const ReportPeriod.all();
+  ReportAge _age = const ReportAge.all();
 
   @override
   void initState() {
@@ -101,9 +103,23 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
           animal.raca.toLowerCase().contains(query);
 
       final range = _period.range();
-      final birth = animal.dataNascimento;
-      final periodOk = range == null || (birth != null && !birth.isBefore(range.$1) && !birth.isAfter(range.$2));
-      return matchesStatus && matchesSexo && matchesRaca && matchesSearch && periodOk;
+      final eventDates = <DateTime?>[
+        animal.dataEntrada,
+        animal.dataSaida,
+        animal.dataAquisicao,
+      ];
+      final periodOk = range == null ||
+          eventDates.any((date) =>
+              date != null &&
+              !date.isBefore(range.$1) &&
+              !date.isAfter(range.$2));
+      final ageOk = _age.matches(animal.dataNascimento);
+      return matchesStatus &&
+          matchesSexo &&
+          matchesRaca &&
+          matchesSearch &&
+          periodOk &&
+          ageOk;
     }).toList();
   }
 
@@ -306,7 +322,21 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
                     children: [
-                      ReportPeriodCard(value: _period, onChanged: (value) => setState(() { _period = value; _selectedIds.clear(); })),
+                      ReportPeriodCard(
+                        value: _period,
+                        onChanged: (value) => setState(() {
+                          _period = value;
+                          _selectedIds.clear();
+                        }),
+                      ),
+                      const SizedBox(height: 10),
+                      ReportAgeCard(
+                        value: _age,
+                        onChanged: (value) => setState(() {
+                          _age = value;
+                          _selectedIds.clear();
+                        }),
+                      ),
                       const SizedBox(height: 12),
                       _Summary(
                         total: _animals.length,
