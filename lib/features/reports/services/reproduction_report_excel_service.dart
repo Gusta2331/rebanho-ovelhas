@@ -18,9 +18,9 @@ class ReproductionReportExcelService {
       ...data.reproducoes.expand((r)=>(data.nascimentosPorReproducao[r.id]??const[]).map((n)=>[_animal(r.maeId,data),_animal(n.animalId,data),n.sexo==SexoNascimento.femea?'Fêmea':'Macho',_date(n.dataNascimento)])),
     ];
     final title=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#367C2B'),fontColorHex:ExcelColor.fromHexString('#FFFFFF'),fontSize:18,bold:true,horizontalAlign:HorizontalAlign.Center,verticalAlign:VerticalAlign.Center);
-    final sub=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#EAF3E7'),fontColorHex:ExcelColor.fromHexString('#263323'),fontSize:12,bold:true);
+    final sub=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#EAF3E7'),fontColorHex:ExcelColor.fromHexString('#263323'),fontSize:12,bold:true,horizontalAlign:HorizontalAlign.Center,verticalAlign:VerticalAlign.Center);
     final header=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#367C2B'),fontColorHex:ExcelColor.fromHexString('#FFFFFF'),fontSize:10,bold:true,horizontalAlign:HorizontalAlign.Center,verticalAlign:VerticalAlign.Center);
-    final section=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#DCEBD7'),fontColorHex:ExcelColor.fromHexString('#24551D'),fontSize:12,bold:true);
+    final section=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#DCEBD7'),fontColorHex:ExcelColor.fromHexString('#24551D'),fontSize:12,bold:true,horizontalAlign:HorizontalAlign.Center,verticalAlign:VerticalAlign.Center);
     final body=CellStyle(fontColorHex:ExcelColor.fromHexString('#263323'),verticalAlign:VerticalAlign.Center);
     final alt=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#F7F9F5'),fontColorHex:ExcelColor.fromHexString('#263323'),verticalAlign:VerticalAlign.Center);
     final label=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#367C2B'),fontColorHex:ExcelColor.fromHexString('#FFFFFF'),fontSize:9,bold:true,horizontalAlign:HorizontalAlign.Center);
