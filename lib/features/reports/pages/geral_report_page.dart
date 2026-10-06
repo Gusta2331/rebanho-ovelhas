@@ -130,12 +130,15 @@ class _GeralReportPageState extends State<GeralReportPage> {
       _cacheLotes
         ..clear()
         ..addAll(List<Map<String, dynamic>>.from(firstResults[4] as List));
+      _cacheFarmaciaMovimentacoes
+        ..clear()
+        ..addAll(List<Map<String, dynamic>>.from(firstResults[5] as List));
       _cacheAlertas
         ..clear()
-        ..addAll(List<Map<String, dynamic>>.from(firstResults[7] as List));
+        ..addAll(List<Map<String, dynamic>>.from(firstResults[6] as List));
       _cacheFinanceiro
         ..clear()
-        ..addAll(List<Map<String, dynamic>>.from(firstResults[6] as List));
+        ..addAll(List<Map<String, dynamic>>.from(firstResults[7] as List));
 
       _buildSections(
         animais: _cacheAnimais,
