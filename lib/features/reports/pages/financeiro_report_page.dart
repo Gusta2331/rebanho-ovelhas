@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/widgets/app_asset_icon.dart';
 import '../services/additional_report_service.dart';
+import '../widgets/report_period.dart';
 
 class FinanceiroReportPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -19,6 +20,7 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
   String? _error, _type;
   List<Map<String, dynamic>> _all = [], _items = [];
   final Set<String> _selectedIds = <String>{};
+  ReportPeriod _period = const ReportPeriod.all();
 
   @override
   void initState() {
@@ -66,6 +68,9 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
     final text = _search.text.trim().toLowerCase();
     final list = _all.where((item) {
       if (_type != null && item['tipo']?.toString() != _type) return false;
+      final range = _period.range();
+      final date = DateTime.tryParse(item['data']?.toString() ?? '');
+      if (range != null && (date == null || date.isBefore(range.$1) || date.isAfter(range.$2))) return false;
       if (text.isEmpty) return true;
       return [item['categoria'], item['descricao'], item['observacoes']]
           .any((v) => v?.toString().toLowerCase().contains(text) == true);
@@ -89,9 +94,11 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
 
   void _clearSelection() => setState(() => _selectedIds.clear());
 
+  void _applyPeriod(ReportPeriod value) { setState(() { _period = value; _selectedIds.clear(); }); _filter(); }
+
   void _clearFilters() {
     _search.clear();
-    setState(() => _type = null);
+    setState(() { _type = null; _period = const ReportPeriod.all(); });
     _filter();
   }
 
@@ -135,6 +142,8 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      ReportPeriodCard(value: _period, onChanged: _applyPeriod),
                       const SizedBox(height: 10),
                       DropdownButtonFormField<String>(
                         value: _type,
@@ -246,7 +255,7 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
       final bytes = format == 'pdf'
           ? await _service.gerarPdf(
               title: 'Relatório financeiro',
-              subtitle: 'Lançamentos selecionados',
+              subtitle: 'Período: ' + _period.label + ' - lançamentos selecionados',
               headers: headers, rows: rows,
             )
           : await _service.gerarExcel(
