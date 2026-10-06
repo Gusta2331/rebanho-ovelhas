@@ -11,6 +11,7 @@ import '../../reproduction/services/reproducao_service.dart';
 import '../models/reproduction_report_data.dart';
 import '../services/reproduction_report_excel_service.dart';
 import '../services/reproduction_report_pdf_service.dart';
+import '../widgets/report_period.dart';
 
 class ReproducaoReportPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -35,6 +36,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
   final Set<String> _selectedIds = <String>{};
   DateTime? _from;
   DateTime? _to;
+  ReportPeriod _period = const ReportPeriod.all();
 
   @override
   void initState() { super.initState(); _load(); }
@@ -93,6 +95,16 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
   }).toList();
 
   String _statusName(StatusReproducao s) => _statusLabel(s);
+
+  void _applyPeriod(ReportPeriod value) {
+    final range = value.range();
+    setState(() {
+      _period = value;
+      _from = range?.$1;
+      _to = range?.$2;
+      _selectedIds.clear();
+    });
+  }
 
   Future<void> _pickDate(bool from) async {
     final d = await showDatePicker(
@@ -214,6 +226,8 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
                     .map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
                 onChanged: (v) { if (v != null) setState(() => _status = v); },
               ),
+              const SizedBox(height: 10),
+              ReportPeriodCard(value: _period, onChanged: _applyPeriod),
               const SizedBox(height: 10),
               Row(children: [
                 Expanded(child: OutlinedButton.icon(onPressed: () => _pickDate(true), icon: const AppAssetIcon(assetPath: 'assets/images/icon_agenda.png', size: 20), label: Text(_from == null ? 'Data inicial' : _date(_from)))),
