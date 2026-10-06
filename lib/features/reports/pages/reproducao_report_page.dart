@@ -160,6 +160,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
         nascimentosPorReproducao: {for (final r in selected) r.id: _births[r.id] ?? const []},
         animaisPorId: _animalMap,
         generatedAt: DateTime.now(),
+        periodLabel: _period.label,
       );
       if (format == 'pdf') {
         final bytes = await _pdf.gerar(data);
