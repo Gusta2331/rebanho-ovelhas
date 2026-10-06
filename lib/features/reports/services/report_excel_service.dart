@@ -234,7 +234,13 @@ class ReportExcelService {
       sheet.setColumnWidth(entry.key, entry.value);
     }
 
-    sheet.setRowHeight(0, 28);
+    // O título ocupa toda a largura do relatório para não ficar cortado.
+    sheet.merge(
+      CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0),
+      CellIndex.indexByColumnRow(columnIndex: 11, rowIndex: 0),
+    );
+
+    sheet.setRowHeight(0, 32);
     sheet.setRowHeight(1, 22);
     sheet.setRowHeight(4, 24);
     sheet.setRowHeight(5, 24);
