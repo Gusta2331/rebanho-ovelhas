@@ -260,7 +260,7 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
             )
           : await _service.gerarExcel(
               title: 'Relatório financeiro',
-              subtitle: 'Lançamentos selecionados',
+              subtitle: 'Período: ' + _period.label + ' - lançamentos selecionados',
               headers: headers, rows: rows,
             );
       final mime = format == 'pdf'
