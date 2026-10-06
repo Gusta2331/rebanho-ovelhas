@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
 import '../../animals/models/animal.dart';
+import '../../animals/models/composicao_racial.dart';
 import '../../animals/services/composicao_racial_service.dart';
 import '../../animals/services/animal_service.dart';
 import '../models/report_data.dart';
@@ -221,6 +222,23 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
       final composicoes = await _composicaoRacialService.listarPorAnimais(
         animals.map((animal) => animal.id).toList(),
       );
+
+      // Animais sem composição cadastrada usam a raça principal como
+      // composição de 100%, sem alterar nenhum dado do banco.
+      for (final animal in animals) {
+        final composicao = composicoes[animal.id];
+        if ((composicao == null || composicao.isEmpty) &&
+            animal.raca.trim().isNotEmpty) {
+          composicoes[animal.id] = [
+            ComposicaoRacial(
+              racaId: '',
+              racaNome: animal.raca.trim(),
+              percentual: 100,
+              automatico: true,
+            ),
+          ];
+        }
+      }
 
       final data = ReportData(
         animals: animals,
