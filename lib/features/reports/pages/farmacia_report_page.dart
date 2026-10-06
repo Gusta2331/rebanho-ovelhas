@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/widgets/app_asset_icon.dart';
 import '../services/additional_report_service.dart';
+import '../widgets/report_period.dart';
 
 class FarmaciaReportPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -19,6 +20,7 @@ class _FarmaciaReportPageState extends State<FarmaciaReportPage> {
   String? _error, _category;
   List<Map<String, dynamic>> _all = [], _items = [];
   final Set<String> _selectedIds = <String>{};
+  ReportPeriod _period = const ReportPeriod.all();
 
   @override
   void initState() {
@@ -66,6 +68,10 @@ class _FarmaciaReportPageState extends State<FarmaciaReportPage> {
       if (_category != null && item['categoria']?.toString() != _category) {
         return false;
       }
+      final range = _period.range();
+      final validade = DateTime.tryParse(item['validade']?.toString() ?? '');
+      final periodOk = range == null || (validade != null && !validade.isBefore(range.$1) && !validade.isAfter(range.$2));
+      if (!periodOk) return false;
       if (text.isEmpty) return true;
       return [item['nome'], item['categoria'], item['principio_ativo'], item['fabricante']]
           .any((v) => v?.toString().toLowerCase().contains(text) == true);
@@ -89,9 +95,11 @@ class _FarmaciaReportPageState extends State<FarmaciaReportPage> {
 
   void _clearSelection() => setState(() => _selectedIds.clear());
 
+  void _applyPeriod(ReportPeriod value) { setState(() { _period = value; _selectedIds.clear(); }); _filter(); }
+
   void _clearFilters() {
     _search.clear();
-    setState(() => _category = null);
+    setState(() { _category = null; _period = const ReportPeriod.all(); });
     _filter();
   }
 
@@ -137,6 +145,8 @@ class _FarmaciaReportPageState extends State<FarmaciaReportPage> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      ReportPeriodCard(value: _period, onChanged: _applyPeriod),
                       const SizedBox(height: 10),
                       DropdownButtonFormField<String>(
                         value: _category,
@@ -248,7 +258,7 @@ class _FarmaciaReportPageState extends State<FarmaciaReportPage> {
       final bytes = format == 'pdf'
           ? await _service.gerarPdf(
               title: 'Relatório de farmácia',
-              subtitle: 'Produtos selecionados',
+              subtitle: 'Período: ' + _period.label + ' - produtos selecionados',
               headers: headers, rows: rows,
             )
           : await _service.gerarExcel(
