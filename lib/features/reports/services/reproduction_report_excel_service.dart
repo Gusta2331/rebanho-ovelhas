@@ -33,7 +33,7 @@ class ReproductionReportExcelService {
     final bytes=excel.save();if(bytes==null)throw Exception('Não foi possível gerar o arquivo Excel.');return Uint8List.fromList(bytes);
   }
   CellValue _cellValue(dynamic v){if(v is int)return IntCellValue(v);if(v is double)return DoubleCellValue(v);if(v is bool)return BoolCellValue(v);return TextCellValue(v?.toString()??'');}
-  String _animal(String? id,ReproductionReportData data){if(id==null||id.trim().isEmpty)return 'Não informado';final a=data.animaisPorId[id];if(a==null)return 'Não informado';final n=a.nome?.trim();return n==null||n.isEmpty?a.brinco:a.brinco+' • '+n;}
+  String _animal(String? id,ReproductionReportData data){if(id==null||id.trim().isEmpty)return 'Não informado';final a=data.animaisPorId[id];if(a==null)return 'Não informado';final n=a.nome?.trim();return n==null||n.isEmpty?a.brinco:a.brinco+' - '+n;}
   String _status(StatusReproducao s)=>switch(s){StatusReproducao.planejada=>'Planejada',StatusReproducao.coberta=>'Coberta',StatusReproducao.prenhe=>'Prenhe',StatusReproducao.naoPrenhe=>'Não prenhe',StatusReproducao.abortou=>'Abortou',StatusReproducao.partoRealizado=>'Parto realizado',StatusReproducao.encerrada=>'Encerrada'};
   String _date(DateTime? d)=>d==null?'Não informada':d.day.toString().padLeft(2,'0')+'/'+d.month.toString().padLeft(2,'0')+'/'+d.year.toString();
   String _dateTime(DateTime d)=>_date(d)+' '+d.hour.toString().padLeft(2,'0')+':'+d.minute.toString().padLeft(2,'0');
