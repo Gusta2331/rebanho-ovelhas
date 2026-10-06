@@ -458,7 +458,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
       final registros = _selectedItems.map((item) => Map<String, dynamic>.from(item)).toList();
       final generatedAt = DateTime.now();
       if (format == 'pdf') {
-        final bytes = await _pdfService.gerarManejo(registros: registros, generatedAt: generatedAt);
+        final bytes = await _pdfService.gerarManejo(registros: registros, generatedAt: generatedAt, periodLabel: _period.label);
         await SharePlus.instance.share(ShareParams(
           files: [XFile.fromData(bytes, mimeType: 'application/pdf')],
           fileNameOverrides: const ['ovigestao_relatorio_manejo.pdf'],
