@@ -4,9 +4,12 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../models/report_type.dart';
+import 'farmacia_report_page.dart';
+import 'financeiro_report_page.dart';
+import 'geral_report_page.dart';
+import 'manejo_report_page.dart';
 import 'rebanho_report_page.dart';
 import 'reproducao_report_page.dart';
-import 'manejo_report_page.dart';
 
 class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
@@ -25,15 +28,28 @@ class _ReportsPageState extends State<ReportsPage> {
         onBack: () => setState(() => _selectedType = null),
       );
     }
-
     if (_selectedType == ReportType.rebanho) {
       return RebanhoReportPage(
         onBack: () => setState(() => _selectedType = null),
       );
     }
-
     if (_selectedType == ReportType.manejo) {
       return ManejoReportPage(
+        onBack: () => setState(() => _selectedType = null),
+      );
+    }
+    if (_selectedType == ReportType.farmacia) {
+      return FarmaciaReportPage(
+        onBack: () => setState(() => _selectedType = null),
+      );
+    }
+    if (_selectedType == ReportType.financeiro) {
+      return FinanceiroReportPage(
+        onBack: () => setState(() => _selectedType = null),
+      );
+    }
+    if (_selectedType == ReportType.geral) {
+      return GeralReportPage(
         onBack: () => setState(() => _selectedType = null),
       );
     }
@@ -60,12 +76,12 @@ class _ReportsPageState extends State<ReportsPage> {
               HelpTopic(
                 title: 'Formatos',
                 description:
-                    'Cada relatório poderá ser gerado em PDF ou Excel, conforme a opção escolhida.',
+                    'Cada relatório poderá ser gerado em PDF ou Excel.',
               ),
               HelpTopic(
-                title: 'Categorias',
+                title: 'Seleção',
                 description:
-                    'Cada categoria reúne informações específicas da Fazenda Baixinha.',
+                    'Nos relatórios de registros, marque os itens que deseja incluir no arquivo.',
               ),
             ],
           ),
@@ -81,56 +97,13 @@ class _ReportsPageState extends State<ReportsPage> {
               padding: const EdgeInsets.only(bottom: 12),
               child: _ReportCard(
                 type: type,
-                onTap: () {
-                  if (type == ReportType.manejo) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => ManejoReportPage(
-                          onBack: () => Navigator.of(context).pop(),
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-
-                  _openType(type);
-                },
+                onTap: () => setState(() => _selectedType = type),
               ),
             ),
           ),
         ],
       ),
     );
-  }
-
-  void _openType(ReportType type) {
-    switch (type) {
-      case ReportType.rebanho:
-        setState(() => _selectedType = ReportType.rebanho);
-        return;
-      case ReportType.reproducao:
-        setState(() => _selectedType = ReportType.reproducao);
-        return;
-      case ReportType.manejo:
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => ManejoReportPage(
-              onBack: () => Navigator.of(context).pop(),
-            ),
-          ),
-        );
-        return;
-      default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'O relatório de ' +
-                  type.title.toLowerCase() +
-                  ' será disponibilizado na próxima etapa.',
-            ),
-          ),
-        );
-    }
   }
 }
 
@@ -158,7 +131,7 @@ class _ReportsHeader extends StatelessWidget {
           ),
           SizedBox(height: 8),
           Text(
-            'Escolha uma categoria, aplique os filtros e gere o arquivo no formato que precisar.',
+            'Escolha uma categoria, selecione os dados desejados e gere o arquivo.',
             style: TextStyle(
               color: Colors.white,
               fontSize: 14,
