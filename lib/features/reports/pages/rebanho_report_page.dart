@@ -104,6 +104,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
 
       final range = _period.range();
       final eventDates = <DateTime?>[
+        animal.dataNascimento,
         animal.dataEntrada,
         animal.dataSaida,
         animal.dataAquisicao,
