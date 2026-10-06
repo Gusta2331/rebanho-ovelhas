@@ -313,10 +313,10 @@ class ReportPdfService {
             border: pw.TableBorder.all(color: PdfColors.grey300, width: .5),
             columnWidths: const {
               0: pw.FixedColumnWidth(48),
-              1: pw.FlexColumnWidth(1.3),
-              2: pw.FlexColumnWidth(1.7),
-              3: pw.FlexColumnWidth(2.5),
-              4: pw.FlexColumnWidth(1.6),
+              1: pw.FixedColumnWidth(66),
+              2: pw.FixedColumnWidth(92),
+              3: pw.FixedColumnWidth(170),
+              4: pw.FixedColumnWidth(90),
             },
             children: [
               _headerRow(['Data', 'Tipo', 'Animal', 'Detalhamento', 'Observações'], green),
@@ -370,16 +370,36 @@ class ReportPdfService {
     return valueText.isEmpty ? 'Não informado' : valueText;
   }
 
+  String _manejoDose(Map<String, dynamic> r) {
+    final dose = r['dose'];
+    if (dose == null) return 'Não informada';
+    final unidade = r['dose_unidade']?.toString().trim() ?? '';
+    return unidade.isEmpty ? dose.toString() : dose.toString() + ' ' + unidade;
+  }
+
   String _manejoDetail(Map<String, dynamic> r) {
     switch (r['tipo']?.toString()) {
       case 'pesagem': return 'Peso: ' + _manejoText(r['peso_kg']) + ' kg';
       case 'famacha': return 'Escore FAMACHA: ' + _manejoText(r['famacha_escore']);
-      case 'vacinacao': return 'Vacina: ' + _manejoText(r['vacina_nome']);
-      case 'vermifugacao': return 'Vermífugo: ' + _manejoText(r['vermifugo_nome']);
-      case 'tratamento': return 'Medicamento: ' + _manejoText(r['medicamento_nome']);
-      case 'denticao': return 'Dentição: ' + _manejoText(r['denticao']);
-      case 'tosquia': return 'Registro de tosquia';
-      default: return _manejoText(r['outro_nome']);
+      case 'vacinacao':
+        return 'Vacina: ' + _manejoText(r['vacina_nome']) +
+            ' • Dose: ' + _manejoDose(r) +
+            ' • Via: ' + _manejoText(r['via_aplicacao']);
+      case 'vermifugacao':
+        return 'Vermífugo: ' + _manejoText(r['vermifugo_nome']) +
+            ' • Dose: ' + _manejoDose(r) +
+            ' • Via: ' + _manejoText(r['via_aplicacao']);
+      case 'tratamento':
+        return 'Medicamento: ' + _manejoText(r['medicamento_nome']) +
+            ' • Enfermidade: ' + _manejoText(r['enfermidade']) +
+            ' • Dose: ' + _manejoDose(r) +
+            ' • Via: ' + _manejoText(r['via_aplicacao']);
+      case 'denticao':
+        return 'Dentição: ' + _manejoText(r['denticao']);
+      case 'tosquia':
+        return 'Tosquia: ' + _manejoText(r['outro_nome']);
+      default:
+        return _manejoText(r['outro_nome']);
     }
   }
 
