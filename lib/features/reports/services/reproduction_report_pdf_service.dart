@@ -29,7 +29,7 @@ class ReproductionReportPdfService {
           child: pw.Column(crossAxisAlignment:pw.CrossAxisAlignment.start,children:[
             pw.Text('RELATÓRIO DE REPRODUÇÃO',style:pw.TextStyle(color:PdfColors.white,fontSize:20,fontWeight:pw.FontWeight.bold)),
             pw.SizedBox(height:5),
-            pw.Text('Fazenda Baixinha - gerado em ' + _dateTime(data.generatedAt),style:pw.TextStyle(color:PdfColors.white,fontSize:9)),
+            pw.Text('Fazenda Baixinha - ' + data.periodLabel + ' - gerado em ' + _dateTime(data.generatedAt),style:pw.TextStyle(color:PdfColors.white,fontSize:9)),
           ]),
         ),
         pw.SizedBox(height:16),
