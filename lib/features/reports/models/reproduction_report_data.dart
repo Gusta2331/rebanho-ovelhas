@@ -7,12 +7,14 @@ class ReproductionReportData {
   final Map<String, List<ReproducaoNascimento>> nascimentosPorReproducao;
   final Map<String, Animal> animaisPorId;
   final DateTime generatedAt;
+  final String periodLabel;
 
   const ReproductionReportData({
     required this.reproducoes,
     required this.nascimentosPorReproducao,
     required this.animaisPorId,
     required this.generatedAt,
+    this.periodLabel = 'Todo o período',
   });
 
   int get total => reproducoes.length;
