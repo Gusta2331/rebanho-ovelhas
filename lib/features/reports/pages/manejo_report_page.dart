@@ -184,8 +184,13 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
       ),
       _Summary('Dentição', count(TipoManejo.denticao), Icons.pets_outlined),
       _Summary(
+        'Tosquias',
+        count(TipoManejo.tosquia),
+        Icons.content_cut_rounded,
+      ),
+      _Summary(
         'Outros',
-        count(TipoManejo.outro) + count(TipoManejo.tosquia),
+        count(TipoManejo.outro),
         Icons.more_horiz_rounded,
       ),
     ];
@@ -486,6 +491,10 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
     if (type == TipoManejo.denticao) {
       add('Dentição', r['denticao']);
       add('Data da dentição', _parsedDate(r['denticao_data']));
+    }
+    if (type == TipoManejo.tosquia) {
+      add('Tipo de tosquia', r['outro_nome']);
+      add('Observações da tosquia', r['observacoes']);
     }
     if (type == TipoManejo.outro) {
       add('Descrição', r['outro_nome']);
