@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
 import '../../manejo/models/manejo.dart';
 import '../../manejo/services/manejo_service.dart';
+import '../services/report_excel_service.dart';
+import '../services/report_pdf_service.dart';
 
 class ManejoReportPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -13,7 +16,10 @@ class ManejoReportPage extends StatefulWidget {
 
 class _ManejoReportPageState extends State<ManejoReportPage> {
   final ManejoService _service = ManejoService();
+  final ReportPdfService _pdfService = ReportPdfService();
+  final ReportExcelService _excelService = ReportExcelService();
   bool _loading = true;
+  bool _generating = false;
   String? _error;
   List<Map<String, dynamic>> _all = [];
   List<Map<String, dynamic>> _items = [];
@@ -79,7 +85,20 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
           AppAssetIcon(assetPath: 'assets/images/icon_manejo.png', size: 26),
           SizedBox(width: 8), Text('Relatório de manejo'),
         ]),
-        actions: [IconButton(onPressed: _loading ? null : _load, icon: const Icon(Icons.refresh_rounded))],
+        actions: [
+          IconButton(
+            tooltip: 'Gerar relatório',
+            onPressed: _loading || _items.isEmpty || _generating ? null : _chooseFormat,
+            icon: _generating
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.ios_share_rounded),
+          ),
+          IconButton(
+            tooltip: 'Atualizar',
+            onPressed: _loading ? null : _load,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
       ),
       body: _loading ? const Center(child: CircularProgressIndicator()) :
         _error != null ? _errorView() :
@@ -345,6 +364,76 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
         ),
       ),
     );
+  }
+
+
+  Future<void> _chooseFormat() async {
+    if (_items.isEmpty || _generating) return;
+    final format = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Escolha o formato', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              Text('O arquivo será gerado usando os filtros atuais.', style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 14),
+              ListTile(
+                leading: const Icon(Icons.picture_as_pdf_outlined),
+                title: const Text('PDF'),
+                subtitle: const Text('Relatório visual pronto para compartilhar'),
+                onTap: () => Navigator.pop(ctx, 'pdf'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.table_view_outlined),
+                title: const Text('Excel'),
+                subtitle: const Text('Planilha .xlsx para editar e analisar'),
+                onTap: () => Navigator.pop(ctx, 'excel'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (format == null || !mounted) return;
+    await _generate(format);
+  }
+
+  Future<void> _generate(String format) async {
+    setState(() => _generating = true);
+    try {
+      final registros = _items.map((item) => Map<String, dynamic>.from(item)).toList();
+      final generatedAt = DateTime.now();
+      if (format == 'pdf') {
+        final bytes = await _pdfService.gerarManejo(registros: registros, generatedAt: generatedAt);
+        await SharePlus.instance.share(ShareParams(
+          files: [XFile.fromData(bytes, mimeType: 'application/pdf')],
+          fileNameOverrides: const ['ovigestao_relatorio_manejo.pdf'],
+          title: 'Relatório de manejo',
+          subject: 'Relatório de manejo - Fazenda Baixinha',
+        ));
+      } else {
+        final bytes = await _excelService.gerarManejo(registros: registros, generatedAt: generatedAt);
+        await SharePlus.instance.share(ShareParams(
+          files: [XFile.fromData(bytes, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')],
+          fileNameOverrides: const ['ovigestao_relatorio_manejo.xlsx'],
+          title: 'Relatório de manejo',
+          subject: 'Planilha de manejo - Fazenda Baixinha',
+        ));
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text((format == 'pdf' ? 'PDF' : 'Excel') + ' gerado com ' + _items.length.toString() + ' registro(s).')));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Não foi possível gerar o relatório: ' + error.toString().replaceFirst('Exception: ', ''))));
+    } finally {
+      if (mounted) setState(() => _generating = false);
+    }
   }
 
   Future<void> _details(Map<String, dynamic> r) async {
