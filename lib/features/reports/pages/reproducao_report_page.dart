@@ -117,6 +117,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
     setState(() {
       if (from) { _from = d; if (_to != null && _to!.isBefore(d)) _to = d; }
       else { _to = d; if (_from != null && d.isBefore(_from!)) _from = d; }
+      if (_from != null && _to != null) _period = ReportPeriod.custom(_from!, _to!);
     });
   }
 
