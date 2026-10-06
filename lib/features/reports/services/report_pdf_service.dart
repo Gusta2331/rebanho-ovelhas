@@ -307,32 +307,60 @@ class ReportPdfService {
             ],
           ),
           pw.SizedBox(height: 20),
-          _sectionTitle('Registros de manejo', text),
+          _sectionTitle('Registros de manejo por tipo', text),
           pw.SizedBox(height: 8),
-          pw.Table(
-            border: pw.TableBorder.all(color: PdfColors.grey300, width: .5),
-            columnWidths: const {
-              0: pw.FixedColumnWidth(48),
-              1: pw.FixedColumnWidth(66),
-              2: pw.FixedColumnWidth(92),
-              3: pw.FixedColumnWidth(170),
-              4: pw.FixedColumnWidth(90),
-            },
+          ..._manejoGroups(registros).entries.map((entry) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              _headerRow(['Data', 'Tipo', 'Animal', 'Detalhamento', 'Observações'], green),
-              ...registros.map((r) => pw.TableRow(children: [
-                _cell(_manejoDate(r['data']), align: pw.TextAlign.center),
-                _cell(_manejoType(r['tipo'])),
-                _cell(_manejoAnimal(r['animais'])),
-                _cell(_manejoDetail(r)),
-                _cell(_manejoText(r['observacoes'])),
-              ])),
+              pw.Container(
+                width: double.infinity,
+                padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                margin: const pw.EdgeInsets.only(top: 8, bottom: 6),
+                decoration: pw.BoxDecoration(
+                  color: lightGreen,
+                  borderRadius: pw.BorderRadius.circular(6),
+                ),
+                child: pw.Text(
+                  entry.key + ' - ' + entry.value.length.toString() + ' registro(s)',
+                  style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: green),
+                ),
+              ),
+              pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.grey300, width: .5),
+                columnWidths: const {
+                  0: pw.FixedColumnWidth(48),
+                  1: pw.FixedColumnWidth(66),
+                  2: pw.FixedColumnWidth(92),
+                  3: pw.FixedColumnWidth(170),
+                  4: pw.FixedColumnWidth(90),
+                },
+                children: [
+                  _headerRow(['Data', 'Tipo', 'Animal', 'Detalhamento', 'Observações'], green),
+                  ...entry.value.map((r) => pw.TableRow(children: [
+                    _cell(_manejoDate(r['data']), align: pw.TextAlign.center),
+                    _cell(_manejoType(r['tipo'])),
+                    _cell(_manejoAnimal(r['animais'])),
+                    _cell(_manejoDetail(r)),
+                    _cell(_manejoText(r['observacoes'])),
+                  ])),
+                ],
+              ),
             ],
-          ),
+          )),
         ],
       ),
     );
     return document.save();
+  }
+
+  Map<String, List<Map<String, dynamic>>> _manejoGroups(List<Map<String, dynamic>> registros) {
+    const order = ['pesagem', 'vacinacao', 'vermifugacao', 'tratamento', 'famacha', 'denticao', 'tosquia', 'outro'];
+    final groups = <String, List<Map<String, dynamic>>>{};
+    for (final tipo in order) {
+      final items = registros.where((r) => r['tipo']?.toString() == tipo).toList();
+      if (items.isNotEmpty) groups[_manejoType(tipo)] = items;
+    }
+    return groups;
   }
 
   String _manejoDate(dynamic value) {
