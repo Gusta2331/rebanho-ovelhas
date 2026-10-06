@@ -1091,40 +1091,6 @@ class _Metric {
   const _Metric(this.label, this.value);
 }
 
-
-class _PeriodChoice {
-  final String type;
-  final DateTime? start;
-  final DateTime? end;
-
-  const _PeriodChoice(this.type, this.start, this.end);
-}
-), '');
-  }
-}
-
-class _ReportSection {
-  final String id;
-  final String title;
-  final String icon;
-  final List<_Metric> items;
-
-  const _ReportSection({
-    required this.id,
-    required this.title,
-    required this.icon,
-    required this.items,
-  });
-}
-
-class _Metric {
-  final String label;
-  final String value;
-
-  const _Metric(this.label, this.value);
-}
-
-
 class _PeriodChoice {
   final String type;
   final DateTime? start;
