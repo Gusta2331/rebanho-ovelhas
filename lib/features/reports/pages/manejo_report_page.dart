@@ -29,8 +29,11 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
   @override
   void initState() {
     super.initState();
-    _load();
     _search.addListener(_refresh);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _load();
+    });
   }
 
   @override
