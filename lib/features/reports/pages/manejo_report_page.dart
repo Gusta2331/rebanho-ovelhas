@@ -86,6 +86,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
     setState(() {
       if (from) { _from = picked; if (_to != null && _to!.isBefore(picked)) _to = picked; }
       else { _to = picked; if (_from != null && _from!.isAfter(picked)) _from = picked; }
+      if (_from != null && _to != null) _period = ReportPeriod.custom(_from!, _to!);
     });
     _filter();
   }
