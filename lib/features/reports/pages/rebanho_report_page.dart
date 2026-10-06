@@ -33,6 +33,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
   String _status = 'Todos';
   String _sexo = 'Todos';
   String _raca = 'Todas';
+  final Set<String> _selectedIds = <String>{};
 
   @override
   void initState() {
@@ -126,8 +127,20 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
         StatusAnimal.descartado => 'Descartado',
       };
 
+  List<Animal> get _selectedAnimals => _filtered.where((a) => _selectedIds.contains(a.id.toString())).toList();
+
+  void _selectAll() => setState(() => _selectedIds.addAll(_filtered.map((a) => a.id.toString())));
+  void _clearSelection() => setState(() => _selectedIds.clear());
+
+  void _toggleSelection(Animal animal) {
+    setState(() {
+      final id = animal.id.toString();
+      if (_selectedIds.contains(id)) { _selectedIds.remove(id); } else { _selectedIds.add(id); }
+    });
+  }
+
   Future<void> _chooseFormat() async {
-    if (_filtered.isEmpty || _generating) return;
+    if (_filtered.isEmpty || _generating || _selectedAnimals.isEmpty) return;
 
     final format = await showModalBottomSheet<String>(
       context: context,
@@ -175,7 +188,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
     setState(() => _generating = true);
 
     try {
-      final animals = List<Animal>.from(_filtered);
+      final animals = List<Animal>.from(_selectedAnimals);
       final composicoes = await _composicaoRacialService.listarPorAnimais(
         animals.map((animal) => animal.id).toList(),
       );
@@ -359,6 +372,8 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                         onChanged: (value) => setState(() => _raca = value),
                       ),
                       const SizedBox(height: 16),
+                      _selectionBar(),
+                      const SizedBox(height: 10),
                       Row(
                         children: [
                           Expanded(
@@ -374,7 +389,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                             TextButton.icon(
                               onPressed: _chooseFormat,
                               icon: const Icon(Icons.description_outlined),
-                              label: const Text('Gerar'),
+                              label: const Text('Gerar selecionados'),
                             ),
                         ],
                       ),
@@ -391,8 +406,30 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                         ..._filtered.map(
                           (animal) => Card(
                             margin: const EdgeInsets.only(bottom: 8),
-                            child: ListTile(
-                              leading: CircleAvatar(
+                            child: CheckboxListTile(
+                              value: _selectedIds.contains(animal.id.toString()),
+                              onChanged: (_) => _toggleSelection(animal),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              secondary: CircleAvatar(
+                                backgroundColor:
+                                    AppTheme.primaryColor.withValues(alpha: .10),
+                                child: AppAssetIcon(
+                                  assetPath: animal.sexo == SexoAnimal.femea
+                                      ? 'assets/images/icon_ovino_femea.png'
+                                      : 'assets/images/icon_ovino_macho.png',
+                                  size: 25,
+                                ),
+                              ),
+                              title: Row(
+                                children: [
+                                  Expanded(child: Text(animal.nome?.trim().isNotEmpty == true ? animal.nome!.trim() : 'Brinco ' + animal.brinco, style: const TextStyle(fontWeight: FontWeight.w700))),
+                                  Text(animal.brinco, style: TextStyle(color: Colors.grey.shade700, fontSize: 12)),
+                                ],
+                              ),
+                              subtitle: Text(animal.raca),
+                            ),
+                          ),
+                        )
                                 backgroundColor:
                                     AppTheme.primaryColor.withValues(alpha: .10),
                                 child: AppAssetIcon(
@@ -422,6 +459,23 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                     ],
                   ),
                 ),
+    );
+  }
+
+  Widget _selectionBar() {
+    final total = _filtered.length;
+    final selected = _selectedAnimals.length;
+    final allSelected = total > 0 && selected == total;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(children: [
+          Expanded(child: Text(selected == 0 ? 'Nenhum selecionado' : selected.toString() + ' selecionado(s)', style: const TextStyle(fontWeight: FontWeight.w700))),
+          TextButton(onPressed: total == 0 ? null : (allSelected ? null : _selectAll), child: const Text('Selecionar tudo')),
+          TextButton(onPressed: selected == 0 ? null : _clearSelection, child: const Text('Limpar')),
+        ]),
+      ),
     );
   }
 
