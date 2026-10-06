@@ -109,13 +109,20 @@ class ReportPdfService {
               0: pw.FixedColumnWidth(45),
               1: pw.FlexColumnWidth(1.7),
               2: pw.FixedColumnWidth(45),
-              3: pw.FlexColumnWidth(1.6),
+              3: pw.FlexColumnWidth(2.8),
               4: pw.FixedColumnWidth(55),
-              5: pw.FlexColumnWidth(1.2),
+              5: pw.FlexColumnWidth(1.0),
             },
             children: [
               _headerRow(
-                ['Brinco', 'Nome', 'Sexo', 'Raça', 'Nascimento', 'Status'],
+                [
+                  'Brinco',
+                  'Nome',
+                  'Sexo',
+                  'Composição racial',
+                  'Nascimento',
+                  'Status',
+                ],
                 green,
               ),
               ...data.animals.map(
@@ -124,8 +131,11 @@ class ReportPdfService {
                     _cell(animal.brinco, align: pw.TextAlign.center),
                     _cell(_nome(animal.nome)),
                     _cell(_sexo(animal.sexo), align: pw.TextAlign.center),
-                    _cell(_raca(animal.raca)),
-                    _cell(_date(animal.dataNascimento), align: pw.TextAlign.center),
+                    _cell(_composicao(data.composicoesPorAnimal[animal.id])),
+                    _cell(
+                      _date(animal.dataNascimento),
+                      align: pw.TextAlign.center,
+                    ),
                     _cell(_status(animal.status), align: pw.TextAlign.center),
                   ],
                 ),
@@ -214,8 +224,21 @@ class ReportPdfService {
   String _nome(String? value) =>
       value == null || value.trim().isEmpty ? 'Não informado' : value.trim();
 
-  String _raca(String value) =>
-      value.trim().isEmpty ? 'Não informada' : value.trim();
+  String _composicao(List<dynamic>? composicoes) {
+    if (composicoes == null || composicoes.isEmpty) {
+      return 'Não informada';
+    }
+
+    return composicoes.map((item) {
+      final nome = item.racaNome.toString().trim();
+      final percentual = item.percentual as double;
+      final percentualTexto = percentual % 1 == 0
+          ? percentual.toStringAsFixed(0)
+          : percentual.toStringAsFixed(1);
+
+      return percentualTexto + '% ' + (nome.isEmpty ? 'Não informada' : nome);
+    }).join(' + ');
+  }
 
   String _date(DateTime? value) => value == null
       ? 'Não informada'
