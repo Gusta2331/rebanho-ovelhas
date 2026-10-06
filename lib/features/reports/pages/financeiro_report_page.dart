@@ -200,7 +200,7 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
         subtitle: Text(
           (receita ? 'Receita' : 'Despesa') +
           ' - ' + (item['categoria']?.toString() ?? 'Sem categoria') +
-          ' - R$ ' + _money(item['valor']) +
+          ' - R\$ ' + _money(item['valor']) +
           ' - ' + (item['data']?.toString() ?? 'Sem data'),
         ),
       ),
