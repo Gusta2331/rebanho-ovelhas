@@ -200,7 +200,7 @@ class AdditionalReportService {
   Future<Uint8List> gerarPdfSecoes({
     required String title,
     required String subtitle,
-    required List<_PdfSection> sections,
+    required Map<String, List<List<String>>> sections,
   }) async {
     final document = pw.Document();
     final green = PdfColor.fromHex('#367C2B');
@@ -262,7 +262,8 @@ class AdditionalReportService {
           ];
 
           for (var i = 0; i < sections.length; i++) {
-            final section = sections[i];
+            final sectionTitle = sections.keys.elementAt(i);
+            final sectionRows = sections[sectionTitle]!;
             widgets.add(
               pw.Container(
                 width: double.infinity,
@@ -276,7 +277,7 @@ class AdditionalReportService {
                   borderRadius: pw.BorderRadius.circular(7),
                 ),
                 child: pw.Text(
-                  section.title.toUpperCase(),
+                  sectionTitle.toUpperCase(),
                   style: pw.TextStyle(
                     color: i == 0 ? PdfColors.white : text,
                     fontSize: 11,
@@ -288,7 +289,7 @@ class AdditionalReportService {
             widgets.add(
               pw.TableHelper.fromTextArray(
                 headers: const ['Indicador', 'Resultado'],
-                data: section.rows,
+                data: sectionRows,
                 headerStyle: pw.TextStyle(
                   color: PdfColors.white,
                   fontSize: 8.5,
@@ -320,13 +321,14 @@ class AdditionalReportService {
   Future<Uint8List> gerarExcelAbas({
     required String title,
     required String subtitle,
-    required List<_ExcelSection> sections,
+    required Map<String, List<List<String>>> sections,
   }) async {
     final excel = Excel.createExcel();
 
     for (var index = 0; index < sections.length; index++) {
-      final section = sections[index];
-      final sheetName = _sheetName(section.title, index);
+      final sectionTitle = sections.keys.elementAt(index);
+      final sectionRows = sections[sectionTitle]!;
+      final sheetName = _sheetName(sectionTitle, index);
       final sheet = excel[sheetName];
 
       final titleStyle = CellStyle(
@@ -363,7 +365,7 @@ class AdditionalReportService {
         ..cellStyle = titleStyle;
       sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1))
         ..value = TextCellValue(
-          section.title + ' - ' + subtitle + ' - gerado em ' +
+          sectionTitle + ' - ' + subtitle + ' - gerado em ' +
               _dateTime(DateTime.now()),
         )
         ..cellStyle = subtitleStyle;
@@ -374,8 +376,8 @@ class AdditionalReportService {
         ..value = const TextCellValue('Resultado')
         ..cellStyle = headerStyle;
 
-      for (var row = 0; row < section.rows.length; row++) {
-        final values = section.rows[row];
+      for (var row = 0; row < sectionRows.length; row++) {
+        final values = sectionRows[row];
         for (var col = 0; col < 2; col++) {
           final cell = sheet.cell(
             CellIndex.indexByColumnRow(
@@ -407,7 +409,7 @@ class AdditionalReportService {
       excel.delete('Sheet1');
     }
     if (sections.isNotEmpty) {
-      excel.setDefaultSheet(_sheetName(sections.first.title, 0));
+      excel.setDefaultSheet(_sheetName(sections.keys.first, 0));
     }
 
     final bytes = excel.save();
@@ -438,17 +440,3 @@ class AdditionalReportService {
       value.minute.toString().padLeft(2, '0');
 }
 
-
-class _PdfSection {
-  final String title;
-  final List<List<String>> rows;
-
-  const _PdfSection({required this.title, required this.rows});
-}
-
-class _ExcelSection {
-  final String title;
-  final List<List<String>> rows;
-
-  const _ExcelSection({required this.title, required this.rows});
-}
