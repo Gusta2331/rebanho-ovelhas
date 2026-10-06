@@ -187,6 +187,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
         animals: animals,
         generatedAt: DateTime.now(),
         composicoesPorAnimal: composicoes,
+        periodLabel: _period.label,
       );
 
       if (format == 'pdf') {
