@@ -34,6 +34,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
   String _status = 'Todos';
   DateTime? _from;
   DateTime? _to;
+  final Set<String> _selectedReproductionIds = <String>{};
 
   @override
   void initState() { super.initState(); _load(); }
@@ -52,6 +53,9 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
         births[item.id] = await _repro.getNascimentos(item.id);
       }));
       if (!mounted) return;
+      _selectedReproductionIds.removeWhere(
+        (id) => !items.any((item) => item.id == id),
+      );
       setState(() { _items = items; _animalMap = map; _births = births; _loading = false; });
     } catch (e) {
       if (!mounted) return;
@@ -93,6 +97,37 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
 
   String _statusName(StatusReproducao s) => _statusLabel(s);
 
+  List<Reproducao> get _selectedReproductions => _items
+      .where((item) => _selectedReproductionIds.contains(item.id))
+      .toList();
+
+  bool _isSelected(Reproducao item) =>
+      _selectedReproductionIds.contains(item.id);
+
+  void _toggleSelection(Reproducao item) {
+    setState(() {
+      if (_selectedReproductionIds.contains(item.id)) {
+        _selectedReproductionIds.remove(item.id);
+      } else {
+        _selectedReproductionIds.add(item.id);
+      }
+    });
+  }
+
+  void _selectAllFiltered() {
+    setState(() {
+      _selectedReproductionIds.addAll(_filtered.map((item) => item.id));
+    });
+  }
+
+  void _clearSelection() {
+    setState(() => _selectedReproductionIds.clear());
+  }
+
+  bool get _allFilteredSelected =>
+      _filtered.isNotEmpty &&
+      _filtered.every(_selectedReproductionIds.contains);
+
   Future<void> _pickDate(bool from) async {
     final d = await showDatePicker(
       context: context,
@@ -108,7 +143,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
   }
 
   Future<void> _chooseFormat() async {
-    if (_filtered.isEmpty || _generating) return;
+    if (_selectedReproductions.isEmpty || _generating) return;
     final format = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -117,6 +152,17 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
           const Padding(
             padding: EdgeInsets.fromLTRB(20, 12, 20, 4),
             child: Align(alignment: Alignment.centerLeft, child: Text('Escolha o formato', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800))),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _selectedReproductions.length.toString() +
+                    ' reprodução(ões) selecionada(s)',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
           ),
           ListTile(leading: const Icon(Icons.picture_as_pdf_outlined), title: const Text('PDF'), subtitle: const Text('Relatório visual'), onTap: () => Navigator.pop(context, 'pdf')),
           ListTile(leading: const Icon(Icons.table_view_outlined), title: const Text('Excel'), subtitle: const Text('Planilha para análise'), onTap: () => Navigator.pop(context, 'excel')),
@@ -130,7 +176,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
   Future<void> _generate(String format) async {
     setState(() => _generating = true);
     try {
-      final selected = _filtered;
+      final selected = List<Reproducao>.from(_selectedReproductions);
       final data = ReproductionReportData(
         reproducoes: selected,
         nascimentosPorReproducao: {for (final r in selected) r.id: _births[r.id] ?? const []},
@@ -184,7 +230,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
         ]),
         actions: [IconButton(
           tooltip: 'Gerar relatório',
-          onPressed: list.isEmpty || _generating ? null : _chooseFormat,
+          onPressed: _selectedReproductions.isEmpty || _generating ? null : _chooseFormat,
           icon: _generating ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.ios_share_rounded),
         )],
       ),
@@ -218,13 +264,45 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
               if (_from != null || _to != null)
                 Align(alignment: Alignment.centerRight, child: TextButton.icon(onPressed: () => setState(() { _from = null; _to = null; }), icon: const Icon(Icons.clear), label: const Text('Limpar datas'))),
               const SizedBox(height: 8),
-              Text(list.isEmpty ? 'Nenhuma reprodução encontrada' : list.length.toString() + ' reprodução(ões) no relatório', style: const TextStyle(fontWeight: FontWeight.w700)),
+              if (list.isNotEmpty)
+                Card(
+                  margin: EdgeInsets.zero,
+                  elevation: 0,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.checklist_rounded),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _selectedReproductions.length.toString() +
+                                ' reprodução(ões) selecionada(s)',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        if (!_allFilteredSelected)
+                          TextButton(
+                            onPressed: _selectAllFiltered,
+                            child: const Text('Selecionar todas'),
+                          ),
+                        if (_selectedReproductionIds.isNotEmpty)
+                          TextButton(
+                            onPressed: _clearSelection,
+                            child: const Text('Limpar'),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
               const SizedBox(height: 8),
               ...list.map((r) => _Card(
                 r: r,
                 mae: _animal(r.maeId),
                 pai: _animal(r.paiId),
                 births: _births[r.id] ?? const [],
+                selected: _isSelected(r),
+                onSelected: () => _toggleSelection(r),
               )),
             ],
           ),
@@ -269,7 +347,9 @@ class _Card extends StatelessWidget {
   final String mae;
   final String pai;
   final List<ReproducaoNascimento> births;
-  const _Card({required this.r, required this.mae, required this.pai, required this.births});
+  final bool selected;
+  final VoidCallback onSelected;
+  const _Card({required this.r, required this.mae, required this.pai, required this.births, required this.selected, required this.onSelected});
 
   String _date(DateTime? d) => d == null ? 'Não informada' :
       d.day.toString().padLeft(2,'0') + '/' + d.month.toString().padLeft(2,'0') + '/' + d.year.toString();
@@ -295,7 +375,10 @@ class _Card extends StatelessWidget {
     };
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(padding: const EdgeInsets.all(15), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      child: InkWell(
+        onTap: onSelected,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(padding: const EdgeInsets.all(15), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Container(width: 44, height: 44, decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: .10), borderRadius: BorderRadius.circular(13)), child: const AppAssetIcon(assetPath: 'assets/images/icon_cobertura.png', size: 26)),
           const SizedBox(width: 12),
@@ -304,6 +387,7 @@ class _Card extends StatelessWidget {
             const SizedBox(height: 3),
             Text('Pai: ' + pai, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
           ])),
+          Checkbox(value: selected, onChanged: (_) => onSelected()),
           Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5), decoration: BoxDecoration(color: color.withValues(alpha: .10), borderRadius: BorderRadius.circular(20)), child: Text(status, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700))),
         ]),
         const SizedBox(height: 12),
@@ -315,6 +399,8 @@ class _Card extends StatelessWidget {
         ]),
         if (births.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 10), child: Text('Nascimentos: ' + births.length.toString(), style: const TextStyle(fontWeight: FontWeight.w700))),
       ])),
+        ),
+      ),
     );
   }
 }
