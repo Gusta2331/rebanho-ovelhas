@@ -160,7 +160,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
       };
 
   Future<void> _chooseFormat() async {
-    if (_filtered.isEmpty || _generating) return;
+    if (_selectedAnimals.isEmpty || _generating) return;
 
     final format = await showModalBottomSheet<String>(
       context: context,
@@ -178,8 +178,17 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
               ),
               const SizedBox(height: 6),
               Text(
-                'O relatório será gerado com os filtros atuais.',
+                'O relatório será gerado com os animais selecionados.',
                 style: TextStyle(color: Colors.grey.shade700),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _selectedAnimals.length.toString() +
+                    ' animal(is) selecionado(s)',
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 16),
               ListTile(
@@ -208,7 +217,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
     setState(() => _generating = true);
 
     try {
-      final animals = List<Animal>.from(_filtered);
+      final animals = List<Animal>.from(_selectedAnimals);
       final composicoes = await _composicaoRacialService.listarPorAnimais(
         animals.map((animal) => animal.id).toList(),
       );
@@ -303,7 +312,9 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
         actions: [
           IconButton(
             tooltip: 'Gerar relatório',
-            onPressed: _filtered.isEmpty || _generating ? null : _chooseFormat,
+            onPressed: _selectedAnimals.isEmpty || _generating
+              ? null
+              : _chooseFormat,
             icon: _generating
                 ? const SizedBox(
                     width: 20,
@@ -444,7 +455,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                               style: const TextStyle(fontWeight: FontWeight.w700),
                             ),
                           ),
-                          if (_filtered.isNotEmpty)
+                          if (_selectedAnimals.isNotEmpty)
                             TextButton.icon(
                               onPressed: _chooseFormat,
                               icon: const Icon(Icons.description_outlined),
