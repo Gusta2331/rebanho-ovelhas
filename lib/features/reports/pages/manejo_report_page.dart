@@ -26,6 +26,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
   TipoManejo? _type;
   DateTime? _from;
   DateTime? _to;
+  final Set<String> _selectedIds = <String>{};
 
   @override
   void initState() { super.initState(); _load(); }
@@ -58,6 +59,19 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
     }).toList();
     list.sort((a, b) => (b['data']?.toString() ?? '').compareTo(a['data']?.toString() ?? ''));
     if (mounted) setState(() => _items = list);
+  }
+
+  String _manejoId(Map<String, dynamic> r) => r['id']?.toString() ?? ((r['data']?.toString() ?? '') + '|' + (r['tipo']?.toString() ?? '') + '|' + (r['animal_id']?.toString() ?? r['animalId']?.toString() ?? ''));
+
+  List<Map<String, dynamic>> get _selectedItems => _items.where((r) => _selectedIds.contains(_manejoId(r))).toList();
+
+  void _selectAll() => setState(() => _selectedIds.addAll(_items.map(_manejoId)));
+  void _clearSelection() => setState(() => _selectedIds.clear());
+  void _toggleSelection(Map<String, dynamic> r) {
+    setState(() {
+      final id = _manejoId(r);
+      if (_selectedIds.contains(id)) { _selectedIds.remove(id); } else { _selectedIds.add(id); }
+    });
   }
 
   Future<void> _date(bool from) async {
@@ -261,9 +275,11 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
   Widget _list() {
     if (_items.isEmpty) return Card(child: Padding(padding: const EdgeInsets.all(28), child: Column(children: [Icon(Icons.assignment_outlined, size: 50, color: Theme.of(context).colorScheme.onSurfaceVariant), const SizedBox(height: 10), const Text('Nenhum manejo encontrado', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)), const SizedBox(height: 5), const Text('Não existem registros para os filtros selecionados.', textAlign: TextAlign.center)])));
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _selectionBar(),
+      const SizedBox(height: 10),
       Row(children: [const Expanded(child: Text('Registros', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800))), Text(_items.length.toString() + ' registro(s)', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant))]),
       const SizedBox(height: 10),
-      ..._items.map(_card),
+      ..._items.map((r) => _card(r)),
     ]);
   }
 
@@ -285,6 +301,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Checkbox(value: _selectedIds.contains(_manejoId(r)), onChanged: (_) => _toggleSelection(r)),
               const AppAssetIcon(
                 assetPath: 'assets/images/icon_manejo.png',
                 size: 38,
@@ -336,6 +353,23 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _selectionBar() {
+    final total = _items.length;
+    final selected = _selectedItems.length;
+    final allSelected = total > 0 && selected == total;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(children: [
+          Expanded(child: Text(selected == 0 ? 'Nenhum selecionado' : selected.toString() + ' selecionado(s)', style: const TextStyle(fontWeight: FontWeight.w700))),
+          TextButton(onPressed: total == 0 || allSelected ? null : _selectAll, child: const Text('Selecionar tudo')),
+          TextButton(onPressed: selected == 0 ? null : _clearSelection, child: const Text('Limpar')),
+        ]),
       ),
     );
   }
@@ -412,7 +446,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
   Future<void> _generate(String format) async {
     setState(() => _generating = true);
     try {
-      final registros = _items.map((item) => Map<String, dynamic>.from(item)).toList();
+      final registros = _selectedItems.map((item) => Map<String, dynamic>.from(item)).toList();
       final generatedAt = DateTime.now();
       if (format == 'pdf') {
         final bytes = await _pdfService.gerarManejo(registros: registros, generatedAt: generatedAt);
@@ -432,7 +466,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
         ));
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text((format == 'pdf' ? 'PDF' : 'Excel') + ' gerado com ' + _items.length.toString() + ' registro(s).')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text((format == 'pdf' ? 'PDF' : 'Excel') + ' gerado com ' + _selectedItems.length.toString() + ' registro(s).')));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Não foi possível gerar o relatório: ' + error.toString().replaceFirst('Exception: ', ''))));
