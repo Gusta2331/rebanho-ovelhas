@@ -472,7 +472,11 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
           subject: 'Relatório de manejo - Fazenda Baixinha',
         ));
       } else {
-        final bytes = await _excelService.gerarManejo(registros: registros, generatedAt: generatedAt);
+        final bytes = await _excelService.gerarManejo(
+          registros: registros,
+          generatedAt: generatedAt,
+          periodLabel: _period.label,
+        );
         await SharePlus.instance.share(ShareParams(
           files: [XFile.fromData(bytes, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')],
           fileNameOverrides: const ['ovigestao_relatorio_manejo.xlsx'],
