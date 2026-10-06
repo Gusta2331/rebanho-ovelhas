@@ -239,7 +239,7 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
         r['tipo']?.toString() == 'receita' ? 'Receita' : 'Despesa',
         r['categoria']?.toString() ?? 'Não informada',
         r['descricao']?.toString() ?? 'Não informada',
-        'R$ ' + _money(r['valor']),
+        'R\$ ' + _money(r['valor']),
         r['observacoes']?.toString() ?? '',
       ]).toList();
       const headers = ['Data', 'Tipo', 'Categoria', 'Descrição', 'Valor', 'Observações'];
