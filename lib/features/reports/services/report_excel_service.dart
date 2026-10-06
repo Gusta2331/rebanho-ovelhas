@@ -30,6 +30,7 @@ class ReportExcelService {
     final rows = <List<dynamic>>[
       ['RELATÓRIO DO REBANHO'],
       ['Fazenda Baixinha'],
+      ['Período', data.periodLabel],
       ['Gerado em', _dateTime(data.generatedAt)],
       [],
       [
