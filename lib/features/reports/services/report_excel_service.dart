@@ -327,7 +327,8 @@ class ReportExcelService {
       ['Gerado em', _manejoDateTime(generatedAt)],
       [],
       ['TOTAL', registros.length, 'PESAGENS', count('pesagem'), 'VACINAÇÕES', count('vacinacao'), 'VERMIFUGAÇÕES', count('vermifugacao')],
-      ['TRATAMENTOS', count('tratamento'), 'FAMACHA', count('famacha'), 'DENTIÇÃO', count('denticao'), 'TOSQUIAS', count('tosquia'), 'OUTROS', count('outro')],
+      ['TRATAMENTOS', count('tratamento'), 'FAMACHA', count('famacha'), 'DENTIÇÃO', count('denticao'), 'TOSQUIAS', count('tosquia')],
+      ['OUTROS', count('outro')],
       [],
       ['DETALHAMENTO DOS MANEJOS'],
       ['Data', 'Tipo', 'Animal', 'Detalhamento', 'Dose', 'Via', 'Carência', 'Observações'],
@@ -342,7 +343,7 @@ class ReportExcelService {
         _manejoText(r['observacoes']),
       ]),
     ];
-    _writeManejoRows(sheet, rows, titleRows: {0}, subtitleRows: {1}, metadataRows: {2}, sectionRows: {7}, headerRows: {8}, summaryRows: {4, 5}, widths: {0: 14, 1: 18, 2: 28, 3: 34, 4: 16, 5: 18, 6: 16, 7: 40});
+    _writeManejoRows(sheet, rows, titleRows: {0}, subtitleRows: {1}, metadataRows: {2}, sectionRows: {8}, headerRows: {9}, summaryRows: {4, 5, 6}, widths: {0: 14, 1: 18, 2: 28, 3: 34, 4: 16, 5: 18, 6: 16, 7: 40});
     if (excel.sheets.containsKey('Sheet1')) excel.delete('Sheet1');
     excel.setDefaultSheet('Relatório de manejo');
     final bytes = excel.save();
@@ -374,7 +375,7 @@ class ReportExcelService {
       }
     }
     for (final entry in widths.entries) sheet.setColumnWidth(entry.key, entry.value);
-    sheet.setRowHeight(0, 28); sheet.setRowHeight(1, 22); sheet.setRowHeight(4, 24); sheet.setRowHeight(5, 24); sheet.setRowHeight(7, 24); sheet.setRowHeight(8, 30);
+    sheet.setRowHeight(0, 28); sheet.setRowHeight(1, 22); sheet.setRowHeight(4, 24); sheet.setRowHeight(5, 24); sheet.setRowHeight(6, 24); sheet.setRowHeight(8, 24); sheet.setRowHeight(9, 30);
   }
 
   CellValue _manejoCellValue(dynamic value) {
@@ -434,7 +435,7 @@ class ReportExcelService {
       case 'vermifugacao': return 'Vermífugo: ' + _manejoText(r['vermifugo_nome']);
       case 'tratamento': return 'Medicamento: ' + _manejoText(r['medicamento_nome']);
       case 'denticao': return 'Dentição: ' + _manejoText(r['denticao']);
-      case 'tosquia': return 'Registro de tosquia';
+      case 'tosquia': return 'Tosquia: ' + _manejoText(r['outro_nome']);
       default: return _manejoText(r['outro_nome']);
     }
   }
