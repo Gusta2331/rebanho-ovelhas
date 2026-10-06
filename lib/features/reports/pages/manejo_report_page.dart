@@ -423,10 +423,14 @@ class _Summary extends StatelessWidget {
           iconAsset: 'assets/images/icon_lotes.png',
         ),
         _SummaryCard(
-        _SummaryCard(
           value: types.toString(),
           label: 'Tipos',
           iconAsset: 'assets/images/icon_relatorios.png',
+        ),
+        _SummaryCard(
+          value: 'OK',
+          label: 'Pronto para consulta',
+          iconAsset: 'assets/images/icon_manejo.png',
         ),
       ],
     );
@@ -473,7 +477,10 @@ class _SummaryCard extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade700,
+                    ),
                   ),
                 ],
               ),
@@ -487,16 +494,12 @@ class _SummaryCard extends StatelessWidget {
 
 class _ManejoCard extends StatelessWidget {
   final _ManejoItem item;
-  final bool selected;
-  final VoidCallback onSelected;
   final String typeLabel;
   final String? detail;
   final String date;
 
   const _ManejoCard({
     required this.item,
-    required this.selected,
-    required this.onSelected,
     required this.typeLabel,
     required this.detail,
     required this.date,
@@ -504,67 +507,37 @@ class _ManejoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final animal = item.nome?.trim().isNotEmpty == true
+        ? item.nome! + ' · ' + item.brinco
+        : 'Brinco ' + item.brinco;
+
+    final subtitle = detail == null || detail!.trim().isEmpty
+        ? typeLabel + ' · ' + date
+        : typeLabel + ' · ' + date + ' · ' + detail!;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onSelected,
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: AppTheme.primaryColor.withValues(alpha: .10),
-            child: const AppAssetIcon(
-              assetPath: 'assets/images/icon_manejo.png',
-              size: 24,
-            ),
-          ),
-          title: Text(
-            item.nome?.trim().isNotEmpty == true
-                ? item.nome! + ' · ' + item.brinco
-                : 'Brinco ' + item.brinco,
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              detail == null || detail!.isEmpty
-                  ? typeLabel + ' · ' + date
-                  : typeLabel + ' · ' + date + ' · ' + detail!,
-            ),
-          ),
-          trailing: Checkbox(
-            value: selected,
-            onChanged: (_) => onSelected(),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 4,
+        ),
+        leading: CircleAvatar(
+          backgroundColor: AppTheme.primaryColor.withValues(alpha: .10),
+          child: const AppAssetIcon(
+            assetPath: 'assets/images/icon_manejo.png',
+            size: 24,
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _ErrorState({
-    required this.message,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Tentar novamente'),
-            ),
-          ],
+        title: Text(
+          animal,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(subtitle),
         ),
       ),
     );
