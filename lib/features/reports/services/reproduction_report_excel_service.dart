@@ -9,7 +9,7 @@ class ReproductionReportExcelService {
     final excel=Excel.createExcel();
     final sheet=excel['Relatório de reprodução'];
     final rows=<List<dynamic>>[
-      ['RELATÓRIO DE REPRODUÇÃO'],['Fazenda Baixinha'],['Gerado em',_dateTime(data.generatedAt)],[],
+      ['RELATÓRIO DE REPRODUÇÃO'],['Fazenda Baixinha'],['Período',data.periodLabel],['Gerado em',_dateTime(data.generatedAt)],[],
       ['REPRODUÇÕES',data.total,'PRENHES',data.prenhes,'PARTOS',data.partos,'NASCIMENTOS',data.totalNascimentos],
       ['PLANEJADAS',data.planejadas,'COBERTAS',data.cobertas,'NÃO PRENHES',data.naoPrenhes,'ABORTOS',data.abortos],[],
       ['DETALHAMENTO DAS REPRODUÇÕES'],['Mãe','Pai','Status','Cobertura','Parto previsto','Prenhez confirmada','Parto','Nascimentos'],
