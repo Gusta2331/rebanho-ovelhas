@@ -885,7 +885,7 @@ class _GeralReportPageState extends State<GeralReportPage> {
     final today = DateTime(now.year, now.month, now.day);
     switch (_period) {
       case 'week':
-        return (today.subtract(const Duration(days: 7)), today);
+        return (today.subtract(const Duration(days: 6)), today);
       case 'month':
         return (DateTime(today.year, today.month - 1, today.day), today);
       case 'year':
@@ -961,7 +961,7 @@ class _GeralReportPageState extends State<GeralReportPage> {
       final bytes = format == 'pdf'
           ? await _service.gerarPdfSecoes(
               title: 'Relatório geral da Fazenda',
-              subtitle: 'Visão consolidada dos dados registrados',
+              subtitle: 'Período: ' + _periodLabel(),
               sections: sections,
             )
           : await _service.gerarExcelAbas(
