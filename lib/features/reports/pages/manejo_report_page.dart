@@ -571,7 +571,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
 
   String _animal(Map<String, dynamic> a) {
     final b = a['brinco']?.toString(); final n = a['nome']?.toString();
-    if (b != null && b.isNotEmpty && n != null && n.isNotEmpty) return 'Brinco ' + b + ' • ' + n;
+    if (b != null && b.isNotEmpty && n != null && n.isNotEmpty) return 'Brinco ' + b + ' - ' + n;
     if (b != null && b.isNotEmpty) return 'Brinco ' + b;
     if (n != null && n.isNotEmpty) return n;
     return 'Animal não identificado';
