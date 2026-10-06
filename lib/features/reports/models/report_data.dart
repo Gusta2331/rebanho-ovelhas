@@ -5,11 +5,13 @@ class ReportData {
   final List<Animal> animals;
   final DateTime generatedAt;
   final Map<String, List<ComposicaoRacial>> composicoesPorAnimal;
+  final String periodLabel;
 
   const ReportData({
     required this.animals,
     required this.generatedAt,
     this.composicoesPorAnimal = const {},
+    this.periodLabel = 'Todo o período',
   });
 
   int get total => animals.length;
