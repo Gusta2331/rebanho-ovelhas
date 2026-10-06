@@ -175,6 +175,19 @@ class ReportAgeCard extends StatelessWidget {
     if (result != null) onChanged(result);
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.pets_rounded),
+        title: const Text('Filtro de idade'),
+        subtitle: Text(value.label),
+        trailing: const Icon(Icons.tune_rounded),
+        onTap: () => _choose(context),
+      ),
+    );
+  }
+
   Widget _radio(
     String label,
     ReportAgeType option,
