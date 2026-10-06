@@ -363,15 +363,20 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                                 ),
                               ),
                               if (_filtered.isNotEmpty)
-                                TextButton(
-                                  onPressed: _allFilteredSelected
-                                      ? _clearSelection
-                                      : _selectAllFiltered,
-                                  child: Text(
-                                    _allFilteredSelected
-                                        ? 'Limpar'
-                                        : 'Selecionar todos',
-                                  ),
+                                Wrap(
+                                  spacing: 4,
+                                  children: [
+                                    if (!_allFilteredSelected)
+                                      TextButton(
+                                        onPressed: _selectAllFiltered,
+                                        child: const Text('Selecionar todos'),
+                                      ),
+                                    if (_selectedAnimalIds.isNotEmpty)
+                                      TextButton(
+                                        onPressed: _clearSelection,
+                                        child: const Text('Limpar'),
+                                      ),
+                                  ],
                                 ),
                             ],
                           ),
