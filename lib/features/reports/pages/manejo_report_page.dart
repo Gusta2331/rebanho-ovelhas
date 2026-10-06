@@ -305,9 +305,6 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
                           ),
                         ),
                       const SizedBox(height: 8),
-                      _SelectionCard(
-                        filteredCount: filtered.length,
-                      ),
                       const SizedBox(height: 12),
                       if (filtered.isEmpty)
                         const Padding(
@@ -321,8 +318,6 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
                         ...filtered.map(
                           (item) => _ManejoCard(
                             item: item,
-                            selected: _isSelected(item),
-                            onSelected: () => _toggleSelection(item),
                             typeLabel: _tipoFromLabel(item.manejo.tipo),
                             detail: _detail(item.manejo),
                             date: _date(item.manejo.data),
