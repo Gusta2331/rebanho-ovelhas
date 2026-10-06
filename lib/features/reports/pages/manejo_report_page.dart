@@ -151,6 +151,11 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Text('Filtros', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
       const SizedBox(height: 12),
+      ReportPeriodCard(
+        value: _period,
+        onChanged: _applyPeriod,
+      ),
+      const SizedBox(height: 12),
       DropdownButtonFormField<TipoManejo>(
         value: _type,
         decoration: const InputDecoration(labelText: 'Tipo de manejo', prefixIcon: Icon(Icons.filter_alt_outlined)),
