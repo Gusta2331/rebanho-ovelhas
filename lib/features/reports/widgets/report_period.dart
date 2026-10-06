@@ -58,7 +58,7 @@ class ReportPeriod {
     }
   }
 
-  static String _date(DateTime value) =>
+  static String formatDate(DateTime value) =>
       value.day.toString().padLeft(2, '0') + '/' +
       value.month.toString().padLeft(2, '0') + '/' +
       value.year.toString();
@@ -124,8 +124,8 @@ class ReportPeriodCard extends StatelessWidget {
                   title: Text(
                     start == null || end == null
                         ? 'Escolher datas'
-                        : ReportPeriod._date(start!) + ' a ' +
-                            ReportPeriod._date(end!),
+                        : ReportPeriod.formatDate(start!) + ' a ' +
+                            ReportPeriod.formatDate(end!),
                   ),
                   onTap: () async {
                     final picked = await showDateRangePicker(
