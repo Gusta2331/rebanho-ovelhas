@@ -399,7 +399,6 @@ class _Card extends StatelessWidget {
         ]),
         if (births.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 10), child: Text('Nascimentos: ' + births.length.toString(), style: const TextStyle(fontWeight: FontWeight.w700))),
       ])),
-        ),
       ),
     );
   }
