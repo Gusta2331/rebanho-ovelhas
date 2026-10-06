@@ -109,14 +109,13 @@ class ReportPdfService {
               0: pw.FixedColumnWidth(45),
               1: pw.FlexColumnWidth(1.7),
               2: pw.FixedColumnWidth(45),
-              3: pw.FlexColumnWidth(1.6),
+              3: pw.FlexColumnWidth(2.8),
               4: pw.FixedColumnWidth(55),
               5: pw.FlexColumnWidth(1.0),
-              6: pw.FlexColumnWidth(2.2),
             },
             children: [
               _headerRow(
-                ['Brinco', 'Nome', 'Sexo', 'Raça', 'Nascimento', 'Status', 'Composição racial'],
+                ['Brinco', 'Nome', 'Sexo', 'Composição racial', 'Nascimento', 'Status'],
                 green,
               ),
               ...data.animals.map(
@@ -125,10 +124,9 @@ class ReportPdfService {
                     _cell(animal.brinco, align: pw.TextAlign.center),
                     _cell(_nome(animal.nome)),
                     _cell(_sexo(animal.sexo), align: pw.TextAlign.center),
-                    _cell(_raca(animal.raca)),
+                    _cell(_composicao(data.composicoesPorAnimal[animal.id])),
                     _cell(_date(animal.dataNascimento), align: pw.TextAlign.center),
                     _cell(_status(animal.status), align: pw.TextAlign.center),
-                    _cell(_composicao(data.composicoesPorAnimal[animal.id])),
                   ],
                 ),
               ),
