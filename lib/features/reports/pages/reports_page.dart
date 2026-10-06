@@ -99,13 +99,7 @@ class _ReportsPageState extends State<ReportsPage> {
         setState(() => _selectedType = ReportType.reproducao);
         return;
       case ReportType.manejo:
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => ManejoReportPage(
-              onBack: () => Navigator.of(context).pop(),
-            ),
-          ),
-        );
+        setState(() => _selectedType = ReportType.manejo);
         return;
       default:
         ScaffoldMessenger.of(context).showSnackBar(
