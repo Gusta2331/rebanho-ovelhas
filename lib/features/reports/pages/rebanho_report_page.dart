@@ -429,32 +429,6 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                               subtitle: Text(animal.raca),
                             ),
                           ),
-                        )
-                                backgroundColor:
-                                    AppTheme.primaryColor.withValues(alpha: .10),
-                                child: AppAssetIcon(
-                                  assetPath: animal.sexo == SexoAnimal.femea
-                                      ? 'assets/images/icon_ovino_femea.png'
-                                      : 'assets/images/icon_ovino_macho.png',
-                                  size: 24,
-                                ),
-                              ),
-                              title: Text(
-                                animal.nome?.trim().isNotEmpty == true
-                                    ? animal.nome! + ' · ' + animal.brinco
-                                    : 'Brinco ' + animal.brinco,
-                              ),
-                              subtitle: Text(
-                                animal.raca +
-                                    ' · ' +
-                                    _statusName(animal.status) +
-                                    ' · ' +
-                                    (_date(animal.dataNascimento).isEmpty
-                                        ? 'Nascimento não informado'
-                                        : _date(animal.dataNascimento)),
-                              ),
-                            ),
-                          ),
                         ),
                     ],
                   ),
