@@ -307,17 +307,6 @@ class _GeralReportPageState extends State<GeralReportPage> {
         .fold<double>(0, (s, e) => s + _number(e['valor']));
     final saldo = receitas - despesas;
 
-    final ultimos30 = financeiro.where((e) {
-      final data = DateTime.tryParse(e['data']?.toString() ?? '');
-      return data != null && !data.isBefore(dia.subtract(const Duration(days: 30)));
-    }).toList();
-    final receitas30 = ultimos30
-        .where((e) => e['tipo'] == 'receita')
-        .fold<double>(0, (s, e) => s + _number(e['valor']));
-    final despesas30 = ultimos30
-        .where((e) => e['tipo'] == 'despesa')
-        .fold<double>(0, (s, e) => s + _number(e['valor']));
-
     final despesasCategoria = <String, double>{};
     for (final item in financeiro.where((e) => e['tipo'] == 'despesa')) {
       final categoria = item['categoria']?.toString().trim();
