@@ -253,4 +253,134 @@ class ReportPdfService {
         StatusAnimal.morto => 'Morto',
         StatusAnimal.descartado => 'Descartado',
       };
+
+  Future<Uint8List> gerarManejo({
+    required List<Map<String, dynamic>> registros,
+    required DateTime generatedAt,
+  }) async {
+    final document = pw.Document();
+    final green = PdfColor.fromHex('#367C2B');
+    final lightGreen = PdfColor.fromHex('#EAF3E7');
+    final text = PdfColor.fromHex('#263323');
+    final muted = PdfColor.fromHex('#667060');
+
+    int count(String tipo) => registros.where((r) => r['tipo']?.toString() == tipo).length;
+
+    document.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.fromLTRB(28, 30, 28, 34),
+        footer: (context) => pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('Fazenda Baixinha • OviGestão', style: pw.TextStyle(fontSize: 8, color: muted)),
+            pw.Text('Página ' + context.pageNumber.toString() + ' de ' + context.pagesCount.toString(), style: pw.TextStyle(fontSize: 8, color: muted)),
+          ],
+        ),
+        build: (context) => [
+          pw.Container(
+            padding: const pw.EdgeInsets.all(18),
+            decoration: pw.BoxDecoration(color: green, borderRadius: pw.BorderRadius.circular(12)),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text('RELATÓRIO DE MANEJO', style: pw.TextStyle(color: PdfColors.white, fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 5),
+                pw.Text('Fazenda Baixinha • gerado em ' + _manejoDateTime(generatedAt), style: pw.TextStyle(color: PdfColors.white, fontSize: 9)),
+              ],
+            ),
+          ),
+          pw.SizedBox(height: 16),
+          pw.Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _card('Total', registros.length.toString(), green, lightGreen),
+              _card('Pesagens', count('pesagem').toString(), green, lightGreen),
+              _card('Vacinações', count('vacinacao').toString(), green, lightGreen),
+              _card('Vermifugações', count('vermifugacao').toString(), green, lightGreen),
+              _card('Tratamentos', count('tratamento').toString(), green, lightGreen),
+              _card('FAMACHA', count('famacha').toString(), green, lightGreen),
+              _card('Dentição', count('denticao').toString(), green, lightGreen),
+              _card('Tosquias', count('tosquia').toString(), green, lightGreen),
+              _card('Outros', count('outro').toString(), green, lightGreen),
+            ],
+          ),
+          pw.SizedBox(height: 20),
+          _sectionTitle('Registros de manejo', text),
+          pw.SizedBox(height: 8),
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColors.grey300, width: .5),
+            columnWidths: const {
+              0: pw.FixedColumnWidth(48),
+              1: pw.FlexColumnWidth(1.3),
+              2: pw.FlexColumnWidth(1.7),
+              3: pw.FlexColumnWidth(2.5),
+              4: pw.FlexColumnWidth(1.6),
+            },
+            children: [
+              _headerRow(['Data', 'Tipo', 'Animal', 'Detalhamento', 'Observações'], green),
+              ...registros.map((r) => pw.TableRow(children: [
+                _cell(_manejoDate(r['data']), align: pw.TextAlign.center),
+                _cell(_manejoType(r['tipo'])),
+                _cell(_manejoAnimal(r['animais'])),
+                _cell(_manejoDetail(r)),
+                _cell(_manejoText(r['observacoes'])),
+              ])),
+            ],
+          ),
+        ],
+      ),
+    );
+    return document.save();
+  }
+
+  String _manejoDate(dynamic value) {
+    final date = DateTime.tryParse(value?.toString() ?? '');
+    return date == null ? 'Não informada' : date.day.toString().padLeft(2, '0') + '/' + date.month.toString().padLeft(2, '0') + '/' + date.year.toString();
+  }
+
+  String _manejoDateTime(DateTime value) => _manejoDate(value.toIso8601String()) + ' ' + value.hour.toString().padLeft(2, '0') + ':' + value.minute.toString().padLeft(2, '0');
+
+  String _manejoType(dynamic value) {
+    switch (value?.toString()) {
+      case 'vacinacao': return 'Vacinação';
+      case 'vermifugacao': return 'Vermifugação';
+      case 'tratamento': return 'Tratamento';
+      case 'tosquia': return 'Tosquia';
+      case 'pesagem': return 'Pesagem';
+      case 'famacha': return 'FAMACHA';
+      case 'denticao': return 'Dentição';
+      default: return 'Outro';
+    }
+  }
+
+  String _manejoAnimal(dynamic value) {
+    if (value is! Map) return 'Animal não identificado';
+    final brinco = value['brinco']?.toString().trim() ?? '';
+    final nome = value['nome']?.toString().trim() ?? '';
+    if (brinco.isNotEmpty && nome.isNotEmpty) return brinco + ' • ' + nome;
+    if (brinco.isNotEmpty) return brinco;
+    if (nome.isNotEmpty) return nome;
+    return 'Animal não identificado';
+  }
+
+  String _manejoText(dynamic value) {
+    final valueText = value?.toString().trim() ?? '';
+    return valueText.isEmpty ? 'Não informado' : valueText;
+  }
+
+  String _manejoDetail(Map<String, dynamic> r) {
+    switch (r['tipo']?.toString()) {
+      case 'pesagem': return 'Peso: ' + _manejoText(r['peso_kg']) + ' kg';
+      case 'famacha': return 'Escore FAMACHA: ' + _manejoText(r['famacha_escore']);
+      case 'vacinacao': return 'Vacina: ' + _manejoText(r['vacina_nome']);
+      case 'vermifugacao': return 'Vermífugo: ' + _manejoText(r['vermifugo_nome']);
+      case 'tratamento': return 'Medicamento: ' + _manejoText(r['medicamento_nome']);
+      case 'denticao': return 'Dentição: ' + _manejoText(r['denticao']);
+      case 'tosquia': return 'Registro de tosquia';
+      default: return _manejoText(r['outro_nome']);
+    }
+  }
+
 }
