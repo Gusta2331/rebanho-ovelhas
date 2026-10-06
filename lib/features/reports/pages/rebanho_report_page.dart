@@ -33,6 +33,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
   String _status = 'Todos';
   String _sexo = 'Todos';
   String _raca = 'Todas';
+  final Set<String> _selectedAnimalIds = <String>{};
 
   @override
   void initState() {
@@ -63,6 +64,9 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
       if (!mounted) return;
       setState(() {
         _animals = rows.map(Animal.fromMap).toList();
+        _selectedAnimalIds.removeWhere(
+          (id) => !_animals.any((animal) => animal.id == id),
+        );
         _loading = false;
       });
     } catch (error) {
@@ -119,7 +123,36 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
           '/' +
           value.year.toString();
 
-  String _statusName(StatusAnimal status) => switch (status) {
+  List<Animal> get _selectedAnimals => _animals
+      .where((animal) => _selectedAnimalIds.contains(animal.id))
+      .toList();
+
+  bool _isSelected(Animal animal) => _selectedAnimalIds.contains(animal.id);
+
+  void _toggleAnimalSelection(Animal animal) {
+    setState(() {
+      if (_selectedAnimalIds.contains(animal.id)) {
+        _selectedAnimalIds.remove(animal.id);
+      } else {
+        _selectedAnimalIds.add(animal.id);
+      }
+    });
+  }
+
+  void _selectAllFiltered() {
+    setState(() {
+      _selectedAnimalIds.addAll(_filtered.map((animal) => animal.id));
+    });
+  }
+
+  void _clearSelection() {
+    setState(() => _selectedAnimalIds.clear());
+  }
+
+  bool get _allFilteredSelected =>
+      _filtered.isNotEmpty && _filtered.every(_selectedAnimalIds.contains);
+
+  String _statusName(StatusAnimal status) => switch (_status) {
         StatusAnimal.ativo => 'Ativo',
         StatusAnimal.vendido => 'Vendido',
         StatusAnimal.morto => 'Morto',
@@ -314,6 +347,37 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                         machos: _filtered.where((a) => a.sexo == SexoAnimal.macho).length,
                       ),
                       const SizedBox(height: 16),
+                      Card(
+                        margin: EdgeInsets.zero,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.checklist_rounded),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _selectedAnimalIds.length.toString() +
+                                      ' animal(is) selecionado(s)',
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                              if (_filtered.isNotEmpty)
+                                TextButton(
+                                  onPressed: _allFilteredSelected
+                                      ? _clearSelection
+                                      : _selectAllFiltered,
+                                  child: Text(
+                                    _allFilteredSelected
+                                        ? 'Limpar'
+                                        : 'Selecionar todos',
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       TextField(
                         controller: _search,
                         decoration: InputDecoration(
@@ -397,6 +461,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                           (animal) => Card(
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
+                              onTap: () => _toggleAnimalSelection(animal),
                               leading: CircleAvatar(
                                 backgroundColor:
                                     AppTheme.primaryColor.withValues(alpha: .10),
@@ -420,6 +485,10 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                                     (_date(animal.dataNascimento).isEmpty
                                         ? 'Nascimento não informado'
                                         : _date(animal.dataNascimento)),
+                              ),
+                              trailing: Checkbox(
+                                value: _isSelected(animal),
+                                onChanged: (_) => _toggleAnimalSelection(animal),
                               ),
                             ),
                           ),
