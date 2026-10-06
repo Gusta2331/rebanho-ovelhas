@@ -80,7 +80,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
     final a = _animalMap[id];
     if (a == null) return 'Não informado';
     final n = a.nome?.trim();
-    return n == null || n.isEmpty ? 'Brinco ' + a.brinco : a.brinco + ' • ' + n;
+    return n == null || n.isEmpty ? 'Brinco ' + a.brinco : a.brinco + ' - ' + n;
   }
 
   List<Reproducao> get _filtered => _items.where((r) {
