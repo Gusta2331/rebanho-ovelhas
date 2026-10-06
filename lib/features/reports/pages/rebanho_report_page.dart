@@ -9,6 +9,7 @@ import '../../animals/services/animal_service.dart';
 import '../models/report_data.dart';
 import '../services/report_excel_service.dart';
 import '../services/report_pdf_service.dart';
+import '../widgets/report_period.dart';
 
 class RebanhoReportPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -34,6 +35,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
   String _sexo = 'Todos';
   String _raca = 'Todas';
   final Set<String> _selectedIds = <String>{};
+  ReportPeriod _period = const ReportPeriod.all();
 
   @override
   void initState() {
@@ -98,7 +100,10 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
           (animal.nome?.toLowerCase().contains(query) ?? false) ||
           animal.raca.toLowerCase().contains(query);
 
-      return matchesStatus && matchesSexo && matchesRaca && matchesSearch;
+      final range = _period.range();
+      final birth = animal.dataNascimento;
+      final periodOk = range == null || (birth != null && !birth.isBefore(range.$1) && !birth.isAfter(range.$2));
+      return matchesStatus && matchesSexo && matchesRaca && matchesSearch && periodOk;
     }).toList();
   }
 
@@ -300,6 +305,8 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
                     children: [
+                      ReportPeriodCard(value: _period, onChanged: (value) => setState(() { _period = value; _selectedIds.clear(); })),
+                      const SizedBox(height: 12),
                       _Summary(
                         total: _animals.length,
                         filtered: _filtered.length,
