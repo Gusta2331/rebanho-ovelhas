@@ -270,6 +270,10 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
                         total: _items.length,
                         filtered: filtered.length,
                         selected: _selectedManejos.length,
+                        types: filtered
+                            .map((item) => item.manejo.tipo)
+                            .toSet()
+                            .length,
                       ),
                       const SizedBox(height: 16),
                       TextField(
@@ -433,11 +437,13 @@ class _Summary extends StatelessWidget {
   final int total;
   final int filtered;
   final int selected;
+  final int types;
 
   const _Summary({
     required this.total,
     required this.filtered,
     required this.selected,
+    required this.types,
   });
 
   @override
@@ -450,8 +456,8 @@ class _Summary extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: [
-        const _SummaryCard(
-          value: 'Total',
+        _SummaryCard(
+          value: total.toString(),
           label: 'Manejos',
           iconAsset: 'assets/images/icon_manejo.png',
         ),
@@ -466,16 +472,12 @@ class _Summary extends StatelessWidget {
           iconAsset: 'assets/images/icon_selecao.png',
         ),
         _SummaryCard(
-          value: _tipoCount(context),
+          value: types.toString(),
           label: 'Tipos',
           iconAsset: 'assets/images/icon_relatorios.png',
         ),
       ],
     );
-  }
-
-  String _tipoCount(BuildContext context) {
-    return '8';
   }
 }
 
