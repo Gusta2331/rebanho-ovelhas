@@ -469,7 +469,7 @@ class _Summary extends StatelessWidget {
         _SummaryCard(
           value: selected.toString(),
           label: 'Selecionados',
-          iconAsset: 'assets/images/icon_selecao.png',
+          iconAsset: 'assets/images/icon_manejo.png',
         ),
         _SummaryCard(
           value: types.toString(),
@@ -560,7 +560,7 @@ class _SelectionCard extends StatelessWidget {
           runSpacing: 6,
           children: [
             const AppAssetIcon(
-              assetPath: 'assets/images/icon_selecao.png',
+              assetPath: 'assets/images/icon_manejo.png',
               size: 24,
             ),
             Text(
