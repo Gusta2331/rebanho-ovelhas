@@ -55,7 +55,7 @@ class ReportPeriod {
         return 'Último ano';
       case ReportPeriodType.custom:
         if (start != null && end != null) {
-          return _date(start!) + ' a ' + _date(end!);
+          return formatDate(start!) + ' a ' + formatDate(end!);
         }
         return 'Período personalizado';
     }
