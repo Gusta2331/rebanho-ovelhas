@@ -352,15 +352,15 @@ class ReportExcelService {
   }
 
   void _writeManejoRows(Sheet sheet, List<List<dynamic>> rows, {Set<int> titleRows = const {}, Set<int> subtitleRows = const {}, Set<int> metadataRows = const {}, Set<int> sectionRows = const {}, Set<int> headerRows = const {}, Set<int> summaryRows = const {}, Map<int, double> widths = const {}}) {
-    final title = CellStyle(backgroundColorHex: ExcelColor.fromHexString('#367C2B'), fontColorHex: ExcelColor.fromHexString('#FFFFFF'), fontSize: 18, bold: true, verticalAlign: VerticalAlign.center);
+    final title = CellStyle(backgroundColorHex: ExcelColor.fromHexString('#367C2B'), fontColorHex: ExcelColor.fromHexString('#FFFFFF'), fontSize: 18, bold: true, verticalAlign: VerticalAlign.Center);
     final subtitle = CellStyle(backgroundColorHex: ExcelColor.fromHexString('#EAF3E7'), fontColorHex: ExcelColor.fromHexString('#263323'), fontSize: 12, bold: true);
     final metadata = CellStyle(fontColorHex: ExcelColor.fromHexString('#5B6558'), fontSize: 10, italic: true);
     final section = CellStyle(backgroundColorHex: ExcelColor.fromHexString('#DCEBD7'), fontColorHex: ExcelColor.fromHexString('#24551D'), fontSize: 12, bold: true);
-    final header = CellStyle(backgroundColorHex: ExcelColor.fromHexString('#367C2B'), fontColorHex: ExcelColor.fromHexString('#FFFFFF'), fontSize: 10, bold: true, horizontalAlign: HorizontalAlign.center, verticalAlign: VerticalAlign.center);
-    final label = CellStyle(backgroundColorHex: ExcelColor.fromHexString('#367C2B'), fontColorHex: ExcelColor.fromHexString('#FFFFFF'), fontSize: 9, bold: true, horizontalAlign: HorizontalAlign.center);
-    final value = CellStyle(backgroundColorHex: ExcelColor.fromHexString('#EAF3E7'), fontColorHex: ExcelColor.fromHexString('#263323'), fontSize: 13, bold: true, horizontalAlign: HorizontalAlign.center);
-    final body = CellStyle(fontColorHex: ExcelColor.fromHexString('#263323'), verticalAlign: VerticalAlign.center);
-    final alternate = CellStyle(backgroundColorHex: ExcelColor.fromHexString('#F7F9F5'), fontColorHex: ExcelColor.fromHexString('#263323'), verticalAlign: VerticalAlign.center);
+    final header = CellStyle(backgroundColorHex: ExcelColor.fromHexString('#367C2B'), fontColorHex: ExcelColor.fromHexString('#FFFFFF'), fontSize: 10, bold: true, horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center);
+    final label = CellStyle(backgroundColorHex: ExcelColor.fromHexString('#367C2B'), fontColorHex: ExcelColor.fromHexString('#FFFFFF'), fontSize: 9, bold: true, horizontalAlign: HorizontalAlign.Center);
+    final value = CellStyle(backgroundColorHex: ExcelColor.fromHexString('#EAF3E7'), fontColorHex: ExcelColor.fromHexString('#263323'), fontSize: 13, bold: true, horizontalAlign: HorizontalAlign.Center);
+    final body = CellStyle(fontColorHex: ExcelColor.fromHexString('#263323'), verticalAlign: VerticalAlign.Center);
+    final alternate = CellStyle(backgroundColorHex: ExcelColor.fromHexString('#F7F9F5'), fontColorHex: ExcelColor.fromHexString('#263323'), verticalAlign: VerticalAlign.Center);
     for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       for (var columnIndex = 0; columnIndex < rows[rowIndex].length; columnIndex++) {
         final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: columnIndex, rowIndex: rowIndex));
