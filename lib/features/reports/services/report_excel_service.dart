@@ -383,8 +383,8 @@ class ReportExcelService {
         if (titleRows.contains(rowIndex)) cell.cellStyle = title;
         else if (subtitleRows.contains(rowIndex)) cell.cellStyle = subtitle;
         else if (metadataRows.contains(rowIndex)) cell.cellStyle = metadata;
-        else if (sectionRows.contains(rowIndex)) cell.cellStyle = section;
-        else if (headerRows.contains(rowIndex)) cell.cellStyle = header;
+        else if (sectionRows.contains(rowIndex) || (rows[rowIndex].length == 1 && rowIndex > 8)) cell.cellStyle = section;
+        else if (headerRows.contains(rowIndex) || (rows[rowIndex].isNotEmpty && rows[rowIndex][0]?.toString() == 'Data')) cell.cellStyle = header;
         else if (summaryRows.contains(rowIndex)) cell.cellStyle = columnIndex.isEven ? label : value;
         else cell.cellStyle = rowIndex.isEven ? body : alternate;
       }
