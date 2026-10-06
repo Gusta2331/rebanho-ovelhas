@@ -97,7 +97,6 @@ class ReproductionReportExcelService {
     sheet.setRowHeight(4, 28);
     sheet.setRowHeight(5, 30);
 
-    sheet.freezeRows(5);
   }
 
   void _buildReproducoes(Sheet sheet, ReproductionReportData data) {
@@ -135,7 +134,6 @@ class ReproductionReportExcelService {
       },
     );
 
-    sheet.freezeRows(2);
   }
 
   void _buildNascimentos(Sheet sheet, ReproductionReportData data) {
@@ -167,7 +165,6 @@ class ReproductionReportExcelService {
       },
     );
 
-    sheet.freezeRows(2);
   }
 
   void _writeTable(
