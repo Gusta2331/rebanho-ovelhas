@@ -32,12 +32,6 @@ class _ReportsPageState extends State<ReportsPage> {
       );
     }
 
-    if (_selectedType == ReportType.manejo) {
-      return ManejoReportPage(
-        onBack: () => setState(() => _selectedType = null),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: const Row(
@@ -91,9 +85,18 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   void _openType(ReportType type) {
-    if (type == ReportType.rebanho ||
-        type == ReportType.reproducao ||
-        type == ReportType.manejo) {
+    if (type == ReportType.manejo) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ManejoReportPage(
+            onBack: () => Navigator.of(context).pop(),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (type == ReportType.rebanho || type == ReportType.reproducao) {
       setState(() => _selectedType = type);
       return;
     }
