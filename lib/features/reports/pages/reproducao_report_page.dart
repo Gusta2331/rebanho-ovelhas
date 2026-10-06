@@ -189,7 +189,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
         ]),
         actions: [IconButton(
           tooltip: 'Gerar relatório',
-          onPressed: list.isEmpty || _generating ? null : _chooseFormat,
+          onPressed: list.isEmpty || _selectedReproducoes.isEmpty || _generating ? null : _chooseFormat,
           icon: _generating ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.ios_share_rounded),
         )],
       ),
