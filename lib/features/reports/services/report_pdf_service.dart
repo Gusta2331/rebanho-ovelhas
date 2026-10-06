@@ -257,6 +257,7 @@ class ReportPdfService {
   Future<Uint8List> gerarManejo({
     required List<Map<String, dynamic>> registros,
     required DateTime generatedAt,
+    String periodLabel = 'Todo o período',
   }) async {
     final document = pw.Document();
     final green = PdfColor.fromHex('#367C2B');
@@ -286,7 +287,7 @@ class ReportPdfService {
               children: [
                 pw.Text('RELATÓRIO DE MANEJO', style: pw.TextStyle(color: PdfColors.white, fontSize: 20, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 5),
-                pw.Text('Fazenda Baixinha - gerado em ' + _manejoDateTime(generatedAt), style: pw.TextStyle(color: PdfColors.white, fontSize: 9)),
+                pw.Text('Fazenda Baixinha - ' + periodLabel + ' - gerado em ' + _manejoDateTime(generatedAt), style: pw.TextStyle(color: PdfColors.white, fontSize: 9)),
               ],
             ),
           ),
