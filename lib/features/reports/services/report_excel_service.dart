@@ -409,7 +409,7 @@ class ReportExcelService {
     if (value is! Map) return 'Animal não identificado';
     final brinco = value['brinco']?.toString().trim() ?? '';
     final nome = value['nome']?.toString().trim() ?? '';
-    if (brinco.isNotEmpty && nome.isNotEmpty) return brinco + ' • ' + nome;
+    if (brinco.isNotEmpty && nome.isNotEmpty) return brinco + ' - ' + nome;
     if (brinco.isNotEmpty) return brinco;
     if (nome.isNotEmpty) return nome;
     return 'Animal não identificado';
