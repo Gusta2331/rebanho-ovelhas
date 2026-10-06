@@ -81,7 +81,20 @@ class _ReportsPageState extends State<ReportsPage> {
               padding: const EdgeInsets.only(bottom: 12),
               child: _ReportCard(
                 type: type,
-                onTap: () => _openType(type),
+                onTap: () {
+                  if (type == ReportType.manejo) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => ManejoReportPage(
+                          onBack: () => Navigator.of(context).pop(),
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+
+                  _openType(type);
+                },
               ),
             ),
           ),
