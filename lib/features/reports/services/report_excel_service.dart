@@ -325,6 +325,7 @@ class ReportExcelService {
   Future<Uint8List> gerarManejo({
     required List<Map<String, dynamic>> registros,
     required DateTime generatedAt,
+    String periodLabel = 'Todo o período',
   }) async {
     final excel = Excel.createExcel();
     final sheet = excel['Relatório de manejo'];
@@ -332,6 +333,7 @@ class ReportExcelService {
     final rows = <List<dynamic>>[
       ['RELATÓRIO DE MANEJO'],
       ['Fazenda Baixinha'],
+      ['Período', periodLabel],
       ['Gerado em', _manejoDateTime(generatedAt)],
       [],
       ['TOTAL', registros.length, 'PESAGENS', count('pesagem'), 'VACINAÇÕES', count('vacinacao'), 'VERMIFUGAÇÕES', count('vermifugacao')],
