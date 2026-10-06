@@ -102,7 +102,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
         actions: [
           IconButton(
             tooltip: 'Gerar relatório',
-            onPressed: _loading || _items.isEmpty || _generating ? null : _chooseFormat,
+            onPressed: _loading || _items.isEmpty || _selectedItems.isEmpty || _generating ? null : _chooseFormat,
             icon: _generating
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.ios_share_rounded),
@@ -302,6 +302,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Checkbox(value: _selectedIds.contains(_manejoId(r)), onChanged: (_) => _toggleSelection(r)),
+
               const AppAssetIcon(
                 assetPath: 'assets/images/icon_manejo.png',
                 size: 38,
