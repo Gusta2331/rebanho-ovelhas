@@ -245,26 +245,107 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
 
   Widget _card(Map<String, dynamic> r) {
     final type = Manejo.tipoFromString(r['tipo']?.toString());
-    final date = DateTime.tryParse(r['data']?.toString() ?? '') ?? DateTime.now();
-    final animal = r['animais'] is Map ? Map<String, dynamic>.from(r['animais']) : <String, dynamic>{};
-    return Card(margin: const EdgeInsets.only(bottom: 10), child: InkWell(
-      onTap: () => _details(r), borderRadius: BorderRadius.circular(12),
-      child: Padding(padding: const EdgeInsets.all(14), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const AppAssetIcon(assetPath: 'assets/images/icon_manejo.png', size: 38), const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [Expanded(child: Text(_typeName(type), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800))), Text(_dateText(date), style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant))]),
-          const SizedBox(height: 5), Text(_animal(animal), style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          const SizedBox(height: 5), Text(_short(r, type), maxLines: 2, overflow: TextOverflow.ellipsis),
-        ])), const Icon(Icons.chevron_right_rounded),
-      ])),
-    ));
+    final date =
+        DateTime.tryParse(r['data']?.toString() ?? '') ?? DateTime.now();
+    final animal = r['animais'] is Map
+        ? Map<String, dynamic>.from(r['animais'])
+        : <String, dynamic>{};
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        onTap: () => _details(r),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const AppAssetIcon(
+                assetPath: 'assets/images/icon_manejo.png',
+                size: 38,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _typeName(type),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          _dateText(date),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _animal(animal),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _short(r, type),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  Widget _errorView() => Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-    const Icon(Icons.error_outline_rounded, size: 56), const SizedBox(height: 12), const Text('Não foi possível carregar o relatório', textAlign: TextAlign.center, style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-    const SizedBox(height: 8), Text(_error ?? 'Erro desconhecido.', textAlign: TextAlign.center), const SizedBox(height: 18),
-    FilledButton.icon(onPressed: _load, icon: const Icon(Icons.refresh_rounded), label: const Text('Tentar novamente')),
-  ]));
+  Widget _errorView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline_rounded, size: 56),
+            const SizedBox(height: 12),
+            const Text(
+              'Não foi possível carregar o relatório',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _error ?? 'Erro desconhecido.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              onPressed: _load,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Tentar novamente'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Future<void> _details(Map<String, dynamic> r) async {
     final type = Manejo.tipoFromString(r['tipo']?.toString());
