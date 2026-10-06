@@ -1067,7 +1067,8 @@ class _GeralReportPageState extends State<GeralReportPage> {
   String _formatQuantidade(double value) {
     return value % 1 == 0
         ? value.toInt().toString()
-        : value.toStringAsFixed(3).replaceFirst(RegExp(r'0+
+        : value.toStringAsFixed(3).replaceFirst(RegExp(r'0+$'), '');
+  }
 
 class _ReportSection {
   final String id;
