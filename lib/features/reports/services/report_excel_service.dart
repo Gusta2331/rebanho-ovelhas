@@ -132,6 +132,7 @@ class ReportExcelService {
       fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
       fontSize: 18,
       bold: true,
+      horizontalAlign: HorizontalAlign.Center,
       verticalAlign: VerticalAlign.Center,
     );
 
@@ -233,6 +234,10 @@ class ReportExcelService {
     for (final entry in widths.entries) {
       sheet.setColumnWidth(entry.key, entry.value);
     }
+
+    _mergeRows(sheet, titleRows, rows, widths.length);
+    _mergeRows(sheet, subtitleRows, rows, widths.length);
+    _mergeRows(sheet, sectionRows, rows, widths.length);
 
     sheet.setRowHeight(0, 28);
     sheet.setRowHeight(1, 22);
@@ -390,7 +395,27 @@ class ReportExcelService {
       }
     }
     for (final entry in widths.entries) sheet.setColumnWidth(entry.key, entry.value);
+    _mergeRows(sheet, titleRows, rows, widths.length);
+    _mergeRows(sheet, subtitleRows, rows, widths.length);
+    _mergeRows(sheet, sectionRows, rows, widths.length);
+    for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+      if (rows[rowIndex].length == 1 && rowIndex > 8) {
+        _mergeRows(sheet, {rowIndex}, rows, widths.length);
+      }
+    }
     sheet.setRowHeight(0, 28); sheet.setRowHeight(1, 22); sheet.setRowHeight(4, 24); sheet.setRowHeight(5, 24); sheet.setRowHeight(6, 24); sheet.setRowHeight(8, 24); sheet.setRowHeight(9, 30);
+  }
+
+  void _mergeRows(Sheet sheet, Set<int> rowIndexes, List<List<dynamic>> rows, int columnCount) {
+    if (columnCount < 2) return;
+    for (final rowIndex in rowIndexes) {
+      if (rowIndex < 0 || rowIndex >= rows.length) continue;
+      if (rows[rowIndex].isEmpty) continue;
+      sheet.merge(
+        CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex),
+        CellIndex.indexByColumnRow(columnIndex: columnCount - 1, rowIndex: rowIndex),
+      );
+    }
   }
 
   CellValue _manejoCellValue(dynamic value) {
