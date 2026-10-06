@@ -55,7 +55,7 @@ class ReportPdfService {
                 ),
                 pw.SizedBox(height: 5),
                 pw.Text(
-                  'Fazenda Baixinha - gerado em ' + _dateTime(data.generatedAt),
+                  'Fazenda Baixinha - ' + data.periodLabel + ' - gerado em ' + _dateTime(data.generatedAt),
                   style: pw.TextStyle(
                     color: PdfColors.white,
                     fontSize: 9,
