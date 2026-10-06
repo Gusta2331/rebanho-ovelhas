@@ -18,7 +18,7 @@ class ReproductionReportPdfService {
       footer: (c) => pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text('Fazenda Baixinha • OviGestão', style: pw.TextStyle(fontSize:8,color:muted)),
+          pw.Text('Fazenda Baixinha - OviGestão', style: pw.TextStyle(fontSize:8,color:muted)),
           pw.Text('Página ' + c.pageNumber.toString() + ' de ' + c.pagesCount.toString(), style: pw.TextStyle(fontSize:8,color:muted)),
         ],
       ),
@@ -29,7 +29,7 @@ class ReproductionReportPdfService {
           child: pw.Column(crossAxisAlignment:pw.CrossAxisAlignment.start,children:[
             pw.Text('RELATÓRIO DE REPRODUÇÃO',style:pw.TextStyle(color:PdfColors.white,fontSize:20,fontWeight:pw.FontWeight.bold)),
             pw.SizedBox(height:5),
-            pw.Text('Fazenda Baixinha • gerado em ' + _dateTime(data.generatedAt),style:pw.TextStyle(color:PdfColors.white,fontSize:9)),
+            pw.Text('Fazenda Baixinha - gerado em ' + _dateTime(data.generatedAt),style:pw.TextStyle(color:PdfColors.white,fontSize:9)),
           ]),
         ),
         pw.SizedBox(height:16),
@@ -92,7 +92,7 @@ class ReproductionReportPdfService {
   }
   pw.TableRow _header(List<String> values,PdfColor green)=>pw.TableRow(decoration:pw.BoxDecoration(color:green),children:values.map((v)=>pw.Padding(padding:const pw.EdgeInsets.all(6),child:pw.Text(v,style:pw.TextStyle(color:PdfColors.white,fontSize:7.5,fontWeight:pw.FontWeight.bold)))).toList());
   pw.Widget _cell(String value)=>pw.Padding(padding:const pw.EdgeInsets.all(5),child:pw.Text(value,style:const pw.TextStyle(fontSize:7)));
-  String _animal(String? id,ReproductionReportData data){if(id==null||id.trim().isEmpty)return 'Não informado';final a=data.animaisPorId[id];if(a==null)return 'Não informado';final n=a.nome?.trim();return n==null||n.isEmpty?a.brinco:a.brinco+' • '+n;}
+  String _animal(String? id,ReproductionReportData data){if(id==null||id.trim().isEmpty)return 'Não informado';final a=data.animaisPorId[id];if(a==null)return 'Não informado';final n=a.nome?.trim();return n==null||n.isEmpty?a.brinco:a.brinco+' - '+n;}
   String _status(StatusReproducao s)=>switch(s){StatusReproducao.planejada=>'Planejada',StatusReproducao.coberta=>'Coberta',StatusReproducao.prenhe=>'Prenhe',StatusReproducao.naoPrenhe=>'Não prenhe',StatusReproducao.abortou=>'Abortou',StatusReproducao.partoRealizado=>'Parto realizado',StatusReproducao.encerrada=>'Encerrada'};
   String _date(DateTime? d)=>d==null?'Não informada':d.day.toString().padLeft(2,'0')+'/'+d.month.toString().padLeft(2,'0')+'/'+d.year.toString();
   String _dateTime(DateTime d)=>_date(d)+' '+d.hour.toString().padLeft(2,'0')+':'+d.minute.toString().padLeft(2,'0');
