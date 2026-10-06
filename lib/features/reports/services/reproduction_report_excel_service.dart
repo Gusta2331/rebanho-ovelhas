@@ -17,7 +17,7 @@ class ReproductionReportExcelService {
       [],['NASCIMENTOS'],['Mãe','Brinco','Sexo','Data de nascimento'],
       ...data.reproducoes.expand((r)=>(data.nascimentosPorReproducao[r.id]??const[]).map((n)=>[_animal(r.maeId,data),_animal(n.animalId,data),n.sexo==SexoNascimento.femea?'Fêmea':'Macho',_date(n.dataNascimento)])),
     ];
-    final title=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#367C2B'),fontColorHex:ExcelColor.fromHexString('#FFFFFF'),fontSize:18,bold:true,verticalAlign:VerticalAlign.Center);
+    final title=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#367C2B'),fontColorHex:ExcelColor.fromHexString('#FFFFFF'),fontSize:18,bold:true,horizontalAlign:HorizontalAlign.Center,verticalAlign:VerticalAlign.Center);
     final sub=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#EAF3E7'),fontColorHex:ExcelColor.fromHexString('#263323'),fontSize:12,bold:true);
     final header=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#367C2B'),fontColorHex:ExcelColor.fromHexString('#FFFFFF'),fontSize:10,bold:true,horizontalAlign:HorizontalAlign.Center,verticalAlign:VerticalAlign.Center);
     final section=CellStyle(backgroundColorHex:ExcelColor.fromHexString('#DCEBD7'),fontColorHex:ExcelColor.fromHexString('#24551D'),fontSize:12,bold:true);
@@ -28,6 +28,7 @@ class ReproductionReportExcelService {
     for(var r=0;r<rows.length;r++){for(var c=0;c<rows[r].length;c++){final cell=sheet.cell(CellIndex.indexByColumnRow(columnIndex:c,rowIndex:r));cell.value=_cellValue(rows[r][c]);if(r==0)cell.cellStyle=title;else if(r==1)cell.cellStyle=sub;else if(r==7||r==11)cell.cellStyle=section;else if(r==8||r==12)cell.cellStyle=header;else if(r==4||r==5)cell.cellStyle=c.isEven?label:value;else cell.cellStyle=r.isEven?body:alt;}}
     const widths={0:28.0,1:28.0,2:18.0,3:18.0,4:18.0,5:20.0,6:18.0,7:14.0};
     for(final e in widths.entries){sheet.setColumnWidth(e.key,e.value);}
+    for(final r in [0,1,7,11]){sheet.merge(CellIndex.indexByColumnRow(columnIndex:0,rowIndex:r),CellIndex.indexByColumnRow(columnIndex:7,rowIndex:r));}
     sheet.setRowHeight(0,28);sheet.setRowHeight(1,22);sheet.setRowHeight(4,24);sheet.setRowHeight(5,24);sheet.setRowHeight(7,24);sheet.setRowHeight(8,30);sheet.setRowHeight(11,24);sheet.setRowHeight(12,30);
     if(excel.sheets.containsKey('Sheet1'))excel.delete('Sheet1');excel.setDefaultSheet('Relatório de reprodução');
     final bytes=excel.save();if(bytes==null)throw Exception('Não foi possível gerar o arquivo Excel.');return Uint8List.fromList(bytes);
