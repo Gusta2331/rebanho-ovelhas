@@ -87,9 +87,6 @@ class AdditionalReportService {
               ),
               headerDecoration: pw.BoxDecoration(color: green),
               cellStyle: pw.TextStyle(color: text, fontSize: 7.5),
-              cellDecoration: (index, rowNum) => pw.BoxDecoration(
-                color: rowNum.isEven ? PdfColors.white : lightGreen,
-              ),
               cellPadding: const pw.EdgeInsets.all(5),
               border: pw.TableBorder.all(
                 color: PdfColor.fromHex('#D8E2D4'),
