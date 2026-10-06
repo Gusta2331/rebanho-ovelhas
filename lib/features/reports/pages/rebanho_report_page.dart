@@ -278,7 +278,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
         actions: [
           IconButton(
             tooltip: 'Gerar relatório',
-            onPressed: _filtered.isEmpty || _generating ? null : _chooseFormat,
+            onPressed: _filtered.isEmpty || _selectedAnimals.isEmpty || _generating ? null : _chooseFormat,
             icon: _generating
                 ? const SizedBox(
                     width: 20,
