@@ -1070,6 +1070,7 @@ class _GeralReportPageState extends State<GeralReportPage> {
         : value.toStringAsFixed(3).replaceFirst(RegExp(r'0+$'), '');
   }
 
+}
 class _ReportSection {
   final String id;
   final String title;
