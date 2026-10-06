@@ -138,25 +138,100 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
   );
 
   Widget _summary() {
-    int count(TipoManejo t) => _items.where((r) => Manejo.tipoFromString(r['tipo']?.toString()) == t).length;
+    int count(TipoManejo t) {
+      return _items
+          .where((r) => Manejo.tipoFromString(r['tipo']?.toString()) == t)
+          .length;
+    }
+
     final data = <_Summary>[
       _Summary('Total', _items.length, Icons.assessment_outlined),
       _Summary('Pesagens', count(TipoManejo.pesagem), Icons.monitor_weight_outlined),
       _Summary('Vacinações', count(TipoManejo.vacinacao), Icons.vaccines_outlined),
-      _Summary('Vermifugações', count(TipoManejo.vermifugacao), Icons.medication_outlined),
-      _Summary('Tratamentos', count(TipoManejo.tratamento), Icons.healing_outlined),
-      _Summary('FAMACHA', count(TipoManejo.famacha), Icons.health_and_safety_outlined),
+      _Summary(
+        'Vermifugações',
+        count(TipoManejo.vermifugacao),
+        Icons.medication_outlined,
+      ),
+      _Summary(
+        'Tratamentos',
+        count(TipoManejo.tratamento),
+        Icons.healing_outlined,
+      ),
+      _Summary(
+        'FAMACHA',
+        count(TipoManejo.famacha),
+        Icons.health_and_safety_outlined,
+      ),
       _Summary('Dentição', count(TipoManejo.denticao), Icons.pets_outlined),
-      _Summary('Outros', count(TipoManejo.outro) + count(TipoManejo.tosquia), Icons.more_horiz_rounded),
+      _Summary(
+        'Outros',
+        count(TipoManejo.outro) + count(TipoManejo.tosquia),
+        Icons.more_horiz_rounded,
+      ),
     ];
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Resumo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-      const SizedBox(height: 10),
-      GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: data.length, gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 210, mainAxisExtent: 82, crossAxisSpacing: 10, mainAxisSpacing: 10), itemBuilder: (_, i) {
-        final s = data[i];
-        return Card(margin: EdgeInsets.zero, child: Padding(padding: const EdgeInsets.all(11), child: Row(children: [Icon(s.icon, size: 23), const SizedBox(width: 9), Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [Text(s.name, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)), Text(s.value.toString(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800))]))]));
-      }),
-    ]);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Resumo',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 10),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: data.length,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 210,
+            mainAxisExtent: 82,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+          ),
+          itemBuilder: (_, i) {
+            final s = data[i];
+            return Card(
+              margin: EdgeInsets.zero,
+              child: Padding(
+                padding: const EdgeInsets.all(11),
+                child: Row(
+                  children: [
+                    Icon(s.icon, size: 23),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                          Text(
+                            s.value.toString(),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
   }
 
   Widget _list() {
