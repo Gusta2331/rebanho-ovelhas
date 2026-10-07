@@ -1474,7 +1474,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                 child: Text(_tipoTexto(tipo)),
                               );
                             }).toList(),
-                            onChanged: _salvando
+                            onChanged: _salvando || widget.tipoInicial != null
                                 ? null
                                 : (value) {
                                     if (value == null) return;
