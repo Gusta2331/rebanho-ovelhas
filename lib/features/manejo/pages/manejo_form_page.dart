@@ -16,8 +16,19 @@ import '../widgets/famacha_score_badge.dart';
 
 class ManejoFormPage extends StatefulWidget {
   final Manejo? manejo;
+  final TipoManejo? tipoInicial;
+  final DateTime? dataInicial;
+  final List<String>? animalIdsIniciais;
+  final bool selecaoAnimaisBloqueada;
 
-  const ManejoFormPage({super.key, this.manejo});
+  const ManejoFormPage({
+    super.key,
+    this.manejo,
+    this.tipoInicial,
+    this.dataInicial,
+    this.animalIdsIniciais,
+    this.selecaoAnimaisBloqueada = false,
+  });
 
   @override
   State<ManejoFormPage> createState() => _ManejoFormPageState();
@@ -82,9 +93,24 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
 
   bool get _editando => widget.manejo != null;
 
+  bool get _selecaoInicialDefinida =>
+      !_editando && widget.animalIdsIniciais != null;
+
   @override
   void initState() {
     super.initState();
+
+    if (!_editando) {
+      if (widget.tipoInicial != null) {
+        _tipo = widget.tipoInicial!;
+      }
+      if (widget.dataInicial != null) {
+        _data = widget.dataInicial!;
+      }
+      if (widget.animalIdsIniciais != null) {
+        _animaisSelecionados.addAll(widget.animalIdsIniciais!);
+      }
+    }
 
     final manejo = widget.manejo;
     if (manejo != null) {
@@ -181,6 +207,24 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         await _carregarPesos();
       } else {
         await _carregarAnimais();
+        if (widget.animalIdsIniciais != null && mounted) {
+          setState(() {
+            _animaisSelecionados
+              ..clear()
+              ..addAll(
+                widget.animalIdsIniciais!.where(
+                  (id) => _animais.any(
+                    (animal) => animal['id']?.toString() == id,
+                  ),
+                ),
+              );
+          });
+          if (_tipo == TipoManejo.vacinacao ||
+              _tipo == TipoManejo.vermifugacao ||
+              _tipo == TipoManejo.tratamento) {
+            await _carregarPesos();
+          }
+        }
       }
 
       if (widget.manejo?.vacinaId != null) {
@@ -1436,7 +1480,9 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                     if (value == null) return;
                                     setState(() {
                                       _tipo = value;
-                                      _animaisSelecionados.clear();
+                                      if (!_selecaoInicialDefinida) {
+                                        _animaisSelecionados.clear();
+                                      }
                                       _famachaPorAnimal.clear();
                                       _denticaoPorAnimal.clear();
                                       _pesos.clear();
@@ -1484,12 +1530,14 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                               animais: _animais,
                               selecionados: _animaisSelecionados,
                               carregando: _carregandoAnimais,
-                              enabled: !_salvando,
+                              enabled: !_salvando &&
+                                  !widget.selecaoAnimaisBloqueada,
                               multiSelecao: true,
                               titulo: _tipo == TipoManejo.famacha
                                   ? 'Ovelhas avaliadas'
                                   : 'Animais do manejo',
                               onRebanhoChanged: (id) {
+                                if (widget.selecaoAnimaisBloqueada) return;
                                 setState(() {
                                   _rebanhoId = id;
                                   _animaisSelecionados.clear();
