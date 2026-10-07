@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
@@ -119,6 +120,7 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
 
     setState(() => _iniciando = true);
     var concluidos = 0;
+    final operacaoId = const Uuid().v4();
 
     for (final tipo in List<TipoManejo>.from(_procedimentos)) {
       if (!mounted) return;
@@ -130,6 +132,7 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
             dataInicial: _data,
             animalIdsIniciais: _animaisSelecionados.toList(),
             selecaoAnimaisBloqueada: true,
+            operacaoId: operacaoId,
           ),
         ),
       );
