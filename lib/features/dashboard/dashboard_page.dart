@@ -665,34 +665,41 @@ case TipoManejo.outro:
   }
 
   Widget _buildAnimalCards() {
-    return Row(
-      children: [
-        Expanded(
-          child: AnimalCard(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 420 ? 3 : 2;
+        final spacing = 10.0;
+        final cardWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+        final cards = [
+          AnimalCard(
             assetPath: 'assets/images/icon_ovino_femea.png',
             title: 'Fêmeas',
             value: _loadingAnimals ? '...' : _totalFemeas.toString(),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: AnimalCard(
+          AnimalCard(
             assetPath: 'assets/images/icon_ovino_macho.png',
             title: 'Machos',
             value: _loadingAnimals ? '...' : _totalMachos.toString(),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: AnimalCard(
+          AnimalCard(
             assetPath: 'assets/images/icon_ovino_femea.png',
             title: 'Fêmeas reprodutoras',
             value: _loadingAnimals
                 ? '...'
                 : _totalFemeasNaIdadeReproducao.toString(),
           ),
-        ),
-      ],
+        ];
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final card in cards)
+              SizedBox(width: cardWidth, child: card),
+          ],
+        );
+      },
     );
   }
 
