@@ -20,6 +20,7 @@ class ManejoFormPage extends StatefulWidget {
   final DateTime? dataInicial;
   final List<String>? animalIdsIniciais;
   final bool selecaoAnimaisBloqueada;
+  final String? operacaoId;
 
   const ManejoFormPage({
     super.key,
@@ -28,6 +29,7 @@ class ManejoFormPage extends StatefulWidget {
     this.dataInicial,
     this.animalIdsIniciais,
     this.selecaoAnimaisBloqueada = false,
+    this.operacaoId,
   });
 
   @override
@@ -939,6 +941,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       await _service.criarManejosEmLote(
         animalIds: _animaisSelecionados.toList(),
         data: _data,
+        operacaoId: widget.operacaoId,
         tipo: _tipo,
         famachaPorAnimal: _famachaPorAnimal,
         denticaoPorAnimal: _tipo == TipoManejo.denticao
