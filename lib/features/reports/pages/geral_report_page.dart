@@ -519,7 +519,11 @@ class _GeralReportPageState extends State<GeralReportPage> {
                     const SizedBox(height: 12),
                     _periodCard(),
                     const SizedBox(height: 4),
-                    Row(
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 4,
+                      runSpacing: 4,
                       children: [
                         TextButton.icon(
                           onPressed: _selectAll,
@@ -531,14 +535,16 @@ class _GeralReportPageState extends State<GeralReportPage> {
                               _selectedIds.isEmpty ? null : _clearSelection,
                           child: const Text('Limpar'),
                         ),
-                        const Spacer(),
-                        Text(
-                          _selectedIds.length.toString() +
-                              '/' +
-                              _sections.length.toString(),
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontWeight: FontWeight.w700,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            _selectedIds.length.toString() +
+                                '/' +
+                                _sections.length.toString(),
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
