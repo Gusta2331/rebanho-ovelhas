@@ -100,8 +100,8 @@ class _PasswordRecoveryDialogState extends State<PasswordRecoveryDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(_codeSent ? 'Criar nova senha' : 'Recuperar senha'),
-      content: SizedBox(
-        width: 380,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 380),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
