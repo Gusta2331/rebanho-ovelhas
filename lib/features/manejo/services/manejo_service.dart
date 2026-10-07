@@ -604,6 +604,7 @@ class ManejoService {
     required List<String> animalIds,
     required DateTime data,
     required TipoManejo tipo,
+    String? operacaoId,
     Map<String, int> famachaPorAnimal = const {},
     Map<String, String> denticaoPorAnimal = const {},
     Map<String, double> pesoPorAnimal = const {},
@@ -701,6 +702,7 @@ class ManejoService {
             fazendaId: fazendaId,
             animalId: animalId,
             tipo: tipo,
+            operacaoId: operacaoId,
             data: data,
             famachaEscore: tipo == TipoManejo.famacha
                 ? famachaPorAnimal[animalId]
@@ -1085,6 +1087,7 @@ class ManejoService {
     required String animalId,
     required TipoManejo tipo,
     required DateTime data,
+    String? operacaoId,
     int? famachaEscore,
     String? denticao,
     DateTime? denticaoData,
@@ -1117,6 +1120,7 @@ class ManejoService {
       'animal_id': animalId,
       'tipo': Manejo.tipoToString(tipo),
       'data': data.toIso8601String(),
+      'operacao_id': operacaoId,
       'famacha_escore': tipo == TipoManejo.famacha ? famachaEscore : null,
       'denticao': tipo == TipoManejo.denticao ? _text(denticao) : null,
       'denticao_data': tipo == TipoManejo.denticao ? denticaoData?.toIso8601String() : null,
