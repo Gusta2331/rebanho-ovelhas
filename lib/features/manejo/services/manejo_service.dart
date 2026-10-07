@@ -1037,8 +1037,12 @@ class ManejoService {
     }
     if (dose != null && dose < 0)
       throw Exception('A dose não pode ser negativa.');
-    if (dose != null && (pesoReferenciaKg == null || pesoReferenciaKg <= 0)) {
-      throw Exception('Informe o peso de referência da dose.');
+    // O peso de referência é necessário para calcular uma dose por peso,
+    // mas não é obrigatório quando a dose foi informada manualmente.
+    if (dose != null &&
+        pesoReferenciaKg != null &&
+        pesoReferenciaKg <= 0) {
+      throw Exception('O peso de referência da dose deve ser maior que zero.');
     }
     if (validarFamacha &&
         tipo == TipoManejo.famacha &&
