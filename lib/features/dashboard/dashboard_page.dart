@@ -825,18 +825,24 @@ case TipoManejo.outro:
       ),
     ];
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: acoes.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.65,
-      ),
-      itemBuilder: (context, index) {
-        return acoes[index];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final aspectRatio = constraints.maxWidth < 360 ? 1.35 : 1.65;
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: acoes.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: aspectRatio,
+          ),
+          itemBuilder: (context, index) {
+            return acoes[index];
+          },
+        );
       },
     );
   }
