@@ -380,11 +380,29 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(children: [
-          Expanded(child: Text(selected == 0 ? 'Nenhum selecionado' : selected.toString() + ' selecionado(s)', style: const TextStyle(fontWeight: FontWeight.w700))),
-          TextButton(onPressed: total == 0 || allSelected ? null : _selectAll, child: const Text('Selecionar tudo')),
-          TextButton(onPressed: selected == 0 ? null : _clearSelection, child: const Text('Limpar')),
-        ]),
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 4,
+          runSpacing: 4,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                selected == 0 ? 'Nenhum selecionado' : selected.toString() + ' selecionado(s)',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+            TextButton(
+              onPressed: total == 0 || allSelected ? null : _selectAll,
+              child: const Text('Selecionar tudo'),
+            ),
+            TextButton(
+              onPressed: selected == 0 ? null : _clearSelection,
+              child: const Text('Limpar'),
+            ),
+          ],
+        ),
       ),
     );
   }
