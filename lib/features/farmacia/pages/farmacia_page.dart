@@ -690,8 +690,8 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
           Text('Cadastrar produto'),
         ],
       ),
-      content: SizedBox(
-        width: 520,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1025,8 +1025,8 @@ class _CorrecaoEstoqueDialogState extends State<_CorrecaoEstoqueDialog> {
 
     return AlertDialog(
       title: const Text('Corrigir estoque'),
-      content: SizedBox(
-        width: 430,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 430),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
