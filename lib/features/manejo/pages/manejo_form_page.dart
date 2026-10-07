@@ -836,14 +836,13 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
 
     if (tipoSanitario) {
       final faltando = _animaisSelecionados.where((id) {
-        final peso = _numero(_pesoTextoPorAnimal[id]) ?? _pesos[id];
         final dose = _numero(_doseTextoPorAnimal[id]) ?? _dosesCalculadas[id];
-        return peso == null || peso <= 0 || dose == null || dose < 0;
+        return dose == null || dose <= 0;
       });
 
       if (faltando.isNotEmpty) {
         _mensagem(
-          'Informe peso e dose de cada animal. Use "Aplicar a mesma dose por kg a todas" se quiser calcular em lote.',
+          'Informe a dose aplicada de cada animal. Se houver peso e uma regra de dose válida, o aplicativo pode calcular automaticamente.',
         );
         return;
       }
@@ -1784,7 +1783,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
           ),
           const SizedBox(height: 5),
           const Text(
-            'A regra é definida aqui e não fica presa ao cadastro do produto. Cada animal recebe peso e dose próprios.',
+            'Cada animal recebe peso e dose próprios. O peso é usado para calcular automaticamente quando existe uma regra válida; se o peso não estiver disponível, informe a dose manualmente.',
             style: TextStyle(color: Colors.black54, height: 1.35),
           ),
           const SizedBox(height: 14),
@@ -1912,7 +1911,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             child: FilledButton.icon(
               onPressed: _salvando ? null : _aplicarRegraDoseTodos,
               icon: const Icon(Icons.calculate_outlined),
-              label: const Text('Aplicar a mesma dose por kg a todas'),
+              label: const Text('Calcular a dose pelo peso de todos'),
             ),
           ),
           const SizedBox(height: 14),
@@ -1931,6 +1930,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     final id = animal['id']?.toString() ?? '';
     final peso = _pesoTextoPorAnimal[id] ?? '';
     final dose = _doseTextoPorAnimal[id] ?? '';
+    final pesoInformado = _numero(peso);
+    final doseInformada = _numero(dose);
+    final temPeso = pesoInformado != null && pesoInformado > 0;
+    final temDose = doseInformada != null && doseInformada > 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -1970,6 +1973,33 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
               Text(
                 _animalTexto(animal),
                 style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  Chip(
+                    avatar: Icon(
+                      temPeso ? Icons.monitor_weight_outlined : Icons.help_outline,
+                      size: 16,
+                    ),
+                    label: Text(
+                      temPeso ? 'Peso: ' + pesoInformado!.toStringAsFixed(2) + ' kg' : 'Peso: não informado',
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  Chip(
+                    avatar: Icon(
+                      temDose ? Icons.medication_outlined : Icons.warning_amber_outlined,
+                      size: 16,
+                    ),
+                    label: Text(
+                      temDose ? 'Dose: ' + doseInformada!.toStringAsFixed(2) + ' ' + _unidadeDose : 'Dose: informar',
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
               if (estreito)
