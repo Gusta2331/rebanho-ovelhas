@@ -10,6 +10,7 @@ import '../models/manejo.dart';
 import '../services/manejo_service.dart';
 import '../widgets/famacha_score_badge.dart';
 import 'manejo_form_page.dart';
+import 'manejo_operacao_page.dart';
 import 'manejo_details_page.dart';
 
 class ManejosPage extends StatefulWidget {
@@ -297,8 +298,53 @@ class _ManejosPageState extends State<ManejosPage> {
   }
 
   Future<void> _novo() async {
-    final resultado = await Navigator.of(context)
-        .push<bool>(MaterialPageRoute(builder: (_) => const ManejoFormPage()));
+    final escolha = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Novo registro de manejo',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Escolha se será feito um único procedimento ou vários na mesma ida ao curral.',
+                style: TextStyle(color: Colors.black54, height: 1.4),
+              ),
+              const SizedBox(height: 18),
+              FilledButton.icon(
+                onPressed: () => Navigator.of(sheetContext).pop('operacao'),
+                icon: const Icon(Icons.playlist_add_check_circle_outlined),
+                label: const Text('Nova operação com vários procedimentos'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(sheetContext).pop('manejo'),
+                icon: const Icon(Icons.add_task_outlined),
+                label: const Text('Registrar um único procedimento'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!mounted || escolha == null) return;
+
+    final resultado = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => escolha == 'operacao'
+            ? const ManejoOperacaoPage()
+            : const ManejoFormPage(),
+      ),
+    );
+
     if (resultado == true && mounted) await _carregar();
   }
 
