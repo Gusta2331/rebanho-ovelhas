@@ -2036,7 +2036,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                       size: 16,
                     ),
                     label: Text(
-                      temPeso ? 'Peso: ' + pesoInformado!.toStringAsFixed(2) + ' kg' : 'Peso: não informado',
+                      temPeso ? 'Peso: ' + pesoInformado.toStringAsFixed(2) + ' kg' : 'Peso: não informado',
                     ),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -2046,7 +2046,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                       size: 16,
                     ),
                     label: Text(
-                      temDose ? 'Dose: ' + doseInformada!.toStringAsFixed(2) + ' ' + _unidadeDose : 'Dose: informar',
+                      temDose ? 'Dose: ' + doseInformada.toStringAsFixed(2) + ' ' + _unidadeDose : 'Dose: informar',
                     ),
                     visualDensity: VisualDensity.compact,
                   ),
