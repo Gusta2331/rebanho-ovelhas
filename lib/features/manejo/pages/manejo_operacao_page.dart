@@ -839,7 +839,7 @@ class _ManejoOperacaoAnimaisPageState
               ),
               child: const Center(
                 child: AppAssetIcon(
-                  assetPath: 'assets/images/icon_ovelha.png',
+                  assetPath: 'assets/images/icon_ovino_femea.png',
                   size: 38,
                 ),
               ),
