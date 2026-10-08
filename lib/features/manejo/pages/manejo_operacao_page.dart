@@ -1530,162 +1530,133 @@ class _ManejoOperacaoAnimaisPageState
     Navigator.of(context).pop(true);
   }
 
+
   @override
   Widget build(BuildContext context) {
     final animal = _animalAtual;
     final id = _animalId(animal);
-    final selecionados = _procedimentosPorAnimal[id] ?? const <TipoManejo>[];
-    final concluido = _finalizado ||
-        _animaisConcluidos.contains(_animalId(animal));
+    final selecionados =
+        _procedimentosPorAnimal[id] ?? const <TipoManejo>[];
+    final total = _animaisOrdenados.length;
+    final concluidos = _animaisConcluidos.length;
+    final progresso = total == 0 ? 0.0 : concluidos / total;
+    final ultimo = _indiceAtual == total - 1;
+    final podeRegistrar =
+        !_processando &&
+        !_finalizado &&
+        selecionados.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registrar manejo'),
-        actions: const [
-          ContextualHelpButton(
+        title: const Text('Manejo'),
+        actions: [
+          const ContextualHelpButton(
             title: 'Registrar por animal',
             introduction:
-                'Nesta tela você trabalha com um animal de cada vez. Escolha tudo o que foi feito nele e registre os procedimentos na ordem que preferir.',
+                'Cada animal pode receber procedimentos diferentes. Escolha o que foi feito e avance quando terminar.',
             topics: [
               HelpTopic(
-                title: 'Um animal, vários procedimentos',
+                title: 'Vários procedimentos',
                 description:
-                    'Exemplo: escolha Pesagem e Vacinação. Primeiro registre a pesagem e depois a vacina. Ao terminar, o próximo animal será aberto.',
+                    'Você pode registrar pesagem, vacinação, vermifugação, tratamento e outros cuidados no mesmo animal.',
               ),
               HelpTopic(
-                title: 'Procedimentos diferentes',
+                title: 'Peso e dose',
                 description:
-                    'Você pode escolher uma combinação diferente para cada animal. O aplicativo não exige que todos recebam os mesmos cuidados.',
+                    'Quando houver peso e uma regra de dose cadastrada, o aplicativo calcula a quantidade individual. A dose pode ser ajustada antes de salvar.',
               ),
               HelpTopic(
-                title: 'Dose da vacina',
+                title: 'Trocar animal',
                 description:
-                    'Quando houver peso e regra de dose cadastrada, o aplicativo calcula a quantidade individual. A dose aplicada pode ser ajustada antes de salvar.',
+                    'Use o botão Animais para ir diretamente a outro animal e reorganizar a sequência.',
               ),
             ],
+          ),
+          IconButton(
+            onPressed: _processando ? null : _abrirListaAnimais,
+            tooltip: 'Animais',
+            icon: const Icon(Icons.groups_outlined),
           ),
         ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final horizontal = constraints.maxWidth < 420 ? 14.0 : 20.0;
             final maxWidth =
-                constraints.maxWidth > 760 ? 720.0 : constraints.maxWidth;
+                constraints.maxWidth > 720 ? 680.0 : constraints.maxWidth;
 
             return Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxWidth),
                 child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontal,
-                    16,
-                    horizontal,
-                    32,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 110),
                   children: [
                     _progresso(),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      onPressed: _processando ? null : _abrirListaAnimais,
-                      icon: const Icon(Icons.swap_horiz_rounded),
-                      label: const Text('Trocar animal / organizar ordem'),
-                    ),
-                    const SizedBox(height: 14),
-                    _animalCard(animal, concluido),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 16),
+                    _animalCard(animal, _animaisConcluidos.contains(id)),
+                    const SizedBox(height: 20),
                     _procedimentosCard(selecionados),
-                    const SizedBox(height: 22),
-                    SizedBox(
-                      height: 52,
-                      child: FilledButton.icon(
-                        onPressed:
-                            _processando || _finalizado ? null : _registrarAnimal,
-                        icon: _processando
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Icon(
-                                _indiceAtual == _animaisOrdenados.length - 1
-                                    ? Icons.check_rounded
-                                    : Icons.arrow_forward_rounded,
-                              ),
-                        label: Text(
-                          _processando
-                              ? 'Salvando...'
-                              : _indiceAtual == _animaisOrdenados.length - 1
-                                  ? 'Concluir animal'
-                                  : 'Registrar e próximo animal',
-                        ),
-                      ),
-                    ),
-                    if (_finalizado) ...[
-                      const SizedBox(height: 12),
-                      Card(
-                        color:
-                            AppTheme.primaryColor.withValues(alpha: 0.08),
-                        child: const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.check_circle,
-                                color: AppTheme.primaryColor,
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  'Todos os animais desta operação foram registrados.',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        if (_indiceAtual > 0)
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _processando ? null : _voltarAnimal,
-                              icon: const Icon(Icons.arrow_back),
-                              label: const Text('Animal anterior'),
-                            ),
-                          ),
-                        if (_indiceAtual > 0 && !_finalizado)
-                          const SizedBox(width: 10),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _processando ? null : _finalizar,
-                            icon: Icon(
-                              _finalizado
-                                  ? Icons.done_all
-                                  : Icons.stop_circle_outlined,
-                            ),
-                            label: Text(
-                              _finalizado
-                                  ? 'Fechar operação'
-                                  : 'Finalizar depois',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),
             );
           },
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            border: const Border(top: BorderSide(color: Colors.black12)),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 52,
+                child: OutlinedButton(
+                  onPressed:
+                      _processando || _indiceAtual == 0 ? null : _voltarAnimal,
+                  child: const Icon(Icons.arrow_back_rounded),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: podeRegistrar ? _registrarAnimal : null,
+                  icon: _processando
+                      ? const SizedBox(
+                          width: 19,
+                          height: 19,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Icon(
+                          ultimo
+                              ? Icons.check_rounded
+                              : Icons.arrow_forward_rounded,
+                        ),
+                  label: Text(
+                    _processando
+                        ? 'Salvando...'
+                        : ultimo
+                            ? 'Concluir animal'
+                            : 'Salvar e próximo',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 52,
+                child: OutlinedButton(
+                  onPressed: _processando ? null : _abrirListaAnimais,
+                  child: const Icon(Icons.groups_outlined),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1734,183 +1705,234 @@ class _ManejoOperacaoAnimaisPageState
     );
   }
 
+
   Widget _animalCard(Map<String, dynamic> animal, bool concluido) {
     final nome = _animalNome(animal);
     final sexo = animal['sexo']?.toString();
     final raca = animal['raca']?.toString();
+    final asset = (sexo ?? '').toLowerCase().contains('masc')
+        ? 'assets/images/icon_ovino_macho.png'
+        : 'assets/images/icon_ovino_femea.png';
 
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          children: [
-            Container(
-              width: 58,
-              height: 58,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(17),
-              ),
-              child: const Center(
-                child: AppAssetIcon(
-                  assetPath: 'assets/images/icon_ovino_femea.png',
-                  size: 38,
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    nome,
-                    style: const TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    [
-                      if (raca != null && raca.isNotEmpty) raca,
-                      if (sexo != null && sexo.isNotEmpty) sexo,
-                    ].join(' • '),
-                    style: const TextStyle(color: Colors.black54),
-                  ),
-                  if (concluido) ...[
-                    const SizedBox(height: 8),
-                    const Row(
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline,
-                          size: 17,
-                          color: AppTheme.primaryColor,
-                        ),
-                        SizedBox(width: 5),
-                        Text(
-                          'Pronto',
-                          style: TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.18),
         ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(19),
+            ),
+            alignment: Alignment.center,
+            child: AppAssetIcon(assetPath: asset, size: 46),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Animal atual',
+                  style: TextStyle(
+                    color: AppTheme.primaryColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  nome,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  [
+                    if (raca != null && raca.trim().isNotEmpty) raca,
+                    if (sexo != null && sexo.trim().isNotEmpty) sexo,
+                  ].join(' • '),
+                  style: const TextStyle(color: Colors.black54),
+                ),
+                if (concluido) ...[
+                  const SizedBox(height: 7),
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: 17,
+                        color: AppTheme.primaryColor,
+                      ),
+                      SizedBox(width: 5),
+                      Text(
+                        'Animal concluído',
+                        style: TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
+
   Widget _procedimentosCard(List<TipoManejo> selecionados) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'O que foi feito neste animal?',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Marque os procedimentos realizados. Eles serão registrados na ordem em que você selecionar.',
-              style: TextStyle(
-                color: Colors.black54,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'O que foi feito?',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 5),
+        const Text(
+          'Selecione os procedimentos realizados neste animal.',
+          style: TextStyle(color: Colors.black54),
+        ),
+        const SizedBox(height: 14),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final colunas = constraints.maxWidth >= 600 ? 4 : 2;
+            final largura =
+                (constraints.maxWidth - ((colunas - 1) * 9)) / colunas;
+
+            return Wrap(
               spacing: 9,
               runSpacing: 9,
               children: TipoManejo.values.map((tipo) {
                 final selecionado = selecionados.contains(tipo);
-                return FilterChip(
-                  selected: selecionado,
-                  avatar: Icon(
-                    _icone(tipo),
-                    size: 19,
-                    color: selecionado
-                        ? Colors.white
-                        : AppTheme.primaryColor,
-                  ),
-                  label: Text(_tipoTexto(tipo)),
-                  onSelected: _processando || _finalizado
-                      ? null
-                      : (_) => _alternarProcedimento(tipo),
-                  selectedColor: AppTheme.primaryColor,
-                  checkmarkColor: Colors.white,
-                );
-              }).toList(),
-            ),
-            if (selecionados.isNotEmpty) ...[
-              const SizedBox(height: 18),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Ordem do registro',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (var i = 0; i < selecionados.length; i++)
-                          Chip(
-                            avatar: CircleAvatar(
-                              radius: 10,
-                              backgroundColor: AppTheme.primaryColor,
-                              child: Text(
-                                (i + 1).toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
+
+                return SizedBox(
+                  width: largura,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _processando || _finalizado
+                          ? null
+                          : () => _alternarProcedimento(tipo),
+                      borderRadius: BorderRadius.circular(16),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        constraints: const BoxConstraints(minHeight: 88),
+                        padding: const EdgeInsets.all(13),
+                        decoration: BoxDecoration(
+                          color: selecionado
+                              ? AppTheme.primaryColor.withValues(alpha: 0.10)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: selecionado
+                                ? AppTheme.primaryColor.withValues(alpha: 0.60)
+                                : Colors.black12,
+                            width: selecionado ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  _icone(tipo),
+                                  color: AppTheme.primaryColor,
+                                  size: 25,
                                 ),
+                                const Spacer(),
+                                if (selecionado)
+                                  const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: AppTheme.primaryColor,
+                                    size: 21,
+                                  ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Text(
+                              _tipoTexto(tipo),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
                               ),
                             ),
-                            label: Text(_tipoTexto(selecionados[i])),
-                            deleteIcon:
-                                const Icon(Icons.close, size: 16),
-                            onDeleted: _processando || _finalizado
-                                ? null
-                                : () => _alternarProcedimento(
-                                      selecionados[i],
-                                    ),
-                          ),
-                      ],
+                          ],
+                        ),
+                      ),
                     ),
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+        if (selecionados.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.black12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Ordem do registro',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 9),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  children: [
+                    for (var i = 0; i < selecionados.length; i++)
+                      Chip(
+                        avatar: CircleAvatar(
+                          radius: 10,
+                          backgroundColor: AppTheme.primaryColor,
+                          child: Text(
+                            (i + 1).toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        label: Text(_tipoTexto(selecionados[i])),
+                        deleteIcon: const Icon(Icons.close, size: 16),
+                        onDeleted: _processando || _finalizado
+                            ? null
+                            : () => _alternarProcedimento(selecionados[i]),
+                      ),
                   ],
                 ),
-              ),
-            ],
-          ],
-        ),
-      ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
+
 }
