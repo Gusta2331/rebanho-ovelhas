@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_service.dart';
 import '../models/manejo.dart';
@@ -23,7 +24,6 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
   List<Map<String, dynamic>> _rebanhos = [];
   List<Map<String, dynamic>> _animais = [];
   final Set<String> _animaisSelecionados = {};
-  final List<TipoManejo> _procedimentos = [];
 
   String? _rebanhoId;
   DateTime _data = DateTime.now();
@@ -59,7 +59,8 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
   Future<void> _carregarAnimais() async {
     setState(() => _carregandoAnimais = true);
     try {
-      final animais = await _animalService.getAnimaisAtivos(rebanhoId: _rebanhoId);
+      final animais =
+          await _animalService.getAnimaisAtivos(rebanhoId: _rebanhoId);
       if (!mounted) return;
       setState(() {
         _animais = animais;
@@ -85,129 +86,55 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
       lastDate: DateTime.now(),
       locale: const Locale('pt', 'BR'),
     );
-    if (escolhida != null && mounted) setState(() => _data = escolhida);
-  }
-
-  void _alternarProcedimento(TipoManejo tipo) {
-    setState(() {
-      if (_procedimentos.contains(tipo)) {
-        _procedimentos.remove(tipo);
-      } else {
-        _procedimentos.add(tipo);
-      }
-    });
+    if (escolhida != null && mounted) {
+      setState(() => _data = escolhida);
+    }
   }
 
   void _selecionarTodosAnimais() {
     setState(() {
       _animaisSelecionados
         ..clear()
-        ..addAll(_animais.map((a) => a['id']?.toString()).whereType<String>());
+        ..addAll(
+          _animais.map((a) => a['id']?.toString()).whereType<String>(),
+        );
     });
   }
 
-  void _limparAnimais() => setState(() => _animaisSelecionados.clear());
+  void _limparAnimais() {
+    setState(() => _animaisSelecionados.clear());
+  }
 
   Future<void> _iniciarOperacao() async {
     if (_animaisSelecionados.isEmpty) {
       _mensagem('Selecione pelo menos um animal.');
       return;
     }
-    if (_procedimentos.isEmpty) {
-      _mensagem('Selecione pelo menos um procedimento.');
-      return;
-    }
 
     setState(() => _iniciando = true);
-    var concluidos = 0;
     final operacaoId = const Uuid().v4();
 
-    for (final tipo in List<TipoManejo>.from(_procedimentos)) {
-      if (!mounted) return;
-
-      final resultado = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (_) => ManejoFormPage(
-            tipoInicial: tipo,
-            dataInicial: _data,
-            animalIdsIniciais: _animaisSelecionados.toList(),
-            selecaoAnimaisBloqueada: true,
-            operacaoId: operacaoId,
-          ),
+    final resultado = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => ManejoOperacaoAnimaisPage(
+          animais: _animais
+              .where(
+                (animal) =>
+                    _animaisSelecionados.contains(animal['id']?.toString()),
+              )
+              .toList(),
+          data: _data,
+          operacaoId: operacaoId,
         ),
-      );
-
-      if (resultado != true) {
-        if (!mounted) return;
-        setState(() => _iniciando = false);
-        final restantes = _procedimentos.length - concluidos;
-        final continuar = await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text('Operação incompleta'),
-            content: Text(
-              concluidos.toString() +
-                  ' procedimento(s) foram salvos. Ainda faltam ' +
-                  restantes.toString() +
-                  '.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(false),
-                child: const Text('Encerrar'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(dialogContext).pop(true),
-                child: const Text('Continuar'),
-              ),
-            ],
-          ),
-        );
-        if (continuar == true && mounted) {
-          setState(() => _iniciando = true);
-          continue;
-        }
-        if (mounted && concluidos > 0) {
-          _mensagem(
-            'Operação encerrada com ' +
-                concluidos.toString() +
-                ' procedimento(s) salvo(s).',
-          );
-        }
-        return;
-      }
-      concluidos++;
-    }
+      ),
+    );
 
     if (!mounted) return;
     setState(() => _iniciando = false);
-    _mensagem('Operação de manejo registrada com sucesso.');
-    Navigator.of(context).pop(true);
-  }
 
-  String _tipoTexto(TipoManejo tipo) {
-    switch (tipo) {
-      case TipoManejo.vacinacao: return 'Vacinação';
-      case TipoManejo.vermifugacao: return 'Vermifugação';
-      case TipoManejo.tratamento: return 'Tratamento';
-      case TipoManejo.tosquia: return 'Tosquia';
-      case TipoManejo.pesagem: return 'Pesagem';
-      case TipoManejo.famacha: return 'FAMACHA';
-      case TipoManejo.denticao: return 'Dentição';
-      case TipoManejo.outro: return 'Outro';
-    }
-  }
-
-  IconData _icone(TipoManejo tipo) {
-    switch (tipo) {
-      case TipoManejo.vacinacao: return Icons.vaccines_outlined;
-      case TipoManejo.vermifugacao: return Icons.medication_outlined;
-      case TipoManejo.tratamento: return Icons.medical_services_outlined;
-      case TipoManejo.tosquia: return Icons.content_cut_outlined;
-      case TipoManejo.pesagem: return Icons.monitor_weight_outlined;
-      case TipoManejo.famacha: return Icons.visibility_outlined;
-      case TipoManejo.denticao: return Icons.health_and_safety_outlined;
-      case TipoManejo.outro: return Icons.assignment_outlined;
+    if (resultado == true) {
+      _mensagem('Operação de manejo registrada com sucesso.');
+      Navigator.of(context).pop(true);
     }
   }
 
@@ -227,22 +154,54 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
           children: [
             AppAssetIcon(assetPath: 'assets/images/icon_manejo.png', size: 26),
             SizedBox(width: 8),
-            Text('Nova operação de manejo'),
+            Flexible(child: Text('Nova operação')),
           ],
         ),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Nova operação de manejo',
+            introduction:
+                'Uma operação representa uma ida ao curral. Você escolhe os animais e depois registra, um animal por vez, tudo o que foi feito nele.',
+            topics: [
+              HelpTopic(
+                title: 'Como funciona',
+                description:
+                    'Selecione os animais e a data. Depois, o aplicativo abrirá cada animal separadamente para você registrar os procedimentos realizados nele.',
+              ),
+              HelpTopic(
+                title: 'Vários procedimentos no mesmo animal',
+                description:
+                    'Você pode pesar, vacinar, vermifugar, tratar ou registrar outros cuidados no mesmo animal antes de passar para o próximo.',
+              ),
+              HelpTopic(
+                title: 'Procedimentos diferentes',
+                description:
+                    'Cada animal pode ter procedimentos diferentes. O que você registrar em um animal não obriga os próximos a receberem a mesma coisa.',
+              ),
+            ],
+          ),
+        ],
       ),
       body: _carregando
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
+            )
           : SafeArea(
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final horizontal = constraints.maxWidth < 420 ? 14.0 : 20.0;
-                  final maxWidth = constraints.maxWidth > 760 ? 720.0 : constraints.maxWidth;
+                  final maxWidth =
+                      constraints.maxWidth > 760 ? 720.0 : constraints.maxWidth;
                   return Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: maxWidth),
                       child: ListView(
-                        padding: EdgeInsets.fromLTRB(horizontal, 16, horizontal, 32),
+                        padding: EdgeInsets.fromLTRB(
+                          horizontal,
+                          16,
+                          horizontal,
+                          32,
+                        ),
                         children: [
                           _intro(),
                           const SizedBox(height: 18),
@@ -254,7 +213,7 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
                             carregando: _carregandoAnimais,
                             enabled: !_iniciando,
                             multiSelecao: true,
-                            titulo: 'Animais da operação',
+                            titulo: '1. Escolha os animais',
                             onRebanhoChanged: (id) {
                               setState(() {
                                 _rebanhoId = id;
@@ -275,30 +234,15 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
                             onLimpar: _limparAnimais,
                           ),
                           const SizedBox(height: 18),
-                          _secaoProcedimentos(),
+                          _dataCard(),
                           const SizedBox(height: 18),
-                          InkWell(
-                            onTap: _iniciando ? null : _escolherData,
-                            child: InputDecorator(
-                              decoration: const InputDecoration(
-                                labelText: 'Data da operação',
-                                prefixIcon: Icon(Icons.calendar_today_outlined),
-                                border: OutlineInputBorder(),
-                              ),
-                              child: Text(
-                                _data.day.toString().padLeft(2, '0') +
-                                    '/' +
-                                    _data.month.toString().padLeft(2, '0') +
-                                    '/' +
-                                    _data.year.toString(),
-                              ),
-                            ),
-                          ),
+                          _resumo(),
                           const SizedBox(height: 24),
                           SizedBox(
                             height: 52,
                             child: FilledButton.icon(
-                              onPressed: _iniciando ? null : _iniciarOperacao,
+                              onPressed:
+                                  _iniciando ? null : _iniciarOperacao,
                               icon: _iniciando
                                   ? const SizedBox(
                                       width: 20,
@@ -308,11 +252,11 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Icon(Icons.arrow_forward),
+                                  : const Icon(Icons.play_arrow_rounded),
                               label: Text(
                                 _iniciando
-                                    ? 'Configurando operação...'
-                                    : 'Configurar e registrar procedimentos',
+                                    ? 'Abrindo operação...'
+                                    : 'Começar manejo',
                               ),
                             ),
                           ),
@@ -337,7 +281,7 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            Icons.playlist_add_check_circle_outlined,
+            Icons.groups_2_outlined,
             color: AppTheme.primaryColor,
             size: 30,
           ),
@@ -347,12 +291,12 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Uma ida ao curral, vários procedimentos',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  'Maneje um animal por vez',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
                 ),
-                SizedBox(height: 5),
+                SizedBox(height: 6),
                 Text(
-                  'Selecione os animais e tudo o que será feito. O OviGestão abrirá a configuração de cada procedimento na sequência, mantendo os registros separados no histórico.',
+                  'Exemplo: pese a ovelha, registre a vacina e depois passe para a próxima. Cada animal pode receber procedimentos diferentes.',
                   style: TextStyle(height: 1.4),
                 ),
               ],
@@ -363,59 +307,694 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
     );
   }
 
-  Widget _secaoProcedimentos() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+  Widget _dataCard() {
+    final texto = _data.day.toString().padLeft(2, '0') +
+        '/' +
+        _data.month.toString().padLeft(2, '0') +
+        '/' +
+        _data.year.toString();
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: InkWell(
+        onTap: _iniciando ? null : _escolherData,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Procedimentos desta operação',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 5),
-          const Text(
-            'Marque todos os procedimentos que serão realizados nos animais selecionados.',
-            style: TextStyle(color: Colors.black54, height: 1.35),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: TipoManejo.values.map((tipo) {
-              final selecionado = _procedimentos.contains(tipo);
-              return FilterChip(
-                selected: selecionado,
-                avatar: Icon(
-                  _icone(tipo),
-                  size: 19,
-                  color: selecionado ? Colors.white : AppTheme.primaryColor,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(13),
                 ),
-                label: Text(_tipoTexto(tipo)),
-                onSelected: _iniciando ? null : (_) => _alternarProcedimento(tipo),
-                selectedColor: AppTheme.primaryColor,
-                checkmarkColor: Colors.white,
-              );
-            }).toList(),
+                child: const Icon(
+                  Icons.calendar_today_outlined,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Data da operação',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Pode ser alterada antes de começar.',
+                      style: TextStyle(color: Colors.black54, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                texto,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right),
+            ],
           ),
-          if (_procedimentos.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Text(
-              _procedimentos.length.toString() +
-                  ' procedimento(s) selecionado(s): ' +
-                  _procedimentos.map(_tipoTexto).join(', '),
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primaryColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _resumo() {
+    final quantidade = _animaisSelecionados.length;
+    return Card(
+      margin: EdgeInsets.zero,
+      color: quantidade == 0
+          ? Colors.grey.shade50
+          : AppTheme.primaryColor.withValues(alpha: 0.05),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(
+              quantidade == 0
+                  ? Icons.info_outline
+                  : Icons.check_circle_outline,
+              color: quantidade == 0
+                  ? Colors.black45
+                  : AppTheme.primaryColor,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                quantidade == 0
+                    ? 'Nenhum animal selecionado.'
+                    : '$quantidade animal(is) selecionado(s). Na próxima etapa, você fará o manejo de cada um individualmente.',
+                style: TextStyle(
+                  color: quantidade == 0
+                      ? Colors.black54
+                      : AppTheme.primaryColor,
+                  fontWeight:
+                      quantidade == 0 ? FontWeight.normal : FontWeight.w600,
+                  height: 1.35,
+                ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class ManejoOperacaoAnimaisPage extends StatefulWidget {
+  final List<Map<String, dynamic>> animais;
+  final DateTime data;
+  final String operacaoId;
+
+  const ManejoOperacaoAnimaisPage({
+    super.key,
+    required this.animais,
+    required this.data,
+    required this.operacaoId,
+  });
+
+  @override
+  State<ManejoOperacaoAnimaisPage> createState() =>
+      _ManejoOperacaoAnimaisPageState();
+}
+
+class _ManejoOperacaoAnimaisPageState
+    extends State<ManejoOperacaoAnimaisPage> {
+  final Map<String, List<TipoManejo>> _procedimentosPorAnimal = {};
+  int _indiceAtual = 0;
+  bool _processando = false;
+  bool _finalizado = false;
+
+  Map<String, dynamic> get _animalAtual => widget.animais[_indiceAtual];
+
+  String _animalId(Map<String, dynamic> animal) =>
+      animal['id']?.toString() ?? '';
+
+  String _animalNome(Map<String, dynamic> animal) {
+    final brinco = animal['brinco']?.toString() ?? '---';
+    final nome = animal['nome']?.toString().trim();
+    if (nome != null && nome.isNotEmpty) {
+      return '$brinco • $nome';
+    }
+    return 'Brinco $brinco';
+  }
+
+  String _tipoTexto(TipoManejo tipo) {
+    switch (tipo) {
+      case TipoManejo.vacinacao:
+        return 'Vacinação';
+      case TipoManejo.vermifugacao:
+        return 'Vermifugação';
+      case TipoManejo.tratamento:
+        return 'Tratamento';
+      case TipoManejo.tosquia:
+        return 'Tosquia';
+      case TipoManejo.pesagem:
+        return 'Pesagem';
+      case TipoManejo.famacha:
+        return 'FAMACHA';
+      case TipoManejo.denticao:
+        return 'Dentição';
+      case TipoManejo.outro:
+        return 'Outro';
+    }
+  }
+
+  IconData _icone(TipoManejo tipo) {
+    switch (tipo) {
+      case TipoManejo.vacinacao:
+        return Icons.vaccines_outlined;
+      case TipoManejo.vermifugacao:
+        return Icons.medication_outlined;
+      case TipoManejo.tratamento:
+        return Icons.medical_services_outlined;
+      case TipoManejo.tosquia:
+        return Icons.content_cut_outlined;
+      case TipoManejo.pesagem:
+        return Icons.monitor_weight_outlined;
+      case TipoManejo.famacha:
+        return Icons.visibility_outlined;
+      case TipoManejo.denticao:
+        return Icons.health_and_safety_outlined;
+      case TipoManejo.outro:
+        return Icons.assignment_outlined;
+    }
+  }
+
+  void _alternarProcedimento(TipoManejo tipo) {
+    final id = _animalId(_animalAtual);
+    final lista =
+        _procedimentosPorAnimal.putIfAbsent(id, () => <TipoManejo>[]);
+    setState(() {
+      if (lista.contains(tipo)) {
+        lista.remove(tipo);
+      } else {
+        lista.add(tipo);
+      }
+    });
+  }
+
+  Future<void> _registrarAnimal() async {
+    final id = _animalId(_animalAtual);
+    final procedimentos =
+        List<TipoManejo>.from(_procedimentosPorAnimal[id] ?? const []);
+
+    if (procedimentos.isEmpty) {
+      _mensagem('Escolha pelo menos um procedimento para este animal.');
+      return;
+    }
+
+    setState(() => _processando = true);
+
+    for (var i = 0; i < procedimentos.length; i++) {
+      if (!mounted) return;
+
+      final resultado = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => ManejoFormPage(
+            tipoInicial: procedimentos[i],
+            dataInicial: widget.data,
+            animalIdsIniciais: [id],
+            selecaoAnimaisBloqueada: true,
+            operacaoId: widget.operacaoId,
+          ),
+        ),
+      );
+
+      if (resultado != true) {
+        if (!mounted) return;
+        setState(() => _processando = false);
+
+        final restantes = procedimentos.length - i;
+        final continuar = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Registro não concluído'),
+            content: Text(
+              'O animal ' +
+                  _animalNome(_animalAtual) +
+                  ' ainda tem ' +
+                  restantes.toString() +
+                  ' procedimento(s) pendente(s).',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Deixar para depois'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('Continuar'),
+              ),
+            ],
+          ),
+        );
+
+        if (continuar == true && mounted) {
+          setState(() => _processando = true);
+          i--;
+          continue;
+        }
+        return;
+      }
+    }
+
+    if (!mounted) return;
+
+    if (_indiceAtual >= widget.animais.length - 1) {
+      setState(() {
+        _processando = false;
+        _finalizado = true;
+      });
+      return;
+    }
+
+    setState(() {
+      _processando = false;
+      _indiceAtual++;
+    });
+  }
+
+  void _voltarAnimal() {
+    if (_indiceAtual == 0 || _processando) return;
+    setState(() => _indiceAtual--);
+  }
+
+  void _mensagem(String texto) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(texto.replaceFirst('Exception: ', ''))),
+    );
+  }
+
+  Future<void> _finalizar() async {
+    if (_processando) return;
+
+    final pendentes = widget.animais.length - _indiceAtual;
+    if (!_finalizado && pendentes > 0) {
+      final confirmar = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Finalizar operação?'),
+          content: const Text(
+            'Os animais que ainda não foram registrados ficarão para depois. Os procedimentos já salvos não serão perdidos.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Continuar no manejo'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Finalizar'),
+            ),
+          ],
+        ),
+      );
+      if (confirmar != true || !mounted) return;
+    }
+
+    Navigator.of(context).pop(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final animal = _animalAtual;
+    final id = _animalId(animal);
+    final selecionados = _procedimentosPorAnimal[id] ?? const <TipoManejo>[];
+    final concluido = _finalizado || _indiceAtual > 0;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Registrar manejo'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Registrar por animal',
+            introduction:
+                'Nesta tela você trabalha com um animal de cada vez. Escolha tudo o que foi feito nele e registre os procedimentos na ordem que preferir.',
+            topics: [
+              HelpTopic(
+                title: 'Um animal, vários procedimentos',
+                description:
+                    'Exemplo: escolha Pesagem e Vacinação. Primeiro registre a pesagem e depois a vacina. Ao terminar, o próximo animal será aberto.',
+              ),
+              HelpTopic(
+                title: 'Procedimentos diferentes',
+                description:
+                    'Você pode escolher uma combinação diferente para cada animal. O aplicativo não exige que todos recebam os mesmos cuidados.',
+              ),
+              HelpTopic(
+                title: 'Dose da vacina',
+                description:
+                    'Quando houver peso e regra de dose cadastrada, o aplicativo calcula a quantidade individual. A dose aplicada pode ser ajustada antes de salvar.',
+              ),
+            ],
+          ),
         ],
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontal = constraints.maxWidth < 420 ? 14.0 : 20.0;
+            final maxWidth =
+                constraints.maxWidth > 760 ? 720.0 : constraints.maxWidth;
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontal,
+                    16,
+                    horizontal,
+                    32,
+                  ),
+                  children: [
+                    _progresso(),
+                    const SizedBox(height: 14),
+                    _animalCard(animal, concluido),
+                    const SizedBox(height: 18),
+                    _procedimentosCard(selecionados),
+                    const SizedBox(height: 22),
+                    SizedBox(
+                      height: 52,
+                      child: FilledButton.icon(
+                        onPressed:
+                            _processando || _finalizado ? null : _registrarAnimal,
+                        icon: _processando
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Icon(
+                                _indiceAtual == widget.animais.length - 1
+                                    ? Icons.check_rounded
+                                    : Icons.arrow_forward_rounded,
+                              ),
+                        label: Text(
+                          _processando
+                              ? 'Salvando...'
+                              : _indiceAtual == widget.animais.length - 1
+                                  ? 'Concluir animal'
+                                  : 'Registrar e próximo animal',
+                        ),
+                      ),
+                    ),
+                    if (_finalizado) ...[
+                      const SizedBox(height: 12),
+                      Card(
+                        color:
+                            AppTheme.primaryColor.withValues(alpha: 0.08),
+                        child: const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                color: AppTheme.primaryColor,
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Todos os animais desta operação foram registrados.',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        if (_indiceAtual > 0)
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _processando ? null : _voltarAnimal,
+                              icon: const Icon(Icons.arrow_back),
+                              label: const Text('Animal anterior'),
+                            ),
+                          ),
+                        if (_indiceAtual > 0 && !_finalizado)
+                          const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _processando ? null : _finalizar,
+                            icon: Icon(
+                              _finalizado
+                                  ? Icons.done_all
+                                  : Icons.stop_circle_outlined,
+                            ),
+                            label: Text(
+                              _finalizado
+                                  ? 'Fechar operação'
+                                  : 'Finalizar depois',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _progresso() {
+    final total = widget.animais.length;
+    final atual = _indiceAtual + 1;
+    final valor = total == 0 ? 0.0 : atual / total;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Animais da operação',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+            Text(
+              '$atual de $total',
+              style: const TextStyle(
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: LinearProgressIndicator(
+            value: valor,
+            minHeight: 8,
+            backgroundColor: Colors.black12,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _animalCard(Map<String, dynamic> animal, bool concluido) {
+    final nome = _animalNome(animal);
+    final sexo = animal['sexo']?.toString();
+    final raca = animal['raca']?.toString();
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(17),
+              ),
+              child: const Center(
+                child: AppAssetIcon(
+                  assetPath: 'assets/images/icon_ovelha.png',
+                  size: 38,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nome,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    [
+                      if (raca != null && raca.isNotEmpty) raca,
+                      if (sexo != null && sexo.isNotEmpty) sexo,
+                    ].join(' • '),
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                  if (concluido) ...[
+                    const SizedBox(height: 8),
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 17,
+                          color: AppTheme.primaryColor,
+                        ),
+                        SizedBox(width: 5),
+                        Text(
+                          'Pronto',
+                          style: TextStyle(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _procedimentosCard(List<TipoManejo> selecionados) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'O que foi feito neste animal?',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Marque os procedimentos realizados. Eles serão registrados na ordem em que você selecionar.',
+              style: TextStyle(
+                color: Colors.black54,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 9,
+              runSpacing: 9,
+              children: TipoManejo.values.map((tipo) {
+                final selecionado = selecionados.contains(tipo);
+                return FilterChip(
+                  selected: selecionado,
+                  avatar: Icon(
+                    _icone(tipo),
+                    size: 19,
+                    color: selecionado
+                        ? Colors.white
+                        : AppTheme.primaryColor,
+                  ),
+                  label: Text(_tipoTexto(tipo)),
+                  onSelected: _processando || _finalizado
+                      ? null
+                      : (_) => _alternarProcedimento(tipo),
+                  selectedColor: AppTheme.primaryColor,
+                  checkmarkColor: Colors.white,
+                );
+              }).toList(),
+            ),
+            if (selecionados.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Ordem do registro',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (var i = 0; i < selecionados.length; i++)
+                          Chip(
+                            avatar: CircleAvatar(
+                              radius: 10,
+                              backgroundColor: AppTheme.primaryColor,
+                              child: Text(
+                                (i + 1).toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            label: Text(_tipoTexto(selecionados[i])),
+                            deleteIcon:
+                                const Icon(Icons.close, size: 16),
+                            onDeleted: _processando || _finalizado
+                                ? null
+                                : () => _alternarProcedimento(
+                                      selecionados[i],
+                                    ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
