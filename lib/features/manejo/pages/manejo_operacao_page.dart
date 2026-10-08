@@ -427,11 +427,19 @@ class ManejoOperacaoAnimaisPage extends StatefulWidget {
 class _ManejoOperacaoAnimaisPageState
     extends State<ManejoOperacaoAnimaisPage> {
   final Map<String, List<TipoManejo>> _procedimentosPorAnimal = {};
+  late List<Map<String, dynamic>> _animaisOrdenados;
+  final Set<String> _animaisConcluidos = {};
   int _indiceAtual = 0;
   bool _processando = false;
   bool _finalizado = false;
 
-  Map<String, dynamic> get _animalAtual => widget.animais[_indiceAtual];
+  Map<String, dynamic> get _animalAtual => _animaisOrdenados[_indiceAtual];
+
+  @override
+  void initState() {
+    super.initState();
+    _animaisOrdenados = List<Map<String, dynamic>>.from(widget.animais);
+  }
 
   String _animalId(Map<String, dynamic> animal) =>
       animal['id']?.toString() ?? '';
@@ -567,7 +575,9 @@ class _ManejoOperacaoAnimaisPageState
 
     if (!mounted) return;
 
-    if (_indiceAtual >= widget.animais.length - 1) {
+    _animaisConcluidos.add(id);
+
+    if (_indiceAtual >= _animaisOrdenados.length - 1) {
       setState(() {
         _processando = false;
         _finalizado = true;
@@ -586,6 +596,137 @@ class _ManejoOperacaoAnimaisPageState
     setState(() => _indiceAtual--);
   }
 
+  Future<void> _abrirListaAnimais() async {
+    if (_processando) return;
+
+    final novoIndice = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: SizedBox(
+            height: MediaQuery.of(sheetContext).size.height * 0.78,
+            child: Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 4, 20, 6),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Animais da operação',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, 14),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Toque em um animal para ir até ele. Segure o ícone para reorganizar.',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ReorderableListView.builder(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 24),
+                    itemCount: _animaisOrdenados.length,
+                    buildDefaultDragHandles: false,
+                    onReorder: (oldIndex, newIndex) {
+                      setState(() {
+                        if (newIndex > oldIndex) newIndex--;
+                        final item = _animaisOrdenados.removeAt(oldIndex);
+                        _animaisOrdenados.insert(newIndex, item);
+                        if (_indiceAtual == oldIndex) {
+                          _indiceAtual = newIndex;
+                        } else if (oldIndex < _indiceAtual &&
+                            newIndex >= _indiceAtual) {
+                          _indiceAtual--;
+                        } else if (oldIndex > _indiceAtual &&
+                            newIndex <= _indiceAtual) {
+                          _indiceAtual++;
+                        }
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final animal = _animaisOrdenados[index];
+                      final id = _animalId(animal);
+                      final ativo = index == _indiceAtual;
+                      final concluido = _animaisConcluidos.contains(id);
+                      return Card(
+                        key: ValueKey(id),
+                        margin: const EdgeInsets.symmetric(vertical: 5),
+                        child: ListTile(
+                          onTap: () =>
+                              Navigator.of(sheetContext).pop(index),
+                          leading: CircleAvatar(
+                            backgroundColor: concluido
+                                ? AppTheme.primaryColor.withValues(alpha: 0.12)
+                                : Colors.black12,
+                            child: Text(
+                              '${index + 1}',
+                              style: TextStyle(
+                                color: concluido
+                                    ? AppTheme.primaryColor
+                                    : Colors.black54,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            _animalNome(animal),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          subtitle: Text(
+                            concluido
+                                ? 'Concluído'
+                                : ativo
+                                    ? 'Animal atual'
+                                    : 'Pendente',
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (concluido)
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: AppTheme.primaryColor,
+                                  size: 21,
+                                ),
+                              ReorderableDragStartListener(
+                                index: index,
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Icon(Icons.drag_handle_rounded),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || novoIndice == null) return;
+    setState(() {
+      _indiceAtual = novoIndice;
+    });
+  }
+
   void _mensagem(String texto) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -596,7 +737,7 @@ class _ManejoOperacaoAnimaisPageState
   Future<void> _finalizar() async {
     if (_processando) return;
 
-    final pendentes = widget.animais.length - _indiceAtual;
+    final pendentes = _animaisOrdenados.length - _indiceAtual;
     if (!_finalizado && pendentes > 0) {
       final confirmar = await showDialog<bool>(
         context: context,
@@ -628,7 +769,8 @@ class _ManejoOperacaoAnimaisPageState
     final animal = _animalAtual;
     final id = _animalId(animal);
     final selecionados = _procedimentosPorAnimal[id] ?? const <TipoManejo>[];
-    final concluido = _finalizado || _indiceAtual > 0;
+    final concluido = _finalizado ||
+        _animaisConcluidos.contains(_animalId(animal));
 
     return Scaffold(
       appBar: AppBar(
@@ -677,6 +819,12 @@ class _ManejoOperacaoAnimaisPageState
                   ),
                   children: [
                     _progresso(),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: _processando ? null : _abrirListaAnimais,
+                      icon: const Icon(Icons.swap_horiz_rounded),
+                      label: const Text('Trocar animal / organizar ordem'),
+                    ),
                     const SizedBox(height: 14),
                     _animalCard(animal, concluido),
                     const SizedBox(height: 18),
@@ -697,14 +845,14 @@ class _ManejoOperacaoAnimaisPageState
                                 ),
                               )
                             : Icon(
-                                _indiceAtual == widget.animais.length - 1
+                                _indiceAtual == _animaisOrdenados.length - 1
                                     ? Icons.check_rounded
                                     : Icons.arrow_forward_rounded,
                               ),
                         label: Text(
                           _processando
                               ? 'Salvando...'
-                              : _indiceAtual == widget.animais.length - 1
+                              : _indiceAtual == _animaisOrdenados.length - 1
                                   ? 'Concluir animal'
                                   : 'Registrar e próximo animal',
                         ),
@@ -778,9 +926,10 @@ class _ManejoOperacaoAnimaisPageState
   }
 
   Widget _progresso() {
-    final total = widget.animais.length;
+    final total = _animaisOrdenados.length;
     final atual = _indiceAtual + 1;
-    final valor = total == 0 ? 0.0 : atual / total;
+    final concluidos = _animaisConcluidos.length;
+    final valor = total == 0 ? 0.0 : concluidos / total;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -797,7 +946,7 @@ class _ManejoOperacaoAnimaisPageState
               ),
             ),
             Text(
-              '$atual de $total',
+              '$concluidos de $total concluídos • animal $atual',
               style: const TextStyle(
                 color: Colors.black54,
                 fontWeight: FontWeight.w600,
