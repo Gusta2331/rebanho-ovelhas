@@ -962,6 +962,890 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
                         ? Colors.white
                         : AppTheme.primaryColor,
                   ),
+
+class ManejoOperacaoOrganizarPage extends StatefulWidget {
+  final List<Map<String, dynamic>> animais;
+  final DateTime data;
+  final String operacaoId;
+
+  const ManejoOperacaoOrganizarPage({
+    super.key,
+    required this.animais,
+    required this.data,
+    required this.operacaoId,
+  });
+
+  @override
+  State<ManejoOperacaoOrganizarPage> createState() =>
+      _ManejoOperacaoOrganizarPageState();
+}
+
+class _ManejoOperacaoOrganizarPageState
+    extends State<ManejoOperacaoOrganizarPage> {
+  late List<Map<String, dynamic>> _animais;
+  bool _abrindo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animais = List<Map<String, dynamic>>.from(widget.animais);
+  }
+
+  String _animalNome(Map<String, dynamic> animal) {
+    final brinco = animal['brinco']?.toString() ?? '---';
+    final nome = animal['nome']?.toString().trim();
+    return nome != null && nome.isNotEmpty ? '$brinco • $nome' : 'Brinco $brinco';
+  }
+
+  Future<void> _começar() async {
+    if (_abrindo) return;
+    setState(() => _abrindo = true);
+    final resultado = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => ManejoOperacaoAnimaisPage(
+          animais: _animais,
+          data: widget.data,
+          operacaoId: widget.operacaoId,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _abrindo = false);
+    if (resultado == true) Navigator.of(context).pop(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Ordem dos animais'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Ordem dos animais',
+            introduction: 'Defina a sequência em que os animais serão manejados.',
+            topics: [
+              HelpTopic(
+                title: 'Arrastar',
+                description: 'Segure o ícone de arrastar e mova o animal para cima ou para baixo.',
+              ),
+              HelpTopic(
+                title: 'Pode mudar depois',
+                description: 'Durante o manejo você também poderá trocar de animal e reorganizar a ordem.',
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '2. Organize a ordem',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    _animais.length.toString() + ' animais selecionados',
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(13),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.drag_indicator_rounded, color: AppTheme.primaryColor),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Arraste os animais para definir quem será atendido primeiro.',
+                            style: TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ReorderableListView.builder(
+                padding: const EdgeInsets.fromLTRB(18, 6, 18, 20),
+                itemCount: _animais.length,
+                buildDefaultDragHandles: false,
+                onReorder: (oldIndex, newIndex) {
+                  setState(() {
+                    if (newIndex > oldIndex) newIndex--;
+                    final item = _animais.removeAt(oldIndex);
+                    _animais.insert(newIndex, item);
+                  });
+                },
+                itemBuilder: (context, index) {
+                  final animal = _animais[index];
+                  final id = animal['id']?.toString() ?? index.toString();
+                  return Container(
+                    key: ValueKey(id),
+                    margin: const EdgeInsets.only(bottom: 9),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.black12),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      leading: CircleAvatar(
+                        backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.10),
+                        foregroundColor: AppTheme.primaryColor,
+                        child: Text(
+                          (index + 1).toString(),
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      title: Text(
+                        _animalNome(animal),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      subtitle: Text(
+                        animal['raca']?.toString() ?? 'Raça não informada',
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                      trailing: ReorderableDragStartListener(
+                        index: index,
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.drag_handle_rounded),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _abrindo ? null : () => Navigator.of(context).pop(),
+                  child: const Text('Voltar'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: FilledButton.icon(
+                  onPressed: _abrindo ? null : _começar,
+                  icon: _abrindo
+                      ? const SizedBox(
+                          width: 19,
+                          height: 19,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.play_arrow_rounded),
+                  label: const Text('Começar manejo'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ManejoOperacaoAnimaisPage extends StatefulWidget {
+  final List<Map<String, dynamic>> animais;
+  final DateTime data;
+  final String operacaoId;
+
+  const ManejoOperacaoAnimaisPage({
+    super.key,
+    required this.animais,
+    required this.data,
+    required this.operacaoId,
+  });
+
+  @override
+  State<ManejoOperacaoAnimaisPage> createState() =>
+      _ManejoOperacaoAnimaisPageState();
+}
+
+class _ManejoOperacaoAnimaisPageState
+    extends State<ManejoOperacaoAnimaisPage> {
+  final Map<String, List<TipoManejo>> _procedimentosPorAnimal = {};
+  late List<Map<String, dynamic>> _animaisOrdenados;
+  final Set<String> _animaisConcluidos = {};
+  int _indiceAtual = 0;
+  bool _processando = false;
+  bool _finalizado = false;
+
+  Map<String, dynamic> get _animalAtual => _animaisOrdenados[_indiceAtual];
+
+  @override
+  void initState() {
+    super.initState();
+    _animaisOrdenados = List<Map<String, dynamic>>.from(widget.animais);
+  }
+
+  String _animalId(Map<String, dynamic> animal) =>
+      animal['id']?.toString() ?? '';
+
+  String _animalNome(Map<String, dynamic> animal) {
+    final brinco = animal['brinco']?.toString() ?? '---';
+    final nome = animal['nome']?.toString().trim();
+    if (nome != null && nome.isNotEmpty) {
+      return '$brinco • $nome';
+    }
+    return 'Brinco $brinco';
+  }
+
+  String _tipoTexto(TipoManejo tipo) {
+    switch (tipo) {
+      case TipoManejo.vacinacao:
+        return 'Vacinação';
+      case TipoManejo.vermifugacao:
+        return 'Vermifugação';
+      case TipoManejo.tratamento:
+        return 'Tratamento';
+      case TipoManejo.tosquia:
+        return 'Tosquia';
+      case TipoManejo.pesagem:
+        return 'Pesagem';
+      case TipoManejo.famacha:
+        return 'FAMACHA';
+      case TipoManejo.denticao:
+        return 'Dentição';
+      case TipoManejo.outro:
+        return 'Outro';
+    }
+  }
+
+  IconData _icone(TipoManejo tipo) {
+    switch (tipo) {
+      case TipoManejo.vacinacao:
+        return Icons.vaccines_outlined;
+      case TipoManejo.vermifugacao:
+        return Icons.medication_outlined;
+      case TipoManejo.tratamento:
+        return Icons.medical_services_outlined;
+      case TipoManejo.tosquia:
+        return Icons.content_cut_outlined;
+      case TipoManejo.pesagem:
+        return Icons.monitor_weight_outlined;
+      case TipoManejo.famacha:
+        return Icons.visibility_outlined;
+      case TipoManejo.denticao:
+        return Icons.health_and_safety_outlined;
+      case TipoManejo.outro:
+        return Icons.assignment_outlined;
+    }
+  }
+
+  void _alternarProcedimento(TipoManejo tipo) {
+    final id = _animalId(_animalAtual);
+    final lista =
+        _procedimentosPorAnimal.putIfAbsent(id, () => <TipoManejo>[]);
+    setState(() {
+      if (lista.contains(tipo)) {
+        lista.remove(tipo);
+      } else {
+        lista.add(tipo);
+      }
+    });
+  }
+
+  Future<void> _registrarAnimal() async {
+    final id = _animalId(_animalAtual);
+    final procedimentos =
+        List<TipoManejo>.from(_procedimentosPorAnimal[id] ?? const []);
+
+    if (procedimentos.isEmpty) {
+      _mensagem('Escolha pelo menos um procedimento para este animal.');
+      return;
+    }
+
+    setState(() => _processando = true);
+
+    for (var i = 0; i < procedimentos.length; i++) {
+      if (!mounted) return;
+
+      final resultado = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => ManejoFormPage(
+            tipoInicial: procedimentos[i],
+            dataInicial: widget.data,
+            animalIdsIniciais: [id],
+            selecaoAnimaisBloqueada: true,
+            operacaoId: widget.operacaoId,
+          ),
+        ),
+      );
+
+      if (resultado != true) {
+        if (!mounted) return;
+        setState(() => _processando = false);
+
+        final restantes = procedimentos.length - i;
+        final continuar = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Registro não concluído'),
+            content: Text(
+              'O animal ' +
+                  _animalNome(_animalAtual) +
+                  ' ainda tem ' +
+                  restantes.toString() +
+                  ' procedimento(s) pendente(s).',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Deixar para depois'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('Continuar'),
+              ),
+            ],
+          ),
+        );
+
+        if (continuar == true && mounted) {
+          setState(() => _processando = true);
+          i--;
+          continue;
+        }
+        return;
+      }
+    }
+
+    if (!mounted) return;
+
+    _animaisConcluidos.add(id);
+
+    if (_indiceAtual >= _animaisOrdenados.length - 1) {
+      setState(() {
+        _processando = false;
+        _finalizado = true;
+      });
+      return;
+    }
+
+    setState(() {
+      _processando = false;
+      _indiceAtual++;
+    });
+  }
+
+  void _voltarAnimal() {
+    if (_indiceAtual == 0 || _processando) return;
+    setState(() => _indiceAtual--);
+  }
+
+  Future<void> _abrirListaAnimais() async {
+    if (_processando) return;
+
+    final novoIndice = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: SizedBox(
+            height: MediaQuery.of(sheetContext).size.height * 0.78,
+            child: Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 4, 20, 6),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Animais da operação',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, 14),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Toque em um animal para ir até ele. Segure o ícone para reorganizar.',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ReorderableListView.builder(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 24),
+                    itemCount: _animaisOrdenados.length,
+                    buildDefaultDragHandles: false,
+                    onReorder: (oldIndex, newIndex) {
+                      setState(() {
+                        if (newIndex > oldIndex) newIndex--;
+                        final item = _animaisOrdenados.removeAt(oldIndex);
+                        _animaisOrdenados.insert(newIndex, item);
+                        if (_indiceAtual == oldIndex) {
+                          _indiceAtual = newIndex;
+                        } else if (oldIndex < _indiceAtual &&
+                            newIndex >= _indiceAtual) {
+                          _indiceAtual--;
+                        } else if (oldIndex > _indiceAtual &&
+                            newIndex <= _indiceAtual) {
+                          _indiceAtual++;
+                        }
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final animal = _animaisOrdenados[index];
+                      final id = _animalId(animal);
+                      final ativo = index == _indiceAtual;
+                      final concluido = _animaisConcluidos.contains(id);
+                      return Card(
+                        key: ValueKey(id),
+                        margin: const EdgeInsets.symmetric(vertical: 5),
+                        child: ListTile(
+                          onTap: () =>
+                              Navigator.of(sheetContext).pop(index),
+                          leading: CircleAvatar(
+                            backgroundColor: concluido
+                                ? AppTheme.primaryColor.withValues(alpha: 0.12)
+                                : Colors.black12,
+                            child: Text(
+                              '${index + 1}',
+                              style: TextStyle(
+                                color: concluido
+                                    ? AppTheme.primaryColor
+                                    : Colors.black54,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            _animalNome(animal),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          subtitle: Text(
+                            concluido
+                                ? 'Concluído'
+                                : ativo
+                                    ? 'Animal atual'
+                                    : 'Pendente',
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (concluido)
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: AppTheme.primaryColor,
+                                  size: 21,
+                                ),
+                              ReorderableDragStartListener(
+                                index: index,
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Icon(Icons.drag_handle_rounded),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || novoIndice == null) return;
+    setState(() {
+      _indiceAtual = novoIndice;
+    });
+  }
+
+  void _mensagem(String texto) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(texto.replaceFirst('Exception: ', ''))),
+    );
+  }
+
+  Future<void> _finalizar() async {
+    if (_processando) return;
+
+    final pendentes = _animaisOrdenados.length - _indiceAtual;
+    if (!_finalizado && pendentes > 0) {
+      final confirmar = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Finalizar operação?'),
+          content: const Text(
+            'Os animais que ainda não foram registrados ficarão para depois. Os procedimentos já salvos não serão perdidos.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Continuar no manejo'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Finalizar'),
+            ),
+          ],
+        ),
+      );
+      if (confirmar != true || !mounted) return;
+    }
+
+    Navigator.of(context).pop(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final animal = _animalAtual;
+    final id = _animalId(animal);
+    final selecionados = _procedimentosPorAnimal[id] ?? const <TipoManejo>[];
+    final concluido = _finalizado ||
+        _animaisConcluidos.contains(_animalId(animal));
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Registrar manejo'),
+        actions: const [
+          ContextualHelpButton(
+            title: 'Registrar por animal',
+            introduction:
+                'Nesta tela você trabalha com um animal de cada vez. Escolha tudo o que foi feito nele e registre os procedimentos na ordem que preferir.',
+            topics: [
+              HelpTopic(
+                title: 'Um animal, vários procedimentos',
+                description:
+                    'Exemplo: escolha Pesagem e Vacinação. Primeiro registre a pesagem e depois a vacina. Ao terminar, o próximo animal será aberto.',
+              ),
+              HelpTopic(
+                title: 'Procedimentos diferentes',
+                description:
+                    'Você pode escolher uma combinação diferente para cada animal. O aplicativo não exige que todos recebam os mesmos cuidados.',
+              ),
+              HelpTopic(
+                title: 'Dose da vacina',
+                description:
+                    'Quando houver peso e regra de dose cadastrada, o aplicativo calcula a quantidade individual. A dose aplicada pode ser ajustada antes de salvar.',
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontal = constraints.maxWidth < 420 ? 14.0 : 20.0;
+            final maxWidth =
+                constraints.maxWidth > 760 ? 720.0 : constraints.maxWidth;
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontal,
+                    16,
+                    horizontal,
+                    32,
+                  ),
+                  children: [
+                    _progresso(),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: _processando ? null : _abrirListaAnimais,
+                      icon: const Icon(Icons.swap_horiz_rounded),
+                      label: const Text('Trocar animal / organizar ordem'),
+                    ),
+                    const SizedBox(height: 14),
+                    _animalCard(animal, concluido),
+                    const SizedBox(height: 18),
+                    _procedimentosCard(selecionados),
+                    const SizedBox(height: 22),
+                    SizedBox(
+                      height: 52,
+                      child: FilledButton.icon(
+                        onPressed:
+                            _processando || _finalizado ? null : _registrarAnimal,
+                        icon: _processando
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Icon(
+                                _indiceAtual == _animaisOrdenados.length - 1
+                                    ? Icons.check_rounded
+                                    : Icons.arrow_forward_rounded,
+                              ),
+                        label: Text(
+                          _processando
+                              ? 'Salvando...'
+                              : _indiceAtual == _animaisOrdenados.length - 1
+                                  ? 'Concluir animal'
+                                  : 'Registrar e próximo animal',
+                        ),
+                      ),
+                    ),
+                    if (_finalizado) ...[
+                      const SizedBox(height: 12),
+                      Card(
+                        color:
+                            AppTheme.primaryColor.withValues(alpha: 0.08),
+                        child: const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                color: AppTheme.primaryColor,
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Todos os animais desta operação foram registrados.',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        if (_indiceAtual > 0)
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _processando ? null : _voltarAnimal,
+                              icon: const Icon(Icons.arrow_back),
+                              label: const Text('Animal anterior'),
+                            ),
+                          ),
+                        if (_indiceAtual > 0 && !_finalizado)
+                          const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _processando ? null : _finalizar,
+                            icon: Icon(
+                              _finalizado
+                                  ? Icons.done_all
+                                  : Icons.stop_circle_outlined,
+                            ),
+                            label: Text(
+                              _finalizado
+                                  ? 'Fechar operação'
+                                  : 'Finalizar depois',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _progresso() {
+    final total = _animaisOrdenados.length;
+    final atual = _indiceAtual + 1;
+    final concluidos = _animaisConcluidos.length;
+    final valor = total == 0 ? 0.0 : concluidos / total;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Animais da operação',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+            Text(
+              '$concluidos de $total concluídos • animal $atual',
+              style: const TextStyle(
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: LinearProgressIndicator(
+            value: valor,
+            minHeight: 8,
+            backgroundColor: Colors.black12,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _animalCard(Map<String, dynamic> animal, bool concluido) {
+    final nome = _animalNome(animal);
+    final sexo = animal['sexo']?.toString();
+    final raca = animal['raca']?.toString();
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(17),
+              ),
+              child: const Center(
+                child: AppAssetIcon(
+                  assetPath: 'assets/images/icon_ovino_femea.png',
+                  size: 38,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nome,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    [
+                      if (raca != null && raca.isNotEmpty) raca,
+                      if (sexo != null && sexo.isNotEmpty) sexo,
+                    ].join(' • '),
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                  if (concluido) ...[
+                    const SizedBox(height: 8),
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 17,
+                          color: AppTheme.primaryColor,
+                        ),
+                        SizedBox(width: 5),
+                        Text(
+                          'Pronto',
+                          style: TextStyle(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _procedimentosCard(List<TipoManejo> selecionados) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'O que foi feito neste animal?',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Marque os procedimentos realizados. Eles serão registrados na ordem em que você selecionar.',
+              style: TextStyle(
+                color: Colors.black54,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 9,
+              runSpacing: 9,
+              children: TipoManejo.values.map((tipo) {
+                final selecionado = selecionados.contains(tipo);
+                return FilterChip(
+                  selected: selecionado,
+                  avatar: Icon(
+                    _icone(tipo),
+                    size: 19,
+                    color: selecionado
+                        ? Colors.white
+                        : AppTheme.primaryColor,
+                  ),
                   label: Text(_tipoTexto(tipo)),
                   onSelected: _processando || _finalizado
                       ? null
