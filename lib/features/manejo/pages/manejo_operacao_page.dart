@@ -92,20 +92,6 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
     }
   }
 
-  void _selecionarTodosAnimais() {
-    setState(() {
-      _animaisSelecionados
-        ..clear()
-        ..addAll(
-          _animais.map((a) => a['id']?.toString()).whereType<String>(),
-        );
-    });
-  }
-
-  void _limparAnimais() {
-    setState(() => _animaisSelecionados.clear());
-  }
-
   Future<void> _iniciarOperacao() async {
     if (_animaisSelecionados.isEmpty) {
       _mensagem('Selecione pelo menos um animal.');
