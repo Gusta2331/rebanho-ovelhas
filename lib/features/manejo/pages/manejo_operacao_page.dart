@@ -292,17 +292,143 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
     }
 
     setState(() => _iniciando = true);
-    final operacaoId = const Uuid().v4();
 
+    final selecionados = _animais
+        .where(
+          (animal) =>
+              _animaisSelecionados.contains(animal['id']?.toString()),
+        )
+        .toList();
+
+    final animaisOrdenados =
+        await showModalBottomSheet<List<Map<String, dynamic>>>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        var ordem = List<Map<String, dynamic>>.from(selecionados);
+        return StatefulBuilder(
+          builder: (context, atualizarLista) => SafeArea(
+            child: SizedBox(
+              height: MediaQuery.of(sheetContext).size.height * 0.78,
+              child: Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(20, 4, 20, 6),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Organizar ordem dos animais',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(20, 0, 20, 14),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Segure o ícone de arrastar para definir quem será atendido primeiro. Você poderá mudar a ordem durante o manejo.',
+                        style: TextStyle(color: Colors.black54, height: 1.35),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ReorderableListView.builder(
+                      padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                      itemCount: ordem.length,
+                      buildDefaultDragHandles: false,
+                      onReorder: (oldIndex, newIndex) {
+                        atualizarLista(() {
+                          if (newIndex > oldIndex) newIndex--;
+                          final animal = ordem.removeAt(oldIndex);
+                          ordem.insert(newIndex, animal);
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final animal = ordem[index];
+                        final id = animal['id']?.toString() ?? 'animal_$index';
+                        return Card(
+                          key: ValueKey('ordem_inicial_$id'),
+                          margin: const EdgeInsets.symmetric(vertical: 5),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor:
+                                  AppTheme.primaryColor.withValues(alpha: 0.10),
+                              child: Text(
+                                '${index + 1}',
+                                style: const TextStyle(
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              _nomeAnimal(animal),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Brinco ${animal['brinco']?.toString() ?? '---'} • ${_sexoAnimal(animal)}',
+                            ),
+                            trailing: ReorderableDragStartListener(
+                              index: index,
+                              child: const Padding(
+                                padding: EdgeInsets.all(10),
+                                child: Icon(Icons.drag_handle_rounded),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () =>
+                                Navigator.of(sheetContext).pop(),
+                            child: const Text('Voltar'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: () =>
+                                Navigator.of(sheetContext).pop(ordem),
+                            icon: const Icon(Icons.play_arrow_rounded),
+                            label: const Text('Iniciar manejo'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted) return;
+    if (animaisOrdenados == null || animaisOrdenados.isEmpty) {
+      setState(() => _iniciando = false);
+      return;
+    }
+
+    final operacaoId = const Uuid().v4();
     final resultado = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => ManejoOperacaoAnimaisPage(
-          animais: _animais
-              .where(
-                (animal) =>
-                    _animaisSelecionados.contains(animal['id']?.toString()),
-              )
-              .toList(),
+          animais: animaisOrdenados,
           data: _data,
           operacaoId: operacaoId,
         ),
