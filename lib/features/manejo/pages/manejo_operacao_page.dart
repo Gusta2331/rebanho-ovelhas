@@ -596,6 +596,7 @@ class _ManejoOperacaoAnimaisPageState
     super.initState();
     _animaisOrdenados = List<Map<String, dynamic>>.from(widget.animais);
     _restaurarRascunho();
+    if (widget.rascunho == null) _salvarRascunho();
   }
 
   void _restaurarRascunho() {
@@ -713,6 +714,7 @@ class _ManejoOperacaoAnimaisPageState
     setState(() {
       if (lista.contains(tipo)) {
         lista.remove(tipo);
+        _procedimentosConcluidosPorAnimal[id]?.remove(tipo.name);
       } else {
         lista.add(tipo);
       }
