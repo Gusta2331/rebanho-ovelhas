@@ -1229,24 +1229,54 @@ class _ManejoOperacaoAnimaisPageState
                     if (_finalizado) ...[
                       const SizedBox(height: 12),
                       Card(
-                        color:
-                            AppTheme.primaryColor.withValues(alpha: 0.08),
-                        child: const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Row(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.check_circle,
-                                color: AppTheme.primaryColor,
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  'Todos os animais desta operação foram registrados.',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: AppTheme.primaryColor,
                                   ),
-                                ),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Manejo concluído!',
+                                      style: TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Todos os animais desta operação foram registrados.',
+                                style: TextStyle(height: 1.4),
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _resumoIndicador(
+                                      'Animais',
+                                      '${_animaisConcluidos.length}/${_animaisOrdenados.length}',
+                                      Icons.pets_outlined,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _resumoIndicador(
+                                      'Procedimentos',
+                                      '${_procedimentosConcluidosPorAnimal.values.fold<int>(0, (total, procedimentos) => total + procedimentos.length)}',
+                                      Icons.task_alt_rounded,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -1289,6 +1319,43 @@ class _ManejoOperacaoAnimaisPageState
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _resumoIndicador(String titulo, String valor, IconData icone) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icone, color: AppTheme.primaryColor, size: 22),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  valor,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
