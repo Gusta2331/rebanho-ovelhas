@@ -806,6 +806,7 @@ class _ManejoOperacaoAnimaisPageState
         _processando = false;
         _finalizado = true;
       });
+      await _salvarRascunho();
       return;
     }
 
@@ -813,6 +814,7 @@ class _ManejoOperacaoAnimaisPageState
       _processando = false;
       _indiceAtual++;
     });
+    await _salvarRascunho();
   }
 
   void _voltarAnimal() {
