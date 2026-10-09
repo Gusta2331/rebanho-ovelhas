@@ -92,21 +92,6 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
     }
   }
 
-  void _selecionarTodosAnimais() {
-    setState(() {
-      _animaisSelecionados
-        ..clear()
-        ..addAll(
-          _animais.map((a) => a['id']?.toString()).whereType<String>(),
-        );
-    });
-  }
-
-  void _limparAnimais() {
-    setState(() => _animaisSelecionados.clear());
-  }
-
-
   List<Map<String, dynamic>> get _animaisVisiveis {
     final termo = _busca.trim().toLowerCase();
     return _animais.where((animal) {
