@@ -612,13 +612,14 @@ class _ManejoOperacaoAnimaisPageState
 
     setState(() => _processando = true);
 
-    for (var i = 0; i < procedimentos.length; i++) {
+    var indiceProcedimento = 0;
+    while (indiceProcedimento < procedimentos.length) {
       if (!mounted) return;
 
       final resultado = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           builder: (_) => ManejoFormPage(
-            tipoInicial: procedimentos[i],
+            tipoInicial: procedimentos[indiceProcedimento],
             dataInicial: widget.data,
             animalIdsIniciais: [id],
             selecaoAnimaisBloqueada: true,
@@ -627,42 +628,43 @@ class _ManejoOperacaoAnimaisPageState
         ),
       );
 
-      if (resultado != true) {
-        if (!mounted) return;
-        setState(() => _processando = false);
-
-        final restantes = procedimentos.length - i;
-        final continuar = await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text('Registro não concluído'),
-            content: Text(
-              'O animal ' +
-                  _animalNome(_animalAtual) +
-                  ' ainda tem ' +
-                  restantes.toString() +
-                  ' procedimento(s) pendente(s).',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(false),
-                child: const Text('Deixar para depois'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(dialogContext).pop(true),
-                child: const Text('Continuar'),
-              ),
-            ],
-          ),
-        );
-
-        if (continuar == true && mounted) {
-          setState(() => _processando = true);
-          i--;
-          continue;
-        }
-        return;
+      if (resultado == true) {
+        indiceProcedimento++;
+        continue;
       }
+
+      if (!mounted) return;
+      setState(() => _processando = false);
+
+      final restantes = procedimentos.length - indiceProcedimento;
+      final continuar = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Registro não concluído'),
+          content: Text(
+            'O procedimento "${_tipoTexto(procedimentos[indiceProcedimento])}" '
+            'do animal ${_animalNome(_animalAtual)} não foi salvo. '
+            'Ainda há $restantes procedimento(s) pendente(s).',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Deixar para depois'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Tentar novamente'),
+            ),
+          ],
+        ),
+      );
+
+      if (continuar != true || !mounted) return;
+
+      // Mantém o mesmo índice para reabrir o procedimento que não foi salvo.
+      setState(() => _processando = true);
     }
 
     if (!mounted) return;
@@ -1135,27 +1137,24 @@ class _ManejoOperacaoAnimaisPageState
   }
 
   Widget _procedimentosCard(List<TipoManejo> selecionados) {
+    final id = _animalId(_animalAtual);
+
     return Card(
       margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'O que foi feito neste animal?',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              'O que será feito neste animal?',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             const Text(
-              'Marque os procedimentos realizados. Eles serão registrados na ordem em que você selecionar.',
-              style: TextStyle(
-                color: Colors.black54,
-                height: 1.4,
-              ),
+              'Selecione os procedimentos e arraste-os para definir a ordem em que serão registrados.',
+              style: TextStyle(color: Colors.black54, height: 1.4),
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -1168,9 +1167,7 @@ class _ManejoOperacaoAnimaisPageState
                   avatar: Icon(
                     _icone(tipo),
                     size: 19,
-                    color: selecionado
-                        ? Colors.white
-                        : AppTheme.primaryColor,
+                    color: selecionado ? Colors.white : AppTheme.primaryColor,
                   ),
                   label: Text(_tipoTexto(tipo)),
                   onSelected: _processando || _finalizado
@@ -1182,56 +1179,106 @@ class _ManejoOperacaoAnimaisPageState
               }).toList(),
             ),
             if (selecionados.isNotEmpty) ...[
-              const SizedBox(height: 18),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Ordem do registro',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Ordem dos procedimentos',
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                    ),
+                  ),
+                  Text(
+                    '${selecionados.length} selecionado(s)',
+                    style: const TextStyle(color: Colors.black54, fontSize: 12),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Segure o ícone ☰ e arraste para reorganizar.',
+                style: TextStyle(color: Colors.black54, fontSize: 12),
+              ),
+              const SizedBox(height: 10),
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                itemCount: selecionados.length,
+                onReorder: _processando || _finalizado
+                    ? (_, __) {}
+                    : (oldIndex, newIndex) {
+                        setState(() {
+                          final lista = _procedimentosPorAnimal.putIfAbsent(
+                            id,
+                            () => <TipoManejo>[],
+                          );
+                          if (newIndex > oldIndex) newIndex--;
+                          final tipo = lista.removeAt(oldIndex);
+                          lista.insert(newIndex, tipo);
+                        });
+                      },
+                itemBuilder: (context, index) {
+                  final tipo = selecionados[index];
+                  return Container(
+                    key: ValueKey('procedimento_${id}_${tipo.name}'),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.16),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (var i = 0; i < selecionados.length; i++)
-                          Chip(
-                            avatar: CircleAvatar(
-                              radius: 10,
-                              backgroundColor: AppTheme.primaryColor,
-                              child: Text(
-                                (i + 1).toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            label: Text(_tipoTexto(selecionados[i])),
-                            deleteIcon:
-                                const Icon(Icons.close, size: 16),
-                            onDeleted: _processando || _finalizado
-                                ? null
-                                : () => _alternarProcedimento(
-                                      selecionados[i],
-                                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 3,
+                      ),
+                      leading: Container(
+                        width: 38,
+                        height: 38,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                        child: Text(
+                          '${index + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
                           ),
-                      ],
+                        ),
+                      ),
+                      title: Text(
+                        _tipoTexto(tipo),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      subtitle: Text(index == 0 ? 'Será registrado primeiro' : 'Posição ${index + 1}'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: 'Remover procedimento',
+                            onPressed: _processando || _finalizado
+                                ? null
+                                : () => _alternarProcedimento(tipo),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                          ReorderableDragStartListener(
+                            index: index,
+                            child: const Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Icon(Icons.drag_handle_rounded),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
             ],
           ],
@@ -1239,4 +1286,5 @@ class _ManejoOperacaoAnimaisPageState
       ),
     );
   }
+}
 }
