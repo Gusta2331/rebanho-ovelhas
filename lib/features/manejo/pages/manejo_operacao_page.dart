@@ -1534,7 +1534,21 @@ class _ManejoOperacaoAnimaisPageState
                         _tipoTexto(tipo),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
-                      subtitle: Text(index == 0 ? 'Será registrado primeiro' : 'Posição ${index + 1}'),
+                      subtitle: Text(
+                        (_procedimentosConcluidosPorAnimal[id]?.contains(tipo.name) ?? false)
+                            ? '✓ Já registrado • posição ${index + 1}'
+                            : index == 0
+                                ? 'Será registrado primeiro'
+                                : 'Pendente • posição ${index + 1}',
+                        style: TextStyle(
+                          color: (_procedimentosConcluidosPorAnimal[id]?.contains(tipo.name) ?? false)
+                              ? AppTheme.primaryColor
+                              : Colors.black54,
+                          fontWeight: (_procedimentosConcluidosPorAnimal[id]?.contains(tipo.name) ?? false)
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
