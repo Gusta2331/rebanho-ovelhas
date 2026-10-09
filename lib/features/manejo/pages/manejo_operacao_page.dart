@@ -256,7 +256,14 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
                   child: Row(children: [
                     Container(width: 46, height: 46,
                       decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: 0.09), borderRadius: BorderRadius.circular(12)),
-                      child: const Center(child: AppAssetIcon(assetPath: 'assets/images/icon_ovino_femea.png', size: 32))),
+                      child: Center(
+                        child: AppAssetIcon(
+                          assetPath: _sexoAnimal(animal) == 'Macho'
+                              ? 'assets/images/icon_ovino_macho.png'
+                              : 'assets/images/icon_ovino_femea.png',
+                          size: 32,
+                        ),
+                      )),
                     const SizedBox(width: 12),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(_nomeAnimal(animal), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
@@ -1347,9 +1354,12 @@ class _ManejoOperacaoAnimaisPageState
                 color: AppTheme.primaryColor.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(17),
               ),
-              child: const Center(
+              child: Center(
                 child: AppAssetIcon(
-                  assetPath: 'assets/images/icon_ovino_femea.png',
+                  assetPath: (sexo?.toLowerCase().contains('macho') == true ||
+                          sexo?.toLowerCase() == 'm')
+                      ? 'assets/images/icon_ovino_macho.png'
+                      : 'assets/images/icon_ovino_femea.png',
                   size: 38,
                 ),
               ),
