@@ -707,7 +707,7 @@ class _ManejoOperacaoAnimaisPageState
     }
   }
 
-  void _alternarProcedimento(TipoManejo tipo) {
+  Future<void> _alternarProcedimento(TipoManejo tipo) async {
     final id = _animalId(_animalAtual);
     final lista =
         _procedimentosPorAnimal.putIfAbsent(id, () => <TipoManejo>[]);
@@ -719,7 +719,7 @@ class _ManejoOperacaoAnimaisPageState
         lista.add(tipo);
       }
     });
-    _salvarRascunho();
+    await _salvarRascunho();
   }
 
   Future<void> _registrarAnimal() async {
