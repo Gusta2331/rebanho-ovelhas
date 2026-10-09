@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -8,6 +11,8 @@ import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_service.dart';
 import '../models/manejo.dart';
 import 'manejo_form_page.dart';
+
+const String _chaveRascunhoManejo = 'manejo_operacao_rascunho_v1';
 
 class ManejoOperacaoPage extends StatefulWidget {
   const ManejoOperacaoPage({super.key});
@@ -50,10 +55,66 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
         _animais = List<Map<String, dynamic>>.from(resultados[1] as List);
         _carregando = false;
       });
+      await _oferecerRetomarRascunho();
     } catch (e) {
       if (!mounted) return;
       setState(() => _carregando = false);
       _mensagem(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _oferecerRetomarRascunho() async {
+    final preferencias = await SharedPreferences.getInstance();
+    final texto = preferencias.getString(_chaveRascunhoManejo);
+    if (texto == null || texto.isEmpty || !mounted) return;
+    Map<String, dynamic> rascunho;
+    try {
+      rascunho = Map<String, dynamic>.from(jsonDecode(texto) as Map);
+    } catch (_) {
+      await preferencias.remove(_chaveRascunhoManejo);
+      return;
+    }
+    final animaisSalvos = rascunho['animais'];
+    if (animaisSalvos is! List || animaisSalvos.isEmpty) {
+      await preferencias.remove(_chaveRascunhoManejo);
+      return;
+    }
+    final escolha = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Manejo em andamento'),
+        content: const Text('Existe uma operação de manejo salva neste aparelho. Você pode retomá-la de onde parou ou descartá-la e iniciar uma nova.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop('descartar'), child: const Text('Descartar rascunho')),
+          FilledButton.icon(onPressed: () => Navigator.of(dialogContext).pop('retomar'), icon: const Icon(Icons.play_arrow_rounded), label: const Text('Retomar manejo')),
+        ],
+      ),
+    );
+    if (!mounted || escolha == null) return;
+    if (escolha == 'descartar') {
+      await preferencias.remove(_chaveRascunhoManejo);
+      if (mounted) _mensagem('Rascunho descartado. Você pode iniciar uma nova operação.');
+      return;
+    }
+    try {
+      final animais = animaisSalvos.map((animal) => Map<String, dynamic>.from(animal as Map)).toList();
+      final resultado = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => ManejoOperacaoAnimaisPage(
+          animais: animais,
+          data: DateTime.parse(rascunho['data'] as String),
+          operacaoId: rascunho['operacaoId'] as String,
+          rascunho: rascunho,
+        )),
+      );
+      if (!mounted) return;
+      if (resultado == true) {
+        _mensagem('Operação de manejo encerrada.');
+        Navigator.of(context).pop(true);
+      }
+    } catch (_) {
+      await preferencias.remove(_chaveRascunhoManejo);
+      if (mounted) _mensagem('Não foi possível recuperar o rascunho. Inicie uma nova operação.');
     }
   }
 
@@ -503,12 +564,14 @@ class ManejoOperacaoAnimaisPage extends StatefulWidget {
   final List<Map<String, dynamic>> animais;
   final DateTime data;
   final String operacaoId;
+  final Map<String, dynamic>? rascunho;
 
   const ManejoOperacaoAnimaisPage({
     super.key,
     required this.animais,
     required this.data,
     required this.operacaoId,
+    this.rascunho,
   });
 
   @override
@@ -519,6 +582,7 @@ class ManejoOperacaoAnimaisPage extends StatefulWidget {
 class _ManejoOperacaoAnimaisPageState
     extends State<ManejoOperacaoAnimaisPage> {
   final Map<String, List<TipoManejo>> _procedimentosPorAnimal = {};
+  final Map<String, Set<String>> _procedimentosConcluidosPorAnimal = {};
   late List<Map<String, dynamic>> _animaisOrdenados;
   final Set<String> _animaisConcluidos = {};
   int _indiceAtual = 0;
@@ -531,6 +595,61 @@ class _ManejoOperacaoAnimaisPageState
   void initState() {
     super.initState();
     _animaisOrdenados = List<Map<String, dynamic>>.from(widget.animais);
+    _restaurarRascunho();
+  }
+
+  void _restaurarRascunho() {
+    final rascunho = widget.rascunho;
+    if (rascunho == null) return;
+    _indiceAtual = (rascunho['indiceAtual'] as num?)?.toInt() ?? 0;
+    if (_indiceAtual < 0) _indiceAtual = 0;
+    if (_indiceAtual >= _animaisOrdenados.length) _indiceAtual = _animaisOrdenados.length - 1;
+    final concluidos = rascunho['animaisConcluidos'];
+    if (concluidos is List) _animaisConcluidos.addAll(concluidos.map((item) => item.toString()));
+    final procedimentos = rascunho['procedimentosPorAnimal'];
+    if (procedimentos is Map) {
+      for (final entrada in procedimentos.entries) {
+        if (entrada.value is List) {
+          _procedimentosPorAnimal[entrada.key.toString()] = (entrada.value as List)
+              .map((item) {
+                final encontrados = TipoManejo.values.where((tipo) => tipo.name == item.toString()).toList();
+                return encontrados.isEmpty ? null : encontrados.first;
+              })
+              .whereType<TipoManejo>()
+              .toList();
+        }
+      }
+    }
+    final procedimentosConcluidos = rascunho['procedimentosConcluidosPorAnimal'];
+    if (procedimentosConcluidos is Map) {
+      for (final entrada in procedimentosConcluidos.entries) {
+        if (entrada.value is List) {
+          _procedimentosConcluidosPorAnimal[entrada.key.toString()] = (entrada.value as List).map((item) => item.toString()).toSet();
+        }
+      }
+    }
+    _finalizado = rascunho['finalizado'] == true;
+  }
+
+  Future<void> _salvarRascunho() async {
+    if (_animaisOrdenados.isEmpty) return;
+    final preferencias = await SharedPreferences.getInstance();
+    final dados = <String, dynamic>{
+      'data': widget.data.toIso8601String(),
+      'operacaoId': widget.operacaoId,
+      'animais': _animaisOrdenados,
+      'indiceAtual': _indiceAtual,
+      'animaisConcluidos': _animaisConcluidos.toList(),
+      'procedimentosPorAnimal': _procedimentosPorAnimal.map((id, tipos) => MapEntry(id, tipos.map((tipo) => tipo.name).toList())),
+      'procedimentosConcluidosPorAnimal': _procedimentosConcluidosPorAnimal.map((id, tipos) => MapEntry(id, tipos.toList())),
+      'finalizado': _finalizado,
+    };
+    await preferencias.setString(_chaveRascunhoManejo, jsonEncode(dados));
+  }
+
+  Future<void> _limparRascunho() async {
+    final preferencias = await SharedPreferences.getInstance();
+    await preferencias.remove(_chaveRascunhoManejo);
   }
 
   String _animalId(Map<String, dynamic> animal) =>
@@ -598,6 +717,7 @@ class _ManejoOperacaoAnimaisPageState
         lista.add(tipo);
       }
     });
+    _salvarRascunho();
   }
 
   Future<void> _registrarAnimal() async {
@@ -613,7 +733,12 @@ class _ManejoOperacaoAnimaisPageState
     setState(() => _processando = true);
 
     var indiceProcedimento = 0;
+    final concluidos = _procedimentosConcluidosPorAnimal.putIfAbsent(id, () => <String>{});
     while (indiceProcedimento < procedimentos.length) {
+      if (concluidos.contains(procedimentos[indiceProcedimento].name)) {
+        indiceProcedimento++;
+        continue;
+      }
       if (!mounted) return;
 
       final resultado = await Navigator.of(context).push<bool>(
@@ -629,6 +754,8 @@ class _ManejoOperacaoAnimaisPageState
       );
 
       if (resultado == true) {
+        concluidos.add(procedimentos[indiceProcedimento].name);
+        await _salvarRascunho();
         indiceProcedimento++;
         continue;
       }
@@ -670,6 +797,7 @@ class _ManejoOperacaoAnimaisPageState
     if (!mounted) return;
 
     _animaisConcluidos.add(id);
+    await _salvarRascunho();
 
     if (_indiceAtual >= _animaisOrdenados.length - 1) {
       setState(() {
@@ -688,6 +816,7 @@ class _ManejoOperacaoAnimaisPageState
   void _voltarAnimal() {
     if (_indiceAtual == 0 || _processando) return;
     setState(() => _indiceAtual--);
+    _salvarRascunho();
   }
 
   Future<void> _abrirListaAnimais() async {
@@ -746,6 +875,7 @@ class _ManejoOperacaoAnimaisPageState
                           _indiceAtual++;
                         }
                       });
+                      _salvarRascunho();
                     },
                     itemBuilder: (context, index) {
                       final animal = _animaisOrdenados[index];
@@ -819,6 +949,7 @@ class _ManejoOperacaoAnimaisPageState
     setState(() {
       _indiceAtual = novoIndice;
     });
+    _salvarRascunho();
   }
 
   void _mensagem(String texto) {
@@ -855,6 +986,12 @@ class _ManejoOperacaoAnimaisPageState
       if (confirmar != true || !mounted) return;
     }
 
+    if (_finalizado) {
+      await _limparRascunho();
+    } else {
+      await _salvarRascunho();
+    }
+    if (!mounted) return;
     Navigator.of(context).pop(true);
   }
 
@@ -1217,6 +1354,7 @@ class _ManejoOperacaoAnimaisPageState
                           final tipo = lista.removeAt(oldIndex);
                           lista.insert(newIndex, tipo);
                         });
+                        _salvarRascunho();
                       },
                 itemBuilder: (context, index) {
                   final tipo = selecionados[index];
