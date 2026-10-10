@@ -197,16 +197,17 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back_rounded)),
-        title: const Row(mainAxisSize: MainAxisSize.min, children: [
+        title: Row(
+          children: [
           AppAssetIcon(assetPath: 'assets/images/icon_cobertura.png', size: 26),
-          SizedBox(width: 8), Text('Relatório de reprodução'),
+          SizedBox(width: 8), Expanded(child: Text('Relatório de reprodução', maxLines: 1, overflow: TextOverflow.ellipsis)),
         ]),
         actions: [IconButton(
           tooltip: 'Gerar relatório',
           onPressed: list.isEmpty || _selectedReproducoes.isEmpty || _generating ? null : _chooseFormat,
           icon: _generating ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.ios_share_rounded),
         )],
-      ),
+        ),
       body: _loading ? const Center(child: CircularProgressIndicator()) :
         _error != null ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
           Padding(padding: const EdgeInsets.all(24), child: Text(_error!, textAlign: TextAlign.center)),
@@ -308,16 +309,16 @@ class _Summary extends StatelessWidget {
     ];
     return GridView.count(
       crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10,
-      childAspectRatio: 2.2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: 1.8, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
       children: values.map((v) => Card(
         margin: EdgeInsets.zero, elevation: 0,
         child: Padding(padding: const EdgeInsets.all(12), child: Row(children: [
           AppAssetIcon(assetPath: v[2].toString(), size: 26),
           const SizedBox(width: 9),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text(v[1].toString(), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-            Text(v[0].toString(), style: TextStyle(fontSize: 11, color: Colors.grey.shade700)),
-          ]),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+            FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(v[1].toString(), maxLines: 1, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800))),
+            Text(v[0].toString(), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: Colors.grey.shade700)),
+          ])),
         ])),
       )).toList(),
     );
