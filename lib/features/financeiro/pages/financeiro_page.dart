@@ -154,12 +154,11 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
     );
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
-          mainAxisSize: MainAxisSize.min,
+        title: Row(
           children: [
             AppAssetIcon(assetPath: 'assets/images/icon_financeiro.png', size: 26),
             SizedBox(width: 8),
-            Text('Despesas e lucro'),
+            Expanded(child: Text('Despesas e lucro', maxLines: 1, overflow: TextOverflow.ellipsis)),
           ],
         ),
         actions: [
@@ -297,9 +296,14 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                _moeda((item['valor'] as num).toDouble()),
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    _moeda((item['valor'] as num).toDouble()),
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
                               ),
                               PopupMenuButton<String>(
                                 onSelected: (value) {
