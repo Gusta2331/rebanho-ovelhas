@@ -473,6 +473,7 @@ class _PlanPickerDialogState extends State<_PlanPickerDialog> {
             TextFormField(
               controller: _duration,
               keyboardType: TextInputType.number,
+              onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
                 labelText: 'Duração em dias',
                 helperText: 'Padrão: 30 dias (1 mês). Máximo: 3.650 dias.',
