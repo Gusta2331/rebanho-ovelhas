@@ -272,15 +272,14 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
           onPressed: widget.onBack,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: const Row(
-          mainAxisSize: MainAxisSize.min,
+        title: Row(
           children: [
             AppAssetIcon(
               assetPath: 'assets/images/icon_animais.png',
               size: 26,
             ),
             SizedBox(width: 8),
-            Text('Relatório do rebanho'),
+            Expanded(child: Text('Relatório do rebanho', maxLines: 1, overflow: TextOverflow.ellipsis)),
           ],
         ),
         actions: [
@@ -539,7 +538,7 @@ class _Summary extends StatelessWidget {
       crossAxisCount: 2,
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
-      childAspectRatio: 2.2,
+      childAspectRatio: 1.8,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: [
@@ -570,19 +569,19 @@ class _SummaryCard extends StatelessWidget {
           children: [
             AppAssetIcon(assetPath: iconAsset, size: 24),
             const SizedBox(width: 9),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
-                ),
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
-                ),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(value, maxLines: 1, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+                  ),
+                  Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: Colors.grey.shade700)),
+                ],
+              ),
             ),
           ],
         ),
