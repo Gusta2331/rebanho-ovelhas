@@ -60,8 +60,7 @@ class _FazendaBaixinhaAppState extends State<FazendaBaixinhaApp> {
     _processandoLink = true;
 
     try {
-      final response =
-          await Supabase.instance.client.auth.getSessionFromUrl(uri);
+      await Supabase.instance.client.auth.getSessionFromUrl(uri);
 
       _navigatorKey.currentState?.pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const FarmCheckPage()),
