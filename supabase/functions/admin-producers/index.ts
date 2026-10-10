@@ -49,10 +49,14 @@ Deno.serve(async (request) => {
           plano: null,
         })),
       }))
-      const assignments = await admin.from('planos_fazenda').select('fazenda_id,plano_id,status,planos_produtor(nome,limite_animais,preco_mensal)')
+      const assignments = await admin.from('planos_fazenda').select('fazenda_id,plano_id,status,validade_em,atualizado_em,planos_produtor(nome,limite_animais,preco_mensal)')
       if (assignments.error) throw assignments.error
       const planByFarm = new Map((assignments.data ?? []).map((item) => [item.fazenda_id, item]))
       for (const producer of producers) for (const farm of producer.fazendas) farm.plano = planByFarm.get(farm.id) ?? null
+      const pendingResult = await admin.from('planos_pendentes_produtor').select('usuario_id,plano_id,validade_em,planos_produtor(nome,limite_animais,preco_mensal)')
+      if (pendingResult.error) throw pendingResult.error
+      const pendingByUser = new Map((pendingResult.data ?? []).map((item) => [item.usuario_id, item]))
+      for (const producer of producers) producer.plano_pendente = pendingByUser.get(producer.id) ?? null
       return json({ producers, plans: plansResult.data ?? [] })
     }
 
@@ -67,7 +71,7 @@ Deno.serve(async (request) => {
       if (!plan) return json({ error: 'Plano inválido.' }, 400)
       const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { nome } })
       if (error) throw error
-      const { error: assignmentError } = await admin.from('planos_pendentes_produtor').upsert({ usuario_id: data.user.id, plano_id: planoId, atualizado_em: new Date().toISOString() })
+      const { error: assignmentError } = await admin.from('planos_pendentes_produtor').upsert({ usuario_id: data.user.id, plano_id: planoId, validade_em: planoId === 'free_10' ? null : addDaysIso(30), atualizado_em: new Date().toISOString() })
       if (assignmentError) throw new Error(`A conta ${email} foi criada, mas o plano inicial não foi associado: ${assignmentError.message}`)
       return json({ id: data.user.id, email: data.user.email })
     }
@@ -75,17 +79,22 @@ Deno.serve(async (request) => {
     if (payload.action === 'set_plan') {
       const userId = String(payload.user_id ?? '')
       const planId = String(payload.plano_id ?? '')
+      const durationDays = planId === 'free_10' ? null : Number(payload.duracao_dias ?? 30)
       if (!userId || !planId) return json({ error: 'Selecione produtor e plano.' }, 400)
+      if (durationDays !== null && (!Number.isInteger(durationDays) || durationDays < 1 || durationDays > 3650)) {
+        return json({ error: 'A duração deve ser de 1 a 3.650 dias.' }, 400)
+      }
       const { data: plan, error: planError } = await admin.from('planos_produtor').select('id').eq('id', planId).eq('ativo', true).maybeSingle()
       if (planError) throw planError
       if (!plan) return json({ error: 'Plano inválido.' }, 400)
+      const validadeEm = durationDays === null ? null : addDaysIso(durationDays)
       const { data: farm, error: farmError } = await admin.from('fazendas').select('id').eq('proprietario_id', userId).eq('ativo', true).maybeSingle()
       if (farmError) throw farmError
       const result = farm
-        ? await admin.from('planos_fazenda').upsert({ fazenda_id: farm.id, plano_id: planId, status: 'ativo', atualizado_em: new Date().toISOString() })
-        : await admin.from('planos_pendentes_produtor').upsert({ usuario_id: userId, plano_id: planId, atualizado_em: new Date().toISOString() })
+        ? await admin.from('planos_fazenda').upsert({ fazenda_id: farm.id, plano_id: planId, validade_em: validadeEm, status: 'ativo', atualizado_em: new Date().toISOString() })
+        : await admin.from('planos_pendentes_produtor').upsert({ usuario_id: userId, plano_id: planId, validade_em: validadeEm, atualizado_em: new Date().toISOString() })
       if (result.error) throw result.error
-      return json({ success: true })
+      return json({ success: true, validade_em: validadeEm })
     }
 
     if (payload.action === 'set_plan_price') {
@@ -104,6 +113,12 @@ Deno.serve(async (request) => {
     return json({ error: message }, 400)
   }
 })
+
+function addDaysIso(days: number) {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+  return date.toISOString()
+}
 
 async function listUsers(admin: ReturnType<typeof createClient>) {
   const users = []

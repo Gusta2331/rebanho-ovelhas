@@ -23,6 +23,7 @@ class _PasswordRecoveryDialogState extends State<PasswordRecoveryDialog> {
   bool _busy = false;
   bool _hidePassword = true;
   String? _error;
+  String? _notice;
 
   @override
   void dispose() {
@@ -34,17 +35,23 @@ class _PasswordRecoveryDialogState extends State<PasswordRecoveryDialog> {
   }
 
   Future<void> _sendCode() async {
-    if (!_formKey.currentState!.validate()) return;
+    // Ao reenviar, valide apenas o e-mail já confirmado. Não exija
+    // código e senhas antes de permitir solicitar um novo código.
+    if (!_codeSent && !_formKey.currentState!.validate()) return;
     setState(() {
       _busy = true;
       _error = null;
+      _notice = null;
     });
     try {
       await _auth.solicitarRecuperacaoSenha(_email.text);
       if (!mounted) return;
       setState(() {
         _codeSent = true;
+        _code.clear();
         _busy = false;
+        _notice =
+            'Enviamos um novo código. Use o código do e-mail mais recente.';
       });
     } catch (error) {
       if (!mounted) return;
@@ -60,6 +67,7 @@ class _PasswordRecoveryDialogState extends State<PasswordRecoveryDialog> {
     setState(() {
       _busy = true;
       _error = null;
+      _notice = null;
     });
     try {
       await _auth.concluirRecuperacaoSenha(
@@ -179,6 +187,13 @@ class _PasswordRecoveryDialogState extends State<PasswordRecoveryDialog> {
                       onPressed: _busy ? null : _sendCode,
                       child: const Text('Reenviar código'),
                     ),
+                  ),
+                ],
+                if (_notice != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _notice!,
+                    style: TextStyle(color: AppTheme.primaryColor),
                   ),
                 ],
                 if (_error != null) ...[

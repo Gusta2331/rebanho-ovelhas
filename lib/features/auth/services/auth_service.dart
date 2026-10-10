@@ -5,6 +5,19 @@ import '../../../core/services/supabase_service.dart';
 class AuthService {
   SupabaseClient get _client => SupabaseService.client;
 
+  Future<AuthResponse> cadastrar({
+    required String nome,
+    required String email,
+    required String senha,
+  }) async {
+    return _client.auth.signUp(
+      email: email.trim(),
+      password: senha,
+      emailRedirectTo: 'ovigestao://login-callback/',
+      data: {'nome': nome.trim()},
+    );
+  }
+
   Future<void> login({required String email, required String password}) async {
     await _client.auth.signInWithPassword(
       email: email.trim(),
