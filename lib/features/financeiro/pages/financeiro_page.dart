@@ -208,9 +208,13 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                     isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'Mostrar financeiro de',
-                      prefixIcon: Icon(Icons.filter_alt_outlined),
                       border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 16,
+                      ),
                     ),
+                    iconSize: 20,
                     items: [
                       const DropdownMenuItem<String?>(
                         value: null,
