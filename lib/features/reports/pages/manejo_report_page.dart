@@ -336,6 +336,8 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
                         Expanded(
                           child: Text(
                             _typeName(type),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
@@ -344,6 +346,8 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
                         ),
                         Text(
                           _dateText(date),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
                             color: Theme.of(context)
