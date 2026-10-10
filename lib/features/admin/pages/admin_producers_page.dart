@@ -145,7 +145,7 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
       return 'Vencido há ${remaining.abs()} dia(s) • limite temporário de 10 animais';
     }
     if (remaining == 0) return 'Vence hoje';
-    return 'Restam ${remaining} dia(s) • vence em ${expiry.day.toString().padLeft(2, '0')}/${expiry.month.toString().padLeft(2, '0')}/${expiry.year}';
+    return 'Restam $remaining dia(s) • vence em ${expiry.day.toString().padLeft(2, '0')}/${expiry.month.toString().padLeft(2, '0')}/${expiry.year}';
   }
 
   @override
