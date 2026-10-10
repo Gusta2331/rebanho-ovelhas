@@ -12,6 +12,7 @@ import '../widgets/famacha_score_badge.dart';
 import 'manejo_form_page.dart';
 import 'manejo_operacao_page.dart';
 import 'manejo_details_page.dart';
+import 'manejo_operacao_details_page.dart';
 
 class ManejosPage extends StatefulWidget {
   const ManejosPage({super.key});
@@ -136,6 +137,29 @@ class _ManejosPageState extends State<ManejosPage> {
 
       return true;
     }).toList();
+  }
+
+  List<List<Map<String, dynamic>>> _agruparManejos(
+    List<Map<String, dynamic>> registros,
+  ) {
+    final grupos = <String, List<Map<String, dynamic>>>{};
+
+    for (final registro in registros) {
+      final operacaoId = registro['operacao_id']?.toString();
+      final chave = operacaoId == null || operacaoId.isEmpty
+          ? 'registro:${registro['id']}'
+          : 'operacao:$operacaoId';
+      grupos.putIfAbsent(chave, () => []).add(registro);
+    }
+
+    return grupos.values.toList();
+  }
+
+  String _tituloRegistro(Map<String, dynamic> registro) {
+    final manejo = Manejo.fromMap(registro);
+    return manejo.tipo == TipoManejo.outro && manejo.outroNome != null
+        ? manejo.outroNome!
+        : _tipo(manejo.tipo);
   }
 
   Future<void> _escolherPeriodo() async {
@@ -559,6 +583,7 @@ class _ManejosPageState extends State<ManejosPage> {
     }
 
     final manejos = _manejosFiltrados;
+    final gruposManejos = _agruparManejos(manejos);
 
     return Column(
       children: [
@@ -581,164 +606,215 @@ class _ManejosPageState extends State<ManejosPage> {
               : ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
-                  itemCount: manejos.length,
+                  itemCount: gruposManejos.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
-                    final registro = manejos[index];
+                    final grupo = gruposManejos[index];
+                    final registro = grupo.first;
                     final manejo = Manejo.fromMap(registro);
-                    return Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.10,
-                                ),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Icon(
-                                _icone(manejo.tipo),
-                                color: AppTheme.primaryColor,
-                              ),
+                    final operacaoId = registro['operacao_id']?.toString();
+                    final agrupado = operacaoId != null &&
+                        operacaoId.isNotEmpty &&
+                        grupo.length > 1;
+                    final animais = grupo
+                        .map((item) => item['animal_id']?.toString())
+                        .whereType<String>()
+                        .toSet();
+                    final tipos = <String>{
+                      for (final item in grupo) _tituloRegistro(item),
+                    };
+                    final titulo = agrupado
+                        ? 'Operação de manejo'
+                        : _tituloRegistro(registro);
+                    final subtitulo = agrupado
+                        ? tipos.join(' • ')
+                        : _animal(registro);
+
+                    Future<void> abrirDetalhes() async {
+                      if (!mounted) return;
+                      if (agrupado) {
+                        final resultado = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => ManejoOperacaoDetailsPage(
+                              registros: grupo,
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    manejo.tipo == TipoManejo.outro &&
-                                            manejo.outroNome != null
-                                        ? manejo.outroNome!
-                                        : _tipo(manejo.tipo),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
+                          ),
+                        );
+                        if (resultado == true && mounted) await _carregar();
+                      } else {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ManejoDetailsPage(
+                              manejoId: manejo.id,
+                            ),
+                          ),
+                        );
+                      }
+                    }
+
+                    return Card(
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: abrirDetalhes,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.10,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _animal(registro),
-                                    style: const TextStyle(
-                                      color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Icon(
+                                  agrupado
+                                      ? Icons.playlist_add_check_circle_outlined
+                                      : _icone(manejo.tipo),
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      titulo,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                  ),
-                                  if (manejo.tipo == TipoManejo.vacinacao &&
-                                      manejo.vacinaNome != null) ...[
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Vacina: ' + manejo.vacinaNome!,
+                                      subtitulo,
                                       style: const TextStyle(
                                         color: Colors.black54,
                                       ),
-                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (agrupado) ...[
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        '${grupo.length} registros • ${animais.length} animais',
+                                        style: const TextStyle(
+                                          color: Colors.black54,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ] else if (manejo.tipo == TipoManejo.vacinacao &&
+                                        manejo.vacinaNome != null) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Vacina: ' + manejo.vacinaNome!,
+                                        style: const TextStyle(
+                                          color: Colors.black54,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _data(registro['data']),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black45,
+                                      ),
                                     ),
                                   ],
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _data(registro['data']),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black45,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
-                            if (manejo.tipo == TipoManejo.famacha &&
-                                manejo.famachaEscore != null)
-                              FamachaScoreBadge(score: manejo.famachaEscore!),
-                            PopupMenuButton<String>(
-                              onSelected: (acao) async {
-                                if (acao == 'detalhes') {
-                                  if (!mounted) return;
-                                  await Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => ManejoDetailsPage(
-                                        manejoId: manejo.id,
-                                      ),
-                                    ),
-                                  );
-                                }
+                              if (!agrupado &&
+                                  manejo.tipo == TipoManejo.famacha &&
+                                  manejo.famachaEscore != null)
+                                FamachaScoreBadge(score: manejo.famachaEscore!),
+                              if (agrupado)
+                                const Icon(Icons.chevron_right)
+                              else
+                                PopupMenuButton<String>(
+                                  onSelected: (acao) async {
+                                    if (acao == 'detalhes') {
+                                      await abrirDetalhes();
+                                    }
 
-                                if (acao == 'editar') {
-                                  final resultado = await Navigator.of(context)
-                                      .push<bool>(
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              ManejoFormPage(manejo: manejo),
+                                    if (acao == 'editar') {
+                                      final resultado = await Navigator.of(context)
+                                          .push<bool>(
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  ManejoFormPage(manejo: manejo),
+                                            ),
+                                          );
+                                      if (resultado == true && mounted) {
+                                        await _carregar();
+                                      }
+                                    }
+
+                                    if (acao == 'excluir') {
+                                      final confirmar = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Excluir manejo?'),
+                                          content: const Text(
+                                            'Este registro será removido do histórico. Essa ação não pode ser desfeita.',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context, false),
+                                              child: const Text('Cancelar'),
+                                            ),
+                                            FilledButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context, true),
+                                              child: const Text('Excluir'),
+                                            ),
+                                          ],
                                         ),
                                       );
-                                  if (resultado == true && mounted)
-                                    await _carregar();
-                                }
 
-                                if (acao == 'excluir') {
-                                  final confirmar = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: const Text('Excluir manejo?'),
-                                      content: const Text(
-                                        'Este registro será removido do histórico. Essa ação não pode ser desfeita.',
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: const Text('Cancelar'),
-                                        ),
-                                        FilledButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          child: const Text('Excluir'),
-                                        ),
-                                      ],
+                                      if (confirmar != true || !mounted) return;
+
+                                      try {
+                                        await _service.excluirManejo(manejo.id);
+                                        if (!mounted) return;
+                                        _mensagem('Manejo excluído.');
+                                        await _carregar();
+                                      } catch (e) {
+                                        if (!mounted) return;
+                                        _mensagem(
+                                          e.toString().replaceFirst(
+                                            'Exception: ',
+                                            '',
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  itemBuilder: (_) => const [
+                                    PopupMenuItem(
+                                      value: 'detalhes',
+                                      child: Text('Ver detalhes'),
                                     ),
-                                  );
-
-                                  if (confirmar != true || !mounted) return;
-
-                                  try {
-                                    await _service.excluirManejo(manejo.id);
-                                    if (!mounted) return;
-                                    _mensagem('Manejo excluído.');
-                                    await _carregar();
-                                  } catch (e) {
-                                    if (!mounted) return;
-                                    _mensagem(
-                                      e.toString().replaceFirst(
-                                        'Exception: ',
-                                        '',
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                              itemBuilder: (_) => const [
-                                PopupMenuItem(
-                                  value: 'detalhes',
-                                  child: Text('Ver detalhes'),
+                                    PopupMenuItem(
+                                      value: 'editar',
+                                      child: Text('Editar'),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'excluir',
+                                      child: Text('Excluir'),
+                                    ),
+                                  ],
                                 ),
-                                PopupMenuItem(
-                                  value: 'editar',
-                                  child: Text('Editar'),
-                                ),
-                                PopupMenuItem(
-                                  value: 'excluir',
-                                  child: Text('Excluir'),
-                                ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     );
                   },
-                ),
+                )
         ),
       ],
     );
