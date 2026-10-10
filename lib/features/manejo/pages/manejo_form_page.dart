@@ -1410,6 +1410,60 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     );
   }
 
+  Widget _cabecalhoEtapa(
+    int numero,
+    String titulo,
+    String descricao,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              numero.toString(),
+              style: const TextStyle(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  descricao,
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1463,7 +1517,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                         ),
                         children: [
                           _intro(),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 22),
+                          _cabecalhoEtapa(
+                            1,
+                            'Tipo de manejo',
+                            'Escolha o procedimento que será registrado.',
+                          ),
                           DropdownButtonFormField<TipoManejo>(
                             value: _tipo,
                             decoration: const InputDecoration(
@@ -1523,7 +1582,14 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                     }
                                   },
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 22),
+                          _cabecalhoEtapa(
+                            2,
+                            _editando ? 'Animal do registro' : 'Selecionar animais',
+                            _editando
+                                ? 'Confira o animal vinculado a este registro.'
+                                : 'Busque por nome, brinco/ID ou raça. Você pode selecionar mais de um animal.',
+                          ),
                           if (_editando)
                             _animalEdicao()
                           else
@@ -1557,6 +1623,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                               onSelecionarTodos: _selecionarTodos,
                               onLimpar: _limparSelecao,
                             ),
+                          const SizedBox(height: 22),
+                          _cabecalhoEtapa(
+                            3,
+                            'Dados do procedimento',
+                            'Preencha as informações específicas do manejo escolhido.',
+                          ),
                           if (_tipo == TipoManejo.vacinacao) ...[
                             const SizedBox(height: 16),
                             _farmaciaProdutoField(),
@@ -1662,7 +1734,12 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                             else
                               _avaliacaoLote(),
                           ],
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 22),
+                          _cabecalhoEtapa(
+                            4,
+                            'Data e observações',
+                            'Finalize o registro com a data e alguma informação adicional, se necessário.',
+                          ),
                           InkWell(
                             onTap: _salvando ? null : _escolherData,
                             child: InputDecorator(
@@ -1754,7 +1831,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                 Text(
                   _editando
                       ? 'Edite o registro deste animal sem alterar seu histórico.'
-                      : 'Selecione um rebanho e registre o mesmo manejo para vários animais de uma vez.',
+                      : 'Localize os animais por nome, brinco ou raça e registre o procedimento com os dados organizados em etapas.',
                   style: const TextStyle(height: 1.4),
                 ),
                 if (_tipo == TipoManejo.famacha) ...[
