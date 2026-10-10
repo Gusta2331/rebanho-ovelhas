@@ -43,6 +43,7 @@ Deno.serve(async (request) => {
         id: producer.id,
         email: producer.email,
         nome: producer.user_metadata?.nome ?? '',
+        plano_pendente: null,
         fazendas: farms.filter((farm) => farm.proprietario_id === producer.id).map((farm) => ({
           ...farm,
           animais_ativos: stats.get(farm.id) ?? 0,
