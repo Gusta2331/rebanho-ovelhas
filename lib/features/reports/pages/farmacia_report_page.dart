@@ -202,15 +202,14 @@ class _FarmaciaReportPageState extends State<FarmaciaReportPage> {
           onPressed: widget.onBack,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: const Row(
-          mainAxisSize: MainAxisSize.min,
+        title: Row(
           children: [
             AppAssetIcon(
               assetPath: 'assets/images/icon_farmacia.png',
               size: 26,
             ),
             SizedBox(width: 8),
-            Text('Relatório de farmácia'),
+            Expanded(child: Text('Relatório de farmácia', maxLines: 1, overflow: TextOverflow.ellipsis)),
           ],
         ),
         actions: [
@@ -289,7 +288,11 @@ class _FarmaciaReportPageState extends State<FarmaciaReportPage> {
                         },
                       ),
                       const SizedBox(height: 8),
-                      Row(
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           TextButton.icon(
                             onPressed: _items.isEmpty ? null : _selectAll,
@@ -302,7 +305,6 @@ class _FarmaciaReportPageState extends State<FarmaciaReportPage> {
                                 : _clearSelection,
                             child: const Text('Limpar'),
                           ),
-                          const Spacer(),
                           TextButton(
                             onPressed: _category == null &&
                                     _search.text.isEmpty &&
