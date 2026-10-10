@@ -13,6 +13,7 @@ class AuthService {
     return _client.auth.signUp(
       email: email.trim(),
       password: senha,
+      emailRedirectTo: 'ovigestao://login-callback/',
       data: {'nome': nome.trim()},
     );
   }
