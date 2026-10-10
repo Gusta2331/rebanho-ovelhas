@@ -21,7 +21,7 @@ class ManejoOperacaoDetailsPage extends StatefulWidget {
 
 class _ManejoOperacaoDetailsPageState extends State<ManejoOperacaoDetailsPage> {
   final ManejoService _service = ManejoService();
-  late List<Map<String, dynamic>> _registros;
+  late final List<Map<String, dynamic>> _registros;
 
   @override
   void initState() {
