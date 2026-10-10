@@ -56,15 +56,14 @@ class _ReportsPageState extends State<ReportsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
-          mainAxisSize: MainAxisSize.min,
+        title: Row(
           children: [
             AppAssetIcon(
               assetPath: 'assets/images/icon_relatorios.png',
               size: 26,
             ),
             SizedBox(width: 8),
-            Text('Relatórios'),
+            Expanded(child: Text('Relatórios', maxLines: 1, overflow: TextOverflow.ellipsis)),
           ],
         ),
         actions: const [
