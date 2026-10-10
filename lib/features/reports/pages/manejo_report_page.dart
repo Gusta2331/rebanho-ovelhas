@@ -104,9 +104,10 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back_rounded)),
-        title: const Row(mainAxisSize: MainAxisSize.min, children: [
+        title: Row(
+          children: [
           AppAssetIcon(assetPath: 'assets/images/icon_manejo.png', size: 26),
-          SizedBox(width: 8), Text('Relatório de manejo'),
+          SizedBox(width: 8), Expanded(child: Text('Relatório de manejo', maxLines: 1, overflow: TextOverflow.ellipsis)),
         ]),
         actions: [
           IconButton(
@@ -122,7 +123,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
-      ),
+        ),
       body: _loading ? const Center(child: CircularProgressIndicator()) :
         _error != null ? _errorView() :
         RefreshIndicator(onRefresh: _load, child: ListView(
