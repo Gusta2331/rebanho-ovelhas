@@ -445,7 +445,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
                               ),
                               title: Row(
                                 children: [
-                                  Expanded(child: Text(animal.nome?.trim().isNotEmpty == true ? animal.nome!.trim() : 'Brinco ' + animal.brinco, style: const TextStyle(fontWeight: FontWeight.w700))),
+                                  Expanded(child: Text(animal.nome?.trim().isNotEmpty == true ? animal.nome!.trim() : 'Brinco ' + animal.brinco, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700))),
                                   Text(animal.brinco, style: TextStyle(color: Colors.grey.shade700, fontSize: 12)),
                                 ],
                               ),
