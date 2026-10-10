@@ -583,7 +583,17 @@ class _ManejosPageState extends State<ManejosPage> {
     }
 
     final manejos = _manejosFiltrados;
-    final gruposManejos = _agruparManejos(manejos);
+    final idsFiltrados = manejos
+        .map((registro) => registro['id']?.toString())
+        .whereType<String>()
+        .toSet();
+    final gruposManejos = _agruparManejos(_manejos)
+        .where(
+          (grupo) => grupo.any(
+            (registro) => idsFiltrados.contains(registro['id']?.toString()),
+          ),
+        )
+        .toList();
 
     return Column(
       children: [
