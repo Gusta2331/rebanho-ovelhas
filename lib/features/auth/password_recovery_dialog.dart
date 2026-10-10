@@ -34,7 +34,9 @@ class _PasswordRecoveryDialogState extends State<PasswordRecoveryDialog> {
   }
 
   Future<void> _sendCode() async {
-    if (!_formKey.currentState!.validate()) return;
+    // Ao reenviar, valide apenas o e-mail já confirmado. Não exija
+    // código e senhas antes de permitir solicitar um novo código.
+    if (!_codeSent && !_formKey.currentState!.validate()) return;
     setState(() {
       _busy = true;
       _error = null;
