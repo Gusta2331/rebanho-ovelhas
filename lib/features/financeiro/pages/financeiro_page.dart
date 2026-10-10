@@ -154,12 +154,10 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
     );
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            AppAssetIcon(assetPath: 'assets/images/icon_financeiro.png', size: 26),
-            SizedBox(width: 8),
-            Expanded(child: Text('Despesas e lucro', maxLines: 1, overflow: TextOverflow.ellipsis)),
-          ],
+        title: const Text(
+          'Despesas e lucro',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         actions: [
           const ContextualHelpButton(
@@ -249,12 +247,15 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                   const SizedBox(height: 14),
                   LayoutBuilder(
                     builder: (context, constraints) {
+                      final colunas = constraints.maxWidth < 380 ? 1 : 2;
+                      final larguraCard =
+                          (constraints.maxWidth - (8 * (colunas - 1))) / colunas;
                       return Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: [
                           SizedBox(
-                            width: (constraints.maxWidth - 16) / 3,
+                            width: larguraCard,
                             child: _ResumoCard(
                               titulo: 'Receitas',
                               valor: _moeda(_resumo['receitas']!),
@@ -262,7 +263,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                             ),
                           ),
                           SizedBox(
-                            width: (constraints.maxWidth - 16) / 3,
+                            width: larguraCard,
                             child: _ResumoCard(
                               titulo: 'Despesas',
                               valor: _moeda(_resumo['despesas']!),
@@ -270,7 +271,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                             ),
                           ),
                           SizedBox(
-                            width: (constraints.maxWidth - 16) / 3,
+                            width: larguraCard,
                             child: _ResumoCard(
                               titulo: 'Saldo',
                               valor: _moeda(_resumo['saldo']!),
