@@ -180,7 +180,11 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
     onPressed: tap, icon: const Icon(Icons.calendar_today_outlined, size: 18),
     label: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, style: const TextStyle(fontSize: 11)),
-      Text(date == null ? 'Selecionar' : _dateText(date)),
+      Text(
+        date == null ? 'Selecionar' : _dateText(date),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
     ]),
     style: OutlinedButton.styleFrom(alignment: Alignment.centerLeft, padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9)),
   );
