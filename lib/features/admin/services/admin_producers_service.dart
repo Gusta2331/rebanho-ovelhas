@@ -21,11 +21,13 @@ class AdminProducersService {
   Future<void> alterarPlano({
     required String usuarioId,
     required String planoId,
+    int? duracaoDias,
   }) async {
     await _invoke({
       'action': 'set_plan',
       'user_id': usuarioId,
       'plano_id': planoId,
+      if (duracaoDias != null) 'duracao_dias': duracaoDias,
     });
   }
 
