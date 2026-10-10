@@ -365,7 +365,7 @@ class _ManejoAnimalSelectorState extends State<ManejoAnimalSelector> {
                                             _tag(nomeRaca, Icons.bookmark_outline, theme),
                                           if (nomeSexo.isNotEmpty)
                                             _tag(nomeSexo, _iconeSexo(animal), theme),
-                                          _tag('ID: ${id.length > 8 ? id.substring(0, 8) : id}', Icons.tag_rounded, theme),
+                                          _tag('Brinco: ${_brinco(animal).isEmpty ? 'Sem brinco' : _brinco(animal)}', Icons.tag_rounded, theme),
                                         ],
                                       ),
                                     ],
