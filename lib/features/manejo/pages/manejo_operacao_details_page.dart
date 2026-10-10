@@ -122,7 +122,7 @@ class _ManejoOperacaoDetailsPageState extends State<ManejoOperacaoDetailsPage> {
     }
     if (manejo.dose != null) {
       partes.add(
-        'Dose: ${manejo.dose!.toStringAsFixed(2)} ${manejo.doseUnidade ?? ''}'
+        ('Dose: ${manejo.dose!.toStringAsFixed(2)} ${manejo.doseUnidade ?? ''}')
             .trim(),
       );
     }
@@ -167,17 +167,7 @@ class _ManejoOperacaoDetailsPageState extends State<ManejoOperacaoDetailsPage> {
     try {
       await _service.excluirManejo(manejo.id);
       if (!mounted) return;
-      setState(() {
-        _registros.removeWhere(
-          (item) => item['id']?.toString() == manejo.id,
-        );
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Procedimento excluído.')),
-      );
-      if (_registros.isEmpty && mounted) {
-        Navigator.of(context).pop(true);
-      }
+      Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
