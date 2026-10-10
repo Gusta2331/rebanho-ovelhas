@@ -207,6 +207,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                 children: [
                   DropdownButtonFormField<String?>(
                     value: _filtroLoteId,
+                    isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'Mostrar financeiro de',
                       prefixIcon: Icon(Icons.filter_alt_outlined),
@@ -220,7 +221,11 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                       ..._lotes.map(
                         (lote) => DropdownMenuItem<String?>(
                           value: lote['id'].toString(),
-                          child: Text(lote['nome']?.toString() ?? 'Lote'),
+                          child: Text(
+                            lote['nome']?.toString() ?? 'Lote',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
                     ],
@@ -233,7 +238,9 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                   Text(
                     _filtroLoteId == null
                         ? 'Visão geral: todos os lotes e lançamentos da fazenda'
-                        : 'Lote: ${loteSelecionado?['nome'] ?? 'selecionado'}',
+                         : 'Lote: ${loteSelecionado?['nome'] ?? 'selecionado'}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -468,6 +475,7 @@ class _LancamentoDialogState extends State<_LancamentoDialog> {
           ),
           DropdownButtonFormField<String?>(
             value: loteId,
+            isExpanded: true,
             decoration: const InputDecoration(labelText: 'Vincular a lote'),
             items: [
               const DropdownMenuItem<String?>(
@@ -477,7 +485,11 @@ class _LancamentoDialogState extends State<_LancamentoDialog> {
               ...widget.lotes.map(
                 (lote) => DropdownMenuItem<String?>(
                   value: lote['id'].toString(),
-                  child: Text(lote['nome']?.toString() ?? 'Lote'),
+                  child: Text(
+                    lote['nome']?.toString() ?? 'Lote',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ],
