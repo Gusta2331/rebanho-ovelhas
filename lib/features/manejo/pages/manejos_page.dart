@@ -814,7 +814,7 @@ class _ManejosPageState extends State<ManejosPage> {
                       ),
                     );
                   },
-                )
+                ),
         ),
       ],
     );
