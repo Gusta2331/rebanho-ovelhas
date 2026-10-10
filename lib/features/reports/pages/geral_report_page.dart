@@ -481,12 +481,11 @@ class _GeralReportPageState extends State<GeralReportPage> {
           onPressed: widget.onBack,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: const Row(
-          mainAxisSize: MainAxisSize.min,
+        title: Row(
           children: [
             AppAssetIcon(assetPath: 'assets/images/icon_relatorios.png', size: 26),
             SizedBox(width: 8),
-            Text('Relatório geral'),
+            Expanded(child: Text('Relatório geral', maxLines: 1, overflow: TextOverflow.ellipsis)),
           ],
         ),
         actions: [
