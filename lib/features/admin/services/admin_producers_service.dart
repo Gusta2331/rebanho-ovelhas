@@ -27,7 +27,7 @@ class AdminProducersService {
       'action': 'set_plan',
       'user_id': usuarioId,
       'plano_id': planoId,
-      if (duracaoDias != null) 'duracao_dias': duracaoDias,
+      'duracao_dias': ?duracaoDias,
     });
   }
 
