@@ -107,9 +107,10 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back_rounded)),
-        title: const Row(mainAxisSize: MainAxisSize.min, children: [
+        title: Row(
+          children: [
           AppAssetIcon(assetPath: 'assets/images/icon_financeiro.png', size: 26),
-          SizedBox(width: 8), Text('Relatório financeiro'),
+          SizedBox(width: 8), Expanded(child: Text('Relatório financeiro', maxLines: 1, overflow: TextOverflow.ellipsis)),
         ]),
         actions: [
           IconButton(
@@ -120,7 +121,7 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
           ),
           IconButton(onPressed: _loading ? null : _load, icon: const Icon(Icons.refresh_rounded)),
         ],
-      ),
+        ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -155,7 +156,12 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
                         ],
                         onChanged: (value) { setState(() => _type = value); _filter(); },
                       ),
-                      Row(children: [
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
                         TextButton.icon(
                           onPressed: _items.isEmpty ? null : _selectAll,
                           icon: const Icon(Icons.select_all_rounded),
@@ -165,7 +171,6 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
                           onPressed: _selectedIds.isEmpty ? null : _clearSelection,
                           child: const Text('Limpar'),
                         ),
-                        const Spacer(),
                         TextButton(
                           onPressed: _type == null && _search.text.isEmpty ? null : _clearFilters,
                           child: const Text('Filtros'),
