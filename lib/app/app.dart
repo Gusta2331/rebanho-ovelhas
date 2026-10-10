@@ -63,13 +63,6 @@ class _FazendaBaixinhaAppState extends State<FazendaBaixinhaApp> {
       final response =
           await Supabase.instance.client.auth.getSessionFromUrl(uri);
 
-      if (response.session == null) {
-        debugPrint(
-          'OVIGESTÃO: o link foi aberto, mas não retornou uma sessão.',
-        );
-        return;
-      }
-
       _navigatorKey.currentState?.pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const FarmCheckPage()),
         (route) => false,
