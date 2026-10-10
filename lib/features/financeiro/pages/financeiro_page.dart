@@ -214,7 +214,11 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                     items: [
                       const DropdownMenuItem<String?>(
                         value: null,
-                        child: Text('Toda a fazenda'),
+                        child: Text(
+                          'Toda a fazenda',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       ..._lotes.map(
                         (lote) => DropdownMenuItem<String?>(
@@ -227,6 +231,27 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                         ),
                       ),
                     ],
+                    selectedItemBuilder: (context) => [
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Toda a fazenda',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      ..._lotes.map(
+                        (lote) => Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            lote['nome']?.toString() ?? 'Lote',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                    menuMaxHeight: 320,
                     onChanged: (value) {
                       setState(() => _filtroLoteId = value);
                       _carregar();
