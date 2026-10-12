@@ -20,7 +20,7 @@ Deno.serve(async (request) => {
       return json({ error: 'A verificação de pagamentos ainda não está configurada no servidor.' }, 500)
     }
 
-    const accessToken = request.headers.get('Authorization')?.match(/^Bearer\\s+(.+)$/i)?.[1]
+    const accessToken = request.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1]
     if (!accessToken) return json({ error: 'Faça login para verificar o pagamento.' }, 401)
 
     const authClient = createClient(supabaseUrl, anonKey, {
