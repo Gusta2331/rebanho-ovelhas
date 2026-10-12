@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/widgets/app_snackbar.dart';
 
+import '../../core/widgets/app_snackbar.dart';
 import '../farm/pages/farm_check_page.dart';
 import 'services/auth_service.dart';
 
