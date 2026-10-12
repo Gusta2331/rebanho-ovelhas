@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
@@ -51,8 +52,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
         _carregando = false;
       });
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(_mensagemErro(error))));
+      showAppSnackBar(context, SnackBar(content: Text(_mensagemErro(error))));
     }
   }
 
@@ -71,7 +71,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(content: Text('Lote "${rebanho.nome}" criado com sucesso.')),
     );
   }
@@ -93,7 +93,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       const SnackBar(content: Text('Lote atualizado com sucesso.')),
     );
   }
@@ -145,8 +145,7 @@ class _RebanhosPageState extends State<RebanhosPage> {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(_mensagemErro(error))));
+      showAppSnackBar(context, SnackBar(content: Text(_mensagemErro(error))));
     }
   }
 
