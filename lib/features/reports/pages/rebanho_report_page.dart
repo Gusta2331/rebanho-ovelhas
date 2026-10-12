@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
@@ -238,7 +239,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(
             (format == 'pdf' ? 'PDF' : 'Excel') +
@@ -250,7 +251,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(
             'Não foi possível gerar o relatório: ' +
