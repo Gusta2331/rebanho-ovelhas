@@ -600,6 +600,92 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     }
   }
 
+  Future<void> _mostrarErroAoSalvarAnimal(Object error) async {
+    final texto = error is PostgrestException
+        ? error.message
+        : error.toString().replaceFirst('Exception: ', '');
+    final textoNormalizado = texto.toLowerCase();
+
+    String? titulo;
+    String? mensagem;
+
+    if (textoNormalizado.contains('expir')) {
+      titulo = 'Plano expirado';
+      mensagem =
+          'O plano da fazenda expirou. Os animais já cadastrados continuam '
+          'salvos e acessíveis. Entre em contato com o administrador para '
+          'regularizar o plano e voltar a cadastrar animais.';
+    } else if (textoNormalizado.contains('suspens')) {
+      titulo = 'Plano suspenso';
+      mensagem =
+          'O plano desta fazenda está suspenso. Os animais já cadastrados '
+          'continuam salvos e acessíveis. Entre em contato com o administrador '
+          'para verificar a situação.';
+    } else if (textoNormalizado.contains('não possui um plano válido') ||
+        textoNormalizado.contains('nao possui um plano valido')) {
+      titulo = 'Plano não disponível';
+      mensagem =
+          'Esta fazenda não possui um plano válido. Os animais já cadastrados '
+          'continuam salvos e acessíveis. Entre em contato com o administrador '
+          'para atribuir ou regularizar um plano.';
+    } else {
+      final limiteMatch = RegExp(
+        r'permite até\s+(\d+)\s+animais',
+        caseSensitive: false,
+      ).firstMatch(texto);
+      final pareceLimite = limiteMatch != null ||
+          textoNormalizado.contains('limite de animais') ||
+          textoNormalizado.contains('limite do plano');
+
+      if (pareceLimite) {
+        final limite = limiteMatch?.group(1);
+        titulo = 'Limite de animais atingido';
+        mensagem = limite == null
+            ? 'Seu plano atual não permite cadastrar mais animais ativos. '
+                'Os animais já cadastrados continuam salvos e acessíveis. '
+                'Para cadastrar mais, solicite ao administrador a alteração '
+                'do seu plano.'
+            : 'Seu plano atual permite até $limite animais ativos. Você '
+                'atingiu esse limite. Os animais já cadastrados continuam '
+                'salvos e acessíveis. Para cadastrar mais, solicite ao '
+                'administrador a alteração do seu plano.';
+      }
+    }
+
+    if (!mounted) return;
+
+    if (titulo != null && mensagem != null) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          icon: Icon(
+            Icons.info_outline_rounded,
+            color: AppTheme.primaryColor,
+            size: 34,
+          ),
+          title: Text(titulo!),
+          content: Text(mensagem!),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Entendi'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          texto.isEmpty ? 'Não foi possível salvar o animal.' : texto,
+        ),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
   Future<void> _salvarAnimal() async {
     if (_salvando) {
       return;
@@ -785,27 +871,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       // no Supabase.
       Navigator.of(context).pop(animalSalvo);
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      String mensagem = 'Não foi possível salvar o animal.';
-
-      if (error is PostgrestException) {
-        mensagem = error.message;
-      } else if (error is Exception) {
-        final texto = error.toString();
-
-        if (texto.startsWith('Exception: ')) {
-          mensagem = texto.substring(11);
-        } else {
-          mensagem = texto;
-        }
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mensagem), duration: const Duration(seconds: 4)),
-      );
+      await _mostrarErroAoSalvarAnimal(error);
     } finally {
       if (mounted) {
         setState(() {
