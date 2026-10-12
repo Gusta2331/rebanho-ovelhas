@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/contextual_help.dart';
 import '../services/farm_service.dart';
@@ -59,7 +60,7 @@ class _FarmSetupPageState extends State<FarmSetupPage> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         const SnackBar(content: Text('Fazenda cadastrada com sucesso!')),
       );
 
@@ -69,7 +70,7 @@ class _FarmSetupPageState extends State<FarmSetupPage> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(content: Text('Não foi possível cadastrar a fazenda: $e')),
       );
     } finally {
