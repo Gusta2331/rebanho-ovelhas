@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
 
@@ -283,7 +284,7 @@ class _FarmaciaPageState extends State<FarmaciaPage> {
 
   void _mensagem(String texto) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texto)));
+    showAppSnackBar(context, SnackBar(content: Text(texto)));
   }
 
   String _quantidade(Map<String, dynamic> p) {
@@ -955,7 +956,7 @@ class _ProdutoDialogState extends State<_ProdutoDialog> {
                 (v != null && v <= 0) ||
                 unidadeControle.isEmpty ||
                 unidadeEmbalagemFinal.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              showAppSnackBar(context, 
                 const SnackBar(
                   content: Text('Confira os campos obrigatórios antes de cadastrar.'),
                 ),
@@ -1068,7 +1069,7 @@ class _CorrecaoEstoqueDialogState extends State<_CorrecaoEstoqueDialog> {
           onPressed: () {
             final valor = double.tryParse(estoque.text.replaceAll(',', '.'));
             if (valor == null || valor < 0) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              showAppSnackBar(context, 
                 const SnackBar(content: Text('Informe um saldo válido.')),
               );
               return;
