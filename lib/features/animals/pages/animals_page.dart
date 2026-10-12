@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../flock/services/rebanho_selection_service.dart';
 import '../models/animal.dart';
 import '../services/animal_service.dart';
