@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
 
@@ -66,7 +67,7 @@ class _AnimalTransferHistoryPageState extends State<AnimalTransferHistoryPage> {
   }
 
   void _mostrarErro(Object erro) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(
         content: Text('Não foi possível carregar o histórico.\n$erro'),
         duration: const Duration(seconds: 5),
