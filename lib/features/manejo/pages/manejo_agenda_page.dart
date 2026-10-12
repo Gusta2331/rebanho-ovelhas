@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../core/widgets/app_snackbar.dart';
 
-import '../../../core/widgets/app_asset_icon.dart';
-
-import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
-import '../../flock/services/rebanho_service.dart';
 import '../../flock/services/rebanho_selection_service.dart';
+import '../../flock/services/rebanho_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_programado_service.dart';
 import '../services/manejo_service.dart';
