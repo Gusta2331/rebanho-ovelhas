@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../animals/models/animal.dart';
 import '../../animals/services/animal_service.dart';
-import '../../reproduction/models/reproducao.dart';
 import '../../reproduction/models/reproducao_nascimento.dart';
+import '../../reproduction/models/reproducao.dart';
 import '../../reproduction/services/reproducao_service.dart';
 import '../models/reproduction_report_data.dart';
 import '../services/reproduction_report_excel_service.dart';
