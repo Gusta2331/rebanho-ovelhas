@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
 
@@ -297,9 +298,7 @@ class _ReproductionFormPageState extends State<ReproductionFormPage> {
   }
 
   void _mostrarMensagem(String mensagem, {bool erro = false}) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
+    showAppSnackBar(context, 
         SnackBar(
           content: Text(mensagem),
           backgroundColor: erro ? Colors.red : null,
