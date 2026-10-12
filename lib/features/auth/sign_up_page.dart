@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/widgets/app_snackbar.dart';
 
 import '../farm/pages/farm_check_page.dart';
 import 'services/auth_service.dart';
@@ -53,7 +54,7 @@ class _SignUpPageState extends State<SignUpPage> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         const SnackBar(
           content: Text(
             'Conta criada! Confira seu e-mail para confirmar o cadastro e depois entre no aplicativo.',
@@ -64,13 +65,13 @@ class _SignUpPageState extends State<SignUpPage> {
       Navigator.of(context).pop();
     } on AuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(content: Text(_mensagemErro(e)),
           duration: const Duration(seconds: 6)),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text('Não foi possível criar a conta: $e'),
           duration: const Duration(seconds: 6),
