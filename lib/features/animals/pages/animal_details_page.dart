@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/contextual_help.dart';
@@ -510,8 +511,7 @@ case TipoManejo.outro:
       return;
     }
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(mensagem)));
+    showAppSnackBar(context, SnackBar(content: Text(mensagem)));
   }
 
   Future<void> _alterarStatus() async {
