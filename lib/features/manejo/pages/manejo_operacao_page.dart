@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../core/widgets/app_snackbar.dart';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -453,7 +454,7 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
 
   void _mensagem(String texto) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(content: Text(texto.replaceFirst('Exception: ', ''))),
     );
   }
@@ -1091,7 +1092,7 @@ class _ManejoOperacaoAnimaisPageState
 
   void _mensagem(String texto) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(content: Text(texto.replaceFirst('Exception: ', ''))),
     );
   }
