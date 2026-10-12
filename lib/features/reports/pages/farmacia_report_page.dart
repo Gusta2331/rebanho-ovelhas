@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/services/supabase_service.dart';
 import '../../../core/widgets/app_asset_icon.dart';
@@ -523,7 +524,7 @@ class _FarmaciaReportPageState extends State<FarmaciaReportPage> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        showAppSnackBar(context, 
           SnackBar(
             content: Text(
               (format == 'pdf' ? 'PDF' : 'Excel') +
@@ -536,7 +537,7 @@ class _FarmaciaReportPageState extends State<FarmaciaReportPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        showAppSnackBar(context, 
           SnackBar(
             content: Text(
               'Não foi possível gerar o relatório: ' +
