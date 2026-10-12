@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/services/supabase_service.dart';
 import '../../../core/widgets/app_asset_icon.dart';
@@ -277,11 +278,11 @@ class _FinanceiroReportPageState extends State<FinanceiroReportPage> {
         title: 'Relatório financeiro',
         subject: 'Relatório financeiro - Fazenda Baixinha',
       ));
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) showAppSnackBar(context, 
         SnackBar(content: Text((format == 'pdf' ? 'PDF' : 'Excel') + ' gerado com ' + _selectedItems.length.toString() + ' lançamento(s).')),
       );
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) showAppSnackBar(context, 
         SnackBar(content: Text('Não foi possível gerar o relatório: ' + e.toString().replaceFirst('Exception: ', ''))),
       );
     } finally {
