@@ -1,30 +1,30 @@
 import 'package:flutter/material.dart';
-import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/contextual_help.dart';
 import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/contextual_help.dart';
+import '../../flock/pages/animal_transfer_history_page.dart';
+import '../../flock/pages/animal_transfer_page.dart';
+import '../../flock/services/rebanho_selection_service.dart';
+import '../../flock/services/rebanho_service.dart';
 import '../../manejo/models/manejo.dart';
 import '../../manejo/services/manejo_service.dart';
 import '../../manejo/widgets/famacha_score_badge.dart';
 import '../../reproduction/pages/reproduction_form_page.dart';
-import '../../flock/pages/animal_transfer_page.dart';
-import '../../flock/pages/animal_transfer_history_page.dart';
-import '../../flock/services/rebanho_selection_service.dart';
-import '../../flock/services/rebanho_service.dart';
+import '../models/animal_venda.dart';
 import '../models/animal.dart';
 import '../models/composicao_racial.dart';
-import '../services/composicao_racial_service.dart';
 import '../services/animal_service.dart';
-import '../models/animal_venda.dart';
 import '../services/animal_venda_service.dart';
-import 'animal_sale_page.dart';
-import '../widgets/animal_photo.dart';
+import '../services/composicao_racial_service.dart';
+import '../widgets/animal_breed_composition_card.dart';
 import '../widgets/animal_descendants.dart';
 import '../widgets/animal_family_tree.dart';
-import '../widgets/animal_breed_composition_card.dart';
+import '../widgets/animal_photo.dart';
 import '../widgets/animal_weight_chart.dart';
 import 'animal_form_page.dart';
+import 'animal_sale_page.dart';
 
 class AnimalDetailsPage extends StatefulWidget {
   final Animal animal;
