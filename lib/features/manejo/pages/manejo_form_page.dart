@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
 
@@ -1176,7 +1177,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
 
   void _mensagem(String texto) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(content: Text(texto.replaceFirst('Exception: ', ''))),
     );
   }
