@@ -224,7 +224,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       if (!mounted) return;
 
       if (composicao.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        _mostrarSnackBarImediato(
           const SnackBar(
             content: Text(
               'Não foi possível calcular. Verifique se mãe e pai possuem raça definida.',
@@ -256,7 +256,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       setState(() {});
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      _mostrarSnackBarImediato(
         SnackBar(content: Text('Não foi possível calcular: $error')),
       );
     } finally {
@@ -264,8 +264,14 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     }
   }
 
+  void _mostrarSnackBarImediato(SnackBar snackBar) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(snackBar);
+  }
+
   void _mostrarAvisoPaisIncompletos() {
-    ScaffoldMessenger.of(context).showSnackBar(
+    _mostrarSnackBarImediato(
       const SnackBar(
         content: Text(
           'Para calcular automaticamente, defina a mãe e o pai do animal.',
@@ -332,7 +338,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       _brincoController.text = proximo.toString().padLeft(3, '0');
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    _mostrarSnackBarImediato(
       SnackBar(
         content: Text(
           'Brinco ${proximo.toString().padLeft(3, '0')} '
@@ -568,7 +574,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      _mostrarSnackBarImediato(
         const SnackBar(content: Text('Não foi possível editar a foto.')),
       );
     }
@@ -676,7 +682,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    _mostrarSnackBarImediato(
       SnackBar(
         content: Text(
           texto.isEmpty ? 'Não foi possível salvar o animal.' : texto,
@@ -707,14 +713,14 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
       );
 
       if (_dataAquisicao == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        _mostrarSnackBarImediato(
           const SnackBar(content: Text('Informe a data da compra.')),
         );
         return;
       }
 
       if (valor == null || valor <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        _mostrarSnackBarImediato(
           const SnackBar(
             content: Text('Informe um valor de compra maior que zero.'),
           ),
@@ -730,7 +736,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     final rebanhoSelecionado = _rebanhoSelectionService.rebanhoSelecionado;
 
     if (rebanhoSelecionado == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      _mostrarSnackBarImediato(
         const SnackBar(
           content: Text('Selecione um rebanho antes de cadastrar o animal.'),
         ),
@@ -756,7 +762,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
     final totalComposicao = _totalComposicaoManual();
     if (_usandoComposicaoManual && (totalComposicao - 100).abs() > 0.01) {
       setState(() => _salvando = false);
-      ScaffoldMessenger.of(context).showSnackBar(
+      _mostrarSnackBarImediato(
         SnackBar(
           content: Text(
             'A composição precisa totalizar 100%. '
@@ -855,7 +861,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      _mostrarSnackBarImediato(
         SnackBar(
           content: Text(
             pendenteOffline
