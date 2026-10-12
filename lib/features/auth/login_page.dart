@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/widgets/app_snackbar.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_snackbar.dart';
 import '../farm/pages/farm_check_page.dart';
 import 'password_recovery_dialog.dart';
-import 'sign_up_page.dart';
 import 'services/auth_service.dart';
+import 'sign_up_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
