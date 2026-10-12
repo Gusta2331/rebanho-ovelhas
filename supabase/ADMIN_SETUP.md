@@ -4,7 +4,15 @@ O painel administrativo cria usuários pelo Supabase Auth e associa uma faixa de
 
 ## Ativação
 
-1. Aplique as migrations `20260924010000_produtor_plans_admin.sql`, `20261010100000_cadastro_publico_plano_gratuito.sql`, `20261011100000_atualiza_planos_produtor.sql` e `20261012100000_validade_planos_produtor.sql`, nesta ordem e depois das migrations anteriores do projeto.
+### Cobranças Pix (fase inicial de testes)
+
+- Configure `MERCADOPAGO_ACCESS_TOKEN` nos secrets das Edge Functions do Supabase com o Access Token de teste do Mercado Pago. Nunca coloque esse token no Flutter nem no GitHub.
+- Aplique a migration `20261013100000_pagamentos_planos_mercado_pago.sql` depois das migrations anteriores.
+- Publique a função `create-plan-pix` com `supabase functions deploy create-plan-pix`.
+- Esta primeira fase cria a cobrança e devolve QR Code/código Pix. Ela ainda não ativa nem renova o plano automaticamente; isso só deve ser ligado depois que a verificação de notificações do Mercado Pago e a confirmação segura do pagamento forem implementadas e testadas.
+
+
+1. Aplique as migrations existentes do projeto na ordem dos nomes. A tabela de cobranças Pix é criada pela migration `20261013100000_pagamentos_planos_mercado_pago.sql`; confirme que as migrations anteriores já foram aplicadas antes de executar as pendentes.
 2. Publique a Edge Function `admin-producers`.
 3. Cadastre primeiro no OviGestão a conta que será administradora. Depois configure o segredo da função `ADMIN_EMAILS` com somente o e-mail `ovigestao.app@gmail.com`. Não coloque esse e-mail como uma regra no código do app. Para manter apenas um administrador, não adicione outros endereços.
 4. Atualize o aplicativo. A opção Administração aparece em Mais; o servidor valida o e-mail em cada solicitação.
