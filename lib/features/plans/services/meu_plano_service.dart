@@ -32,12 +32,13 @@ class MeuPlanoService {
         atribuicao = Map<String, dynamic>.from(resultado);
       }
 
-      final animais = await _client
+      final contagem = await _client
           .from('animais')
           .select('id')
           .eq('fazenda_id', fazenda['id'])
-          .eq('status', 'ativo');
-      animaisAtivos = (animais as List).length;
+          .eq('status', 'ativo')
+          .count(CountOption.exact);
+      animaisAtivos = contagem.count ?? 0;
     } else {
       final pendente = await _client
           .from('planos_pendentes_produtor')
