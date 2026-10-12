@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -132,7 +131,7 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
   }
 
   String _dataFormatada(DateTime data) =>
-      '${data.day.toString().padLeft(2, '0')}/'
+      '${data.day.toString().padLeft(2, "0")}/'
       '${data.month.toString().padLeft(2, '0')}/${data.year}';
 
   String _dinheiro(dynamic valor) {
@@ -156,7 +155,8 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
   int? _diasRestantes() {
     final validade = _data(_atribuicao?['validade_em']);
     if (validade == null) return null;
-    return math.max(0, (validade.difference(DateTime.now()).inSeconds / 86400).ceil());
+    final dias = (validade.difference(DateTime.now()).inSeconds / 86400).ceil();
+    return dias < 0 ? 0 : dias;
   }
 
   bool get _planoVencido {
@@ -270,7 +270,7 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
                 borderRadius: BorderRadius.circular(20),
                 child: LinearProgressIndicator(
                   minHeight: 8,
-                  value: (ativos / (limite as num)).clamp(0.0, 1.0),
+                  value: (ativos / (limite as num)).clamp(0.0, 1.0).toDouble(),
                   backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   color: vencido ? Colors.orange : AppTheme.primaryColor,
                 ),
