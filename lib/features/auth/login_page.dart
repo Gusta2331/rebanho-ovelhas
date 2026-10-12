@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/widgets/app_snackbar.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../farm/pages/farm_check_page.dart';
@@ -93,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
         _loading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(_getAuthErrorMessage(e)),
           duration: const Duration(seconds: 6),
@@ -108,7 +109,7 @@ class _LoginPageState extends State<LoginPage> {
         _loading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text('ERRO NÃO TRATADO: $e'),
           duration: const Duration(seconds: 6),
