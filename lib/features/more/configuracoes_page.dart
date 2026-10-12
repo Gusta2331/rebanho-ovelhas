@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
 
@@ -63,7 +64,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
       await _offlineSync.sincronizar();
       await _carregar();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(
             _pendentes == 0
@@ -95,7 +96,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
       builder: (_) => const ChangePasswordDialog(),
     );
     if (alterada == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         const SnackBar(content: Text('Senha alterada com sucesso.')),
       );
     }
@@ -344,7 +345,7 @@ class _FarmEditorState extends State<_FarmEditor> {
       if (mounted) Navigator.of(context).pop(farm);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(error.toString().replaceFirst('Exception: ', '')),
         ),
