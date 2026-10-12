@@ -89,6 +89,102 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
     }
   }
 
+  Future<void> _toggleProducerActive(Map<String, dynamic> producer) async {
+    final active = producer['ativo'] != false;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(active ? 'Desativar produtor?' : 'Reativar produtor?'),
+        content: Text(
+          active
+              ? 'O produtor perderá o acesso ao aplicativo. A fazenda, os animais e o histórico serão preservados.'
+              : 'O produtor poderá voltar a acessar o aplicativo com a conta existente.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(active ? 'Desativar' : 'Reativar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _service.definirAcesso(
+        usuarioId: producer['id'].toString(),
+        ativo: !active,
+      );
+      await _load();
+      _message(active ? 'Produtor desativado. Os dados foram preservados.' : 'Produtor reativado.');
+    } catch (error) {
+      _message(error.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _deleteProducer(Map<String, dynamic> producer) async {
+    final phraseController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Excluir produtor definitivamente?'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Esta ação é irreversível. Só será permitida se a conta não possuir fazenda associada. '
+                  'Contas com fazenda devem ser desativadas até que a remoção segura do histórico esteja disponível.',
+                ),
+                const SizedBox(height: 12),
+                Text('Conta: ${producer['email'] ?? ''}'),
+                const SizedBox(height: 12),
+                const Text('Digite EXCLUIR DEFINITIVAMENTE para confirmar:'),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: phraseController,
+                  autofocus: true,
+                  onChanged: (_) => setDialogState(() {}),
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'EXCLUIR DEFINITIVAMENTE',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: phraseController.text.trim() == 'EXCLUIR DEFINITIVAMENTE'
+                  ? () => Navigator.pop(dialogContext, true)
+                  : null,
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Excluir definitivamente'),
+            ),
+          ],
+        ),
+      ),
+    );
+    phraseController.dispose();
+    if (confirmed != true) return;
+    try {
+      await _service.excluirProdutor(usuarioId: producer['id'].toString());
+      await _load();
+      _message('Conta excluída definitivamente.');
+    } catch (error) {
+      _message(error.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
   Future<void> _setPrice(Map<String, dynamic> plan) async {
     final price = await showDialog<double>(
       context: context,
@@ -254,7 +350,12 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
                             ? producer['nome'].toString()
                             : producer['email'].toString(),
                       ),
-                      subtitle: Text(producer['email']?.toString() ?? ''),
+                      subtitle: Text(
+                        '${producer['email']?.toString() ?? ''} • ${producer['ativo'] == false ? 'DESATIVADO' : 'ATIVO'}',
+                        style: TextStyle(
+                          color: producer['ativo'] == false ? Colors.red : null,
+                        ),
+                      ),
                       children: [
                         if (farms.isEmpty)
                           ListTile(
@@ -275,12 +376,40 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
                             ),
                           ),
                         ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton.icon(
-                            onPressed: () => _changePlan(producer),
-                            icon: const Icon(Icons.tune),
-                            label: const Text('Alterar plano'),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                          child: Wrap(
+                            alignment: WrapAlignment.end,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () => _changePlan(producer),
+                                icon: const Icon(Icons.tune),
+                                label: const Text('Alterar plano'),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: () => _toggleProducerActive(producer),
+                                icon: Icon(
+                                  producer['ativo'] == false
+                                      ? Icons.lock_open
+                                      : Icons.block,
+                                ),
+                                label: Text(
+                                  producer['ativo'] == false
+                                      ? 'Reativar'
+                                      : 'Desativar',
+                                ),
+                              ),
+                              TextButton.icon(
+                                onPressed: () => _deleteProducer(producer),
+                                icon: const Icon(Icons.delete_forever, color: Colors.red),
+                                label: const Text(
+                                  'Excluir',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
