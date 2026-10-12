@@ -107,11 +107,11 @@ Deno.serve(async (request) => {
     const qrCodeBase64 = paymentMethod.qr_code_base64 ?? null
     const ticketUrl = paymentMethod.ticket_url ?? null
 
+    // Criar a cobrança/QR Code não é prova de pagamento. A aprovação só
+    // acontece na função verify-plan-payment após consulta autenticada ao provedor.
     const { error: updateError } = await admin.from('pagamentos_planos').update({
       provedor_order_id: String(order.id),
-      status: transaction?.status === 'processed' || transaction?.status === 'approved' || order.status === 'processed'
-        ? 'aprovado'
-        : 'pendente',
+      status: 'pendente',
       qr_code: qrCode,
       qr_code_base64: qrCodeBase64,
       ticket_url: ticketUrl,
@@ -128,9 +128,7 @@ Deno.serve(async (request) => {
       plano_id: plan.id,
       plano_nome: plan.nome,
       valor: amount,
-      status: transaction?.status === 'processed' || transaction?.status === 'approved' || order.status === 'processed'
-        ? 'aprovado'
-        : 'pendente',
+      status: 'pendente',
       qr_code: qrCode,
       qr_code_base64: qrCodeBase64,
       ticket_url: ticketUrl,
