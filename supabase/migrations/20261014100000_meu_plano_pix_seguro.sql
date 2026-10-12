@@ -42,6 +42,7 @@ as $$
 declare
   v_pagamento public.pagamentos_planos%rowtype;
   v_fazenda_id uuid;
+  v_validade_final timestamptz;
 begin
   select *
     into v_pagamento
@@ -70,20 +71,46 @@ begin
   limit 1;
 
   if v_fazenda_id is not null then
+    select validade_em
+      into v_validade_final
+    from public.planos_fazenda
+    where fazenda_id = v_fazenda_id
+      and plano_id = v_pagamento.plano_id
+      and validade_em > now();
+
+    if v_validade_final is not null then
+      v_validade_final := v_validade_final + interval '30 days';
+    else
+      v_validade_final := p_validade_em;
+    end if;
+
     insert into public.planos_fazenda
       (fazenda_id, plano_id, validade_em, status, atualizado_em)
     values
-      (v_fazenda_id, v_pagamento.plano_id, p_validade_em, 'ativo', now())
+      (v_fazenda_id, v_pagamento.plano_id, v_validade_final, 'ativo', now())
     on conflict (fazenda_id) do update
       set plano_id = excluded.plano_id,
           validade_em = excluded.validade_em,
           status = 'ativo',
           atualizado_em = now();
   else
+    select validade_em
+      into v_validade_final
+    from public.planos_pendentes_produtor
+    where usuario_id = v_pagamento.usuario_id
+      and plano_id = v_pagamento.plano_id
+      and validade_em > now();
+
+    if v_validade_final is not null then
+      v_validade_final := v_validade_final + interval '30 days';
+    else
+      v_validade_final := p_validade_em;
+    end if;
+
     insert into public.planos_pendentes_produtor
       (usuario_id, plano_id, validade_em, atualizado_em)
     values
-      (v_pagamento.usuario_id, v_pagamento.plano_id, p_validade_em, now())
+      (v_pagamento.usuario_id, v_pagamento.plano_id, v_validade_final, now())
     on conflict (usuario_id) do update
       set plano_id = excluded.plano_id,
           validade_em = excluded.validade_em,
