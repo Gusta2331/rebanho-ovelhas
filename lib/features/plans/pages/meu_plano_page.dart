@@ -28,8 +28,16 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
   List<Map<String, dynamic>> get _catalogo =>
       List<Map<String, dynamic>>.from(_dados['catalogo'] as List? ?? const []);
 
-  List<Map<String, dynamic>> get _pagamentos =>
-      List<Map<String, dynamic>>.from(_dados['pagamentos'] as List? ?? const []);
+  List<Map<String, dynamic>> get _pagamentos {
+    final limiteData = DateTime.now().subtract(const Duration(days: 30));
+    return List<Map<String, dynamic>>.from(
+      _dados['pagamentos'] as List? ?? const [],
+    ).where((pagamento) {
+      final criado = _data(pagamento['criado_em']);
+      // Oculta da tela cobranças antigas, sem apagar o histórico no banco.
+      return criado == null || !criado.isBefore(limiteData);
+    }).toList();
+  }
 
   Map<String, dynamic>? get _atribuicao =>
       _asMap(_dados['atribuicao']);
@@ -79,11 +87,7 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
       if (!mounted) return;
       await _carregar();
       if (!mounted) return;
-      _mensagem(
-        resultado['status']?.toString() == 'aprovado'
-            ? 'A cobrança foi criada. Atualize o status para confirmar a ativação.'
-            : 'Pix gerado. Após pagar, toque em “Verificar pagamento”.',
-      );
+      await _mostrarPixGerado(resultado);
     } catch (error) {
       if (mounted) {
         _mensagem(error.toString().replaceFirst('Exception: ', ''));
@@ -96,6 +100,103 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
         });
       }
     }
+  }
+
+  Future<void> _mostrarPixGerado(Map<String, dynamic> pagamento) async {
+    final qrBase64 = pagamento['qr_code_base64']?.toString();
+    final codigoPix = pagamento['qr_code']?.toString();
+    final ticketUrl = pagamento['ticket_url']?.toString() ?? '';
+    final pagamentoId = pagamento['pagamento_id']?.toString() ?? '';
+    final nomePlano = pagamento['plano_nome']?.toString() ?? 'Plano';
+    final valor = _dinheiro(pagamento['valor']);
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Pix pronto para pagar'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Plano: $nomePlano',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                valor,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              if (qrBase64 != null && qrBase64.isNotEmpty) ...[
+                const Text('Abra o aplicativo do seu banco e escaneie o QR Code.'),
+                const SizedBox(height: 10),
+                _imagemQr(qrBase64),
+              ],
+              if (codigoPix != null && codigoPix.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Ou use o Pix copia e cola:',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 5),
+                SelectableText(codigoPix),
+                const SizedBox(height: 6),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      await Clipboard.setData(ClipboardData(text: codigoPix));
+                      if (mounted) _mensagem('Código Pix copiado.');
+                    },
+                    icon: const Icon(Icons.copy),
+                    label: const Text('Copiar código Pix'),
+                  ),
+                ),
+              ],
+              if ((qrBase64 == null || qrBase64.isEmpty) &&
+                  (codigoPix == null || codigoPix.isEmpty))
+                const Text(
+                  'O Mercado Pago não retornou o QR Code. Você pode tentar abrir a cobrança pelo link abaixo.',
+                  textAlign: TextAlign.center,
+                ),
+              if (ticketUrl.startsWith('https://')) ...[
+                const SizedBox(height: 4),
+                TextButton.icon(
+                  onPressed: () async {
+                    Navigator.of(dialogContext).pop();
+                    await _abrirCheckoutExistente(ticketUrl);
+                  },
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Abrir cobrança'),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Fechar'),
+          ),
+          FilledButton.icon(
+            onPressed: pagamentoId.isEmpty
+                ? null
+                : () async {
+                    Navigator.of(dialogContext).pop();
+                    await _verificarPagamento({'id': pagamentoId});
+                  },
+            icon: const Icon(Icons.verified_outlined),
+            label: const Text('Já paguei'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _gerarCheckoutCartao(Map<String, dynamic> plano) async {
