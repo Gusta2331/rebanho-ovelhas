@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
@@ -179,7 +180,7 @@ class _ReproducaoReportPageState extends State<ReproducaoReportPage> {
         ));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Não foi possível gerar: ' + e.toString().replaceFirst('Exception: ', ''))));
+      if (mounted) showAppSnackBar(context, SnackBar(content: Text('Não foi possível gerar: ' + e.toString().replaceFirst('Exception: ', ''))));
     } finally {
       if (mounted) setState(() => _generating = false);
     }
