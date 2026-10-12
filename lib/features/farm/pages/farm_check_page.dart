@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../features/dashboard/dashboard_page.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../services/farm_service.dart';
 import 'farm_setup_page.dart';
 
@@ -55,7 +56,7 @@ class _FarmCheckPageState extends State<FarmCheckPage> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(content: Text('Não foi possível verificar sua fazenda: $e')),
       );
     }

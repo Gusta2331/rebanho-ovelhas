@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
 import 'manejo_details_page.dart';
@@ -170,7 +171,7 @@ class _ManejoOperacaoDetailsPageState extends State<ManejoOperacaoDetailsPage> {
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
         ),

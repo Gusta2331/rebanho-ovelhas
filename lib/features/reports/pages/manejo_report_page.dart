@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../manejo/models/manejo.dart';
 import '../../manejo/services/manejo_service.dart';
 import '../services/report_excel_service.dart';
@@ -512,10 +513,10 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
         ));
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text((format == 'pdf' ? 'PDF' : 'Excel') + ' gerado com ' + _selectedItems.length.toString() + ' registro(s).')));
+      showAppSnackBar(context, SnackBar(content: Text((format == 'pdf' ? 'PDF' : 'Excel') + ' gerado com ' + _selectedItems.length.toString() + ' registro(s).')));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Não foi possível gerar o relatório: ' + error.toString().replaceFirst('Exception: ', ''))));
+      showAppSnackBar(context, SnackBar(content: Text('Não foi possível gerar o relatório: ' + error.toString().replaceFirst('Exception: ', ''))));
     } finally {
       if (mounted) setState(() => _generating = false);
     }

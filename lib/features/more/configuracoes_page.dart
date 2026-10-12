@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
-
 import '../../core/offline/connectivity_service.dart';
 import '../../core/offline/offline_sync_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_snackbar.dart';
 import '../../core/widgets/contextual_help.dart';
 import '../auth/services/auth_service.dart';
 import '../farm/models/farm.dart';
@@ -63,7 +63,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
       await _offlineSync.sincronizar();
       await _carregar();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(
             _pendentes == 0
@@ -95,7 +95,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
       builder: (_) => const ChangePasswordDialog(),
     );
     if (alterada == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         const SnackBar(content: Text('Senha alterada com sucesso.')),
       );
     }
@@ -344,7 +344,7 @@ class _FarmEditorState extends State<_FarmEditor> {
       if (mounted) Navigator.of(context).pop(farm);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(error.toString().replaceFirst('Exception: ', '')),
         ),

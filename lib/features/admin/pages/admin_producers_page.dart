@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/app_asset_icon.dart';
-
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../services/admin_producers_service.dart';
 
@@ -71,7 +71,7 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
 
   Future<void> _changePlan(Map<String, dynamic> producer) async {
     if (_plans.isEmpty) return;
-    final chosen = await showDialog<String>(
+    final chosen = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (_) => _PlanPickerDialog(plans: _plans),
     );
@@ -79,10 +79,107 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
     try {
       await _service.alterarPlano(
         usuarioId: producer['id'].toString(),
-        planoId: chosen,
+        planoId: chosen['plano_id'] as String,
+        duracaoDias: chosen['duracao_dias'] as int?,
       );
       await _load();
-      _message('Plano atualizado.');
+      _message('Plano e validade atualizados.');
+    } catch (error) {
+      _message(error.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _toggleProducerActive(Map<String, dynamic> producer) async {
+    final active = producer['ativo'] != false;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(active ? 'Desativar produtor?' : 'Reativar produtor?'),
+        content: Text(
+          active
+              ? 'O produtor perderá o acesso ao aplicativo. A fazenda, os animais e o histórico serão preservados.'
+              : 'O produtor poderá voltar a acessar o aplicativo com a conta existente.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(active ? 'Desativar' : 'Reativar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _service.definirAcesso(
+        usuarioId: producer['id'].toString(),
+        ativo: !active,
+      );
+      await _load();
+      _message(active ? 'Produtor desativado. Os dados foram preservados.' : 'Produtor reativado.');
+    } catch (error) {
+      _message(error.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _deleteProducer(Map<String, dynamic> producer) async {
+    final phraseController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Excluir produtor definitivamente?'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Esta ação é irreversível. Só será permitida se a conta não possuir fazenda associada. '
+                  'Contas com fazenda devem ser desativadas até que a remoção segura do histórico esteja disponível.',
+                ),
+                const SizedBox(height: 12),
+                Text('Conta: ${producer['email'] ?? ''}'),
+                const SizedBox(height: 12),
+                const Text('Digite EXCLUIR DEFINITIVAMENTE para confirmar:'),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: phraseController,
+                  autofocus: true,
+                  onChanged: (_) => setDialogState(() {}),
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'EXCLUIR DEFINITIVAMENTE',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: phraseController.text.trim() == 'EXCLUIR DEFINITIVAMENTE'
+                  ? () => Navigator.pop(dialogContext, true)
+                  : null,
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Excluir definitivamente'),
+            ),
+          ],
+        ),
+      ),
+    );
+    phraseController.dispose();
+    if (confirmed != true) return;
+    try {
+      await _service.excluirProdutor(usuarioId: producer['id'].toString());
+      await _load();
+      _message('Conta excluída definitivamente.');
     } catch (error) {
       _message(error.toString().replaceFirst('Exception: ', ''));
     }
@@ -115,8 +212,7 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
 
   void _message(String value) {
     if (mounted)
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(value)));
+      showAppSnackBar(context, SnackBar(content: Text(value)));
   }
 
   String _planName(dynamic plan) {
@@ -125,6 +221,26 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
     return details is Map
         ? details['nome']?.toString() ?? 'Plano atribuído'
         : 'Plano atribuído';
+  }
+
+  String _planValidity(dynamic assignment) {
+    if (assignment is! Map) return 'Plano ainda não atribuído';
+    if (assignment['plano_id']?.toString() == 'free_10') {
+      return 'Plano gratuito • sem vencimento';
+    }
+    final rawDate = assignment['validade_em']?.toString();
+    if (rawDate == null || rawDate.isEmpty) return 'Validade não definida';
+    final expiry = DateTime.tryParse(rawDate)?.toLocal();
+    if (expiry == null) return 'Validade não reconhecida';
+    final today = DateTime.now();
+    final remaining = DateTime(expiry.year, expiry.month, expiry.day)
+        .difference(DateTime(today.year, today.month, today.day))
+        .inDays;
+    if (remaining < 0) {
+      return 'Vencido há ${remaining.abs()} dia(s) • limite temporário de 10 animais';
+    }
+    if (remaining == 0) return 'Vence hoje';
+    return 'Restam $remaining dia(s) • vence em ${expiry.day.toString().padLeft(2, '0')}/${expiry.month.toString().padLeft(2, '0')}/${expiry.year}';
   }
 
   @override
@@ -233,14 +349,21 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
                             ? producer['nome'].toString()
                             : producer['email'].toString(),
                       ),
-                      subtitle: Text(producer['email']?.toString() ?? ''),
+                      subtitle: Text(
+                        '${producer['email']?.toString() ?? ''} • ${producer['ativo'] == false ? 'DESATIVADO' : 'ATIVO'}',
+                        style: TextStyle(
+                          color: producer['ativo'] == false ? Colors.red : null,
+                        ),
+                      ),
                       children: [
                         if (farms.isEmpty)
-                          const ListTile(
-                            leading: Icon(Icons.info_outline),
-                            title: Text('Fazenda ainda não cadastrada'),
+                          ListTile(
+                            leading: const Icon(Icons.info_outline),
+                            title: const Text('Fazenda ainda não cadastrada'),
                             subtitle: Text(
-                              'O plano ficará aguardando a criação da fazenda.',
+                              producer['plano_pendente'] is Map
+                                  ? '${_planName(producer['plano_pendente'])} • ${_planValidity(producer['plano_pendente'])}'
+                                  : 'O plano ficará aguardando a criação da fazenda.',
                             ),
                           ),
                         ...farms.map(
@@ -248,16 +371,44 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
                             leading: const Icon(Icons.agriculture_outlined),
                             title: Text(farm['nome']?.toString() ?? 'Fazenda'),
                             subtitle: Text(
-                              '${farm['animais_ativos'] ?? 0} animais ativos • ${_planName(farm['plano'])}',
+                              '${farm['animais_ativos'] ?? 0} animais ativos • ${_planName(farm['plano'])}\n${_planValidity(farm['plano'])}',
                             ),
                           ),
                         ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton.icon(
-                            onPressed: () => _changePlan(producer),
-                            icon: const Icon(Icons.tune),
-                            label: const Text('Alterar plano'),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                          child: Wrap(
+                            alignment: WrapAlignment.end,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () => _changePlan(producer),
+                                icon: const Icon(Icons.tune),
+                                label: const Text('Alterar plano'),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: () => _toggleProducerActive(producer),
+                                icon: Icon(
+                                  producer['ativo'] == false
+                                      ? Icons.lock_open
+                                      : Icons.block,
+                                ),
+                                label: Text(
+                                  producer['ativo'] == false
+                                      ? 'Reativar'
+                                      : 'Desativar',
+                                ),
+                              ),
+                              TextButton.icon(
+                                onPressed: () => _deleteProducer(producer),
+                                icon: const Icon(Icons.delete_forever, color: Colors.red),
+                                label: const Text(
+                                  'Excluir',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -349,12 +500,17 @@ class _CreateProducerDialogState extends State<_CreateProducerDialog> {
             ),
             DropdownButtonFormField<String>(
               value: _plan,
+              isExpanded: true,
               decoration: const InputDecoration(labelText: 'Plano inicial'),
               items: widget.plans
                   .map(
                     (p) => DropdownMenuItem(
                       value: p['id'].toString(),
-                      child: Text(p['nome'].toString()),
+                      child: Text(
+                        p['nome'].toString(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   )
                   .toList(),
@@ -396,7 +552,7 @@ class _CreateProducerDialogState extends State<_CreateProducerDialog> {
     } catch (error) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
+        showAppSnackBar(context, 
           SnackBar(
             content: Text(error.toString().replaceFirst('Exception: ', '')),
           ),
@@ -415,21 +571,59 @@ class _PlanPickerDialog extends StatefulWidget {
 
 class _PlanPickerDialogState extends State<_PlanPickerDialog> {
   String? _plan;
+  final _duration = TextEditingController(text: '30');
+
+  @override
+  void dispose() {
+    _duration.dispose();
+    super.dispose();
+  }
+
+  bool get _isFree => _plan == 'free_10';
+
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: const Text('Alterar plano'),
-    content: DropdownButtonFormField<String>(
-      value: _plan,
-      items: widget.plans
-          .map(
-            (p) => DropdownMenuItem(
-              value: p['id'].toString(),
-              child: Text(p['nome'].toString()),
+    content: SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DropdownButtonFormField<String>(
+            value: _plan,
+            isExpanded: true,
+            items: widget.plans
+                .map(
+                  (p) => DropdownMenuItem(
+                    value: p['id'].toString(),
+                    child: Text(
+                      p['nome'].toString(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) => setState(() => _plan = value),
+            decoration: const InputDecoration(labelText: 'Plano'),
+          ),
+          const SizedBox(height: 12),
+          if (!_isFree)
+            TextFormField(
+              controller: _duration,
+              keyboardType: TextInputType.number,
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(
+                labelText: 'Duração em dias',
+                helperText: 'Padrão: 30 dias (1 mês). Máximo: 3.650 dias.',
+              ),
+            )
+          else
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text('O plano gratuito não vence.'),
             ),
-          )
-          .toList(),
-      onChanged: (value) => setState(() => _plan = value),
-      decoration: const InputDecoration(labelText: 'Plano'),
+        ],
+      ),
     ),
     actions: [
       TextButton(
@@ -437,11 +631,21 @@ class _PlanPickerDialogState extends State<_PlanPickerDialog> {
         child: const Text('Cancelar'),
       ),
       FilledButton(
-        onPressed: _plan == null ? null : () => Navigator.pop(context, _plan),
+        onPressed: _plan == null || (!_isFree && !_validDuration)
+            ? null
+            : () => Navigator.pop(context, {
+                'plano_id': _plan,
+                'duracao_dias': _isFree ? null : int.parse(_duration.text.trim()),
+              }),
         child: const Text('Salvar'),
       ),
     ],
   );
+
+  bool get _validDuration {
+    final value = int.tryParse(_duration.text.trim());
+    return value != null && value >= 1 && value <= 3650;
+  }
 }
 
 class _PlanPriceDialog extends StatefulWidget {

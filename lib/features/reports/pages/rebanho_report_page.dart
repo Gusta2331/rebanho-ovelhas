@@ -3,14 +3,15 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../animals/models/animal.dart';
-import '../../animals/services/composicao_racial_service.dart';
 import '../../animals/services/animal_service.dart';
+import '../../animals/services/composicao_racial_service.dart';
 import '../models/report_data.dart';
 import '../services/report_excel_service.dart';
 import '../services/report_pdf_service.dart';
-import '../widgets/report_period.dart';
 import '../widgets/report_age.dart';
+import '../widgets/report_period.dart';
 
 class RebanhoReportPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -238,7 +239,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(
             (format == 'pdf' ? 'PDF' : 'Excel') +
@@ -250,7 +251,7 @@ class _RebanhoReportPageState extends State<RebanhoReportPage> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(
             'Não foi possível gerar o relatório: ' +

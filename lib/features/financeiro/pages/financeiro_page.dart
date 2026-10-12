@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/contextual_help.dart';
 import '../../flock/services/rebanho_service.dart';
 import '../services/financeiro_service.dart';
 
@@ -140,7 +141,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
 
   void _msg(String text) {
     if (mounted)
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+      showAppSnackBar(context, SnackBar(content: Text(text)));
   }
 
   String _moeda(double value) =>

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/app_asset_icon.dart';
-
-import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
-import '../../flock/services/rebanho_service.dart';
 import '../../farmacia/services/farmacia_service.dart';
+import '../../flock/services/rebanho_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
-import '../widgets/famacha_reference_widget.dart';
-import '../widgets/manejo_animal_selector.dart';
 import '../utils/famacha_scale.dart';
+import '../widgets/famacha_reference_widget.dart';
 import '../widgets/famacha_score_badge.dart';
+import '../widgets/manejo_animal_selector.dart';
 
 class ManejoFormPage extends StatefulWidget {
   final Manejo? manejo;
@@ -1176,7 +1176,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
 
   void _mensagem(String texto) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(content: Text(texto.replaceFirst('Exception: ', ''))),
     );
   }

@@ -3,6 +3,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/services/supabase_service.dart';
 import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../services/additional_report_service.dart';
 
 class GeralReportPage extends StatefulWidget {
@@ -1014,7 +1015,7 @@ class _GeralReportPageState extends State<GeralReportPage> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        showAppSnackBar(context, 
           SnackBar(
             content: Text(
               (format == 'pdf' ? 'PDF' : 'Excel') +
@@ -1027,7 +1028,7 @@ class _GeralReportPageState extends State<GeralReportPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        showAppSnackBar(context, 
           SnackBar(
             content: Text(
               'Não foi possível gerar o relatório: ' +

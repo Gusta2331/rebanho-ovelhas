@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_service.dart';
@@ -453,7 +454,7 @@ class _ManejoOperacaoPageState extends State<ManejoOperacaoPage> {
 
   void _mensagem(String texto) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(content: Text(texto.replaceFirst('Exception: ', ''))),
     );
   }
@@ -1091,7 +1092,7 @@ class _ManejoOperacaoAnimaisPageState
 
   void _mensagem(String texto) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(content: Text(texto.replaceFirst('Exception: ', ''))),
     );
   }
