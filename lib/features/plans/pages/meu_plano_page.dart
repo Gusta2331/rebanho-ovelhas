@@ -22,6 +22,7 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
   bool _carregando = true;
   String? _erro;
   String? _gerandoPlanoId;
+  String? _metodoGeracao;
   String? _verificandoPagamentoId;
 
   List<Map<String, dynamic>> get _catalogo =>
@@ -69,7 +70,10 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
     final id = plano['id']?.toString();
     if (id == null || id.isEmpty) return;
 
-    setState(() => _gerandoPlanoId = id);
+    setState(() {
+      _gerandoPlanoId = id;
+      _metodoGeracao = 'pix';
+    });
     try {
       final resultado = await _service.gerarPix(id);
       if (!mounted) return;
@@ -85,7 +89,12 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
         _mensagem(error.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
-      if (mounted) setState(() => _gerandoPlanoId = null);
+      if (mounted) {
+        setState(() {
+          _gerandoPlanoId = null;
+          _metodoGeracao = null;
+        });
+      }
     }
   }
 
@@ -93,7 +102,10 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
     final id = plano['id']?.toString();
     if (id == null || id.isEmpty) return;
 
-    setState(() => _gerandoPlanoId = id);
+    setState(() {
+      _gerandoPlanoId = id;
+      _metodoGeracao = 'cartao_credito';
+    });
     try {
       final resultado = await _service.gerarCheckoutCartao(id);
       final checkoutUrl = resultado['checkout_url']?.toString() ?? '';
@@ -116,7 +128,12 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
         _mensagem(error.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
-      if (mounted) setState(() => _gerandoPlanoId = null);
+      if (mounted) {
+        setState(() {
+          _gerandoPlanoId = null;
+          _metodoGeracao = null;
+        });
+      }
     }
   }
 
@@ -406,6 +423,8 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
           final id = plano['id'].toString();
           final limite = plano['limite_animais'];
           final gerando = _gerandoPlanoId == id;
+          final gerandoPix = gerando && _metodoGeracao == 'pix';
+          final gerandoCartao = gerando && _metodoGeracao == 'cartao_credito';
           final atual = _planoAtual?['id']?.toString() == id;
           return Card(
             child: Padding(
@@ -442,14 +461,14 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
                     width: double.infinity,
                     child: FilledButton.icon(
                       onPressed: _gerandoPlanoId != null ? null : () => _gerarPix(plano),
-                      icon: gerando
+                      icon: gerandoPix
                           ? const SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.qr_code_2),
-                      label: Text(gerando ? 'Gerando Pix...' : atual ? 'Renovar com Pix' : 'Contratar com Pix'),
+                      label: Text(gerandoPix ? 'Gerando Pix...' : atual ? 'Renovar com Pix' : 'Contratar com Pix'),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -457,14 +476,14 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: _gerandoPlanoId != null ? null : () => _gerarCheckoutCartao(plano),
-                      icon: gerando
+                      icon: gerandoCartao
                           ? const SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.credit_card_outlined),
-                      label: Text(gerando ? 'Preparando checkout...' : 'Contratar com cartão de crédito'),
+                      label: Text(gerandoCartao ? 'Preparando checkout...' : 'Contratar com cartão de crédito'),
                     ),
                   ),
                 ],
