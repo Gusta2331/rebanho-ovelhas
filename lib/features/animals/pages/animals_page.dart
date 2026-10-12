@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
@@ -200,7 +201,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
     final rebanhoSelecionado = _rebanhoSelectionService.rebanhoSelecionado;
 
     if (rebanhoSelecionado == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         const SnackBar(
           content: Text('Selecione um rebanho antes de adicionar um animal.'),
         ),
@@ -231,7 +232,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text('Animal ${animal.brinco} cadastrado com sucesso.'),
         ),
@@ -241,8 +242,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(_mensagemErro(error))));
+      showAppSnackBar(context, SnackBar(content: Text(_mensagemErro(error))));
     }
   }
 
@@ -272,7 +272,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(
         content: Text('Animal ${animalEditado.brinco} atualizado com sucesso.'),
       ),
@@ -318,7 +318,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
       final excluidoNoServidor = await AnimalService().excluirAnimal(animal.id, fotoUrl: animal.fotoPath);
       await _carregarAnimais();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        showAppSnackBar(context, 
           SnackBar(
             content: Text(
               excluidoNoServidor
@@ -330,7 +330,7 @@ class _AnimalsPageState extends State<AnimalsPage> {
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        showAppSnackBar(context, 
           SnackBar(
             content: Text(error.toString().replaceFirst('Exception: ', '')),
           ),
