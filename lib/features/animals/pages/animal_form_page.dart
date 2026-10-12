@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
@@ -265,9 +266,7 @@ class _AnimalFormPageState extends State<AnimalFormPage> {
   }
 
   void _mostrarSnackBarImediato(SnackBar snackBar) {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
-    messenger.showSnackBar(snackBar);
+    showAppSnackBar(context, snackBar);
   }
 
   void _mostrarAvisoPaisIncompletos() {
