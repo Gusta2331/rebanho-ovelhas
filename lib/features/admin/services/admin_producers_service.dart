@@ -31,6 +31,27 @@ class AdminProducersService {
     });
   }
 
+  Future<void> definirAcesso({
+    required String usuarioId,
+    required bool ativo,
+  }) async {
+    await _invoke({
+      'action': 'set_producer_active',
+      'user_id': usuarioId,
+      'ativo': ativo,
+    });
+  }
+
+  Future<void> excluirProdutor({
+    required String usuarioId,
+  }) async {
+    await _invoke({
+      'action': 'delete_producer',
+      'user_id': usuarioId,
+      'confirmacao': 'EXCLUIR DEFINITIVAMENTE',
+    });
+  }
+
   Future<void> definirPreco({
     required String planoId,
     required double preco,
