@@ -2,3 +2,8 @@ project_id = "ezbfjgozqwzricjwxtba"
 
 [functions.farmacia-alertas]
 verify_jwt = false
+
+# Mercado Pago calls this endpoint directly, so it must not require a Supabase JWT.
+# The function validates the Mercado Pago HMAC signature before processing events.
+[functions.mercadopago-webhook]
+verify_jwt = false
