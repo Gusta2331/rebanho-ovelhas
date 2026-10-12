@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/contextual_help.dart';
+import '../../core/widgets/app_snackbar.dart';
 import '../services/farm_service.dart';
 
 class FarmSetupPage extends StatefulWidget {
