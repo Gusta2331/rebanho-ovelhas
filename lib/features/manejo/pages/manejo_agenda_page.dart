@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
 
@@ -187,8 +188,7 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
 
   void _msg(String texto) {
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(texto)));
+      showAppSnackBar(context, SnackBar(content: Text(texto)));
     }
   }
 
@@ -754,8 +754,7 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
 
   void _msg(String texto) {
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(texto)));
+      showAppSnackBar(context, SnackBar(content: Text(texto)));
     }
   }
 
