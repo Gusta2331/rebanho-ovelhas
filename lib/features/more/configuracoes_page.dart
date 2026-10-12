@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
-
 import '../../core/offline/connectivity_service.dart';
 import '../../core/offline/offline_sync_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_snackbar.dart';
 import '../../core/widgets/contextual_help.dart';
 import '../auth/services/auth_service.dart';
 import '../farm/models/farm.dart';
