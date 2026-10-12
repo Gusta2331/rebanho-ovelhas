@@ -501,12 +501,17 @@ class _CreateProducerDialogState extends State<_CreateProducerDialog> {
             ),
             DropdownButtonFormField<String>(
               value: _plan,
+              isExpanded: true,
               decoration: const InputDecoration(labelText: 'Plano inicial'),
               items: widget.plans
                   .map(
                     (p) => DropdownMenuItem(
                       value: p['id'].toString(),
-                      child: Text(p['nome'].toString()),
+                      child: Text(
+                        p['nome'].toString(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   )
                   .toList(),
@@ -586,11 +591,16 @@ class _PlanPickerDialogState extends State<_PlanPickerDialog> {
         children: [
           DropdownButtonFormField<String>(
             value: _plan,
+            isExpanded: true,
             items: widget.plans
                 .map(
                   (p) => DropdownMenuItem(
                     value: p['id'].toString(),
-                    child: Text(p['nome'].toString()),
+                    child: Text(
+                      p['nome'].toString(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 )
                 .toList(),
