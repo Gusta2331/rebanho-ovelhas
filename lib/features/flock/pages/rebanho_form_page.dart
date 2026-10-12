@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
@@ -94,8 +95,7 @@ class _RebanhoFormPageState extends State<RebanhoFormPage> {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(_mensagemErro(error))));
+      showAppSnackBar(context, SnackBar(content: Text(_mensagemErro(error))));
     } finally {
       if (mounted) {
         setState(() {
