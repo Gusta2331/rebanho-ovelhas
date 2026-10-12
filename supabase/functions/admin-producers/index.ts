@@ -28,13 +28,16 @@ Deno.serve(async (request) => {
     const payload = await request.json()
 
     if (payload.action === 'list') {
-      const [users, farmsResult, plansResult, statsResult] = await Promise.all([
+      const [users, farmsResult, plansResult, statsResult, profilesResult] = await Promise.all([
         listUsers(admin),
         admin.from('fazendas').select('id,nome,proprietario_id,ativo'),
         admin.from('planos_produtor').select('id,nome,limite_animais,preco_mensal,ativo').eq('ativo', true).order('limite_animais', { ascending: true, nullsFirst: false }),
         admin.rpc('admin_resumo_fazendas'),
+        admin.from('usuarios').select('id,ativo'),
       ])
       if (farmsResult.error) throw farmsResult.error
+      if (profilesResult.error) throw profilesResult.error
+      const activeByUser = new Map((profilesResult.data ?? []).map((profile) => [profile.id, profile.ativo !== false]))
       if (plansResult.error) throw plansResult.error
       if (statsResult.error) throw statsResult.error
       const farms = farmsResult.data ?? []
@@ -43,6 +46,7 @@ Deno.serve(async (request) => {
         id: producer.id,
         email: producer.email,
         nome: producer.user_metadata?.nome ?? '',
+        ativo: activeByUser.get(producer.id) ?? true,
         plano_pendente: null,
         fazendas: farms.filter((farm) => farm.proprietario_id === producer.id).map((farm) => ({
           ...farm,
@@ -59,6 +63,64 @@ Deno.serve(async (request) => {
       const pendingByUser = new Map((pendingResult.data ?? []).map((item) => [item.usuario_id, item]))
       for (const producer of producers) producer.plano_pendente = pendingByUser.get(producer.id) ?? null
       return json({ producers, plans: plansResult.data ?? [] })
+    }
+
+
+    if (payload.action === 'set_producer_active') {
+      const userId = String(payload.user_id ?? '')
+      const active = payload.ativo
+      if (!userId || typeof active !== 'boolean') return json({ error: 'Informe o produtor e o estado desejado.' }, 400)
+
+      const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId)
+      if (targetError) throw targetError
+      if (!target.user) return json({ error: 'Produtor não encontrado.' }, 404)
+      const targetEmail = target.user.email?.toLowerCase() ?? ''
+      if (admins.includes(targetEmail) || target.user.id === user.id) {
+        return json({ error: 'A conta administrativa não pode ser desativada por este painel.' }, 403)
+      }
+
+      const { error: profileError } = await admin.from('usuarios').update({ ativo: active }).eq('id', userId)
+      if (profileError) throw profileError
+      const { error: authUpdateError } = await admin.auth.admin.updateUserById(userId, {
+        ban_duration: active ? 'none' : '876000h',
+      })
+      if (authUpdateError) {
+        await admin.from('usuarios').update({ ativo: !active }).eq('id', userId)
+        throw authUpdateError
+      }
+      return json({ success: true, ativo: active })
+    }
+
+    if (payload.action === 'delete_producer') {
+      const userId = String(payload.user_id ?? '')
+      const confirmation = String(payload.confirmacao ?? '')
+      if (!userId || confirmation !== 'EXCLUIR DEFINITIVAMENTE') {
+        return json({ error: 'Confirmação de exclusão inválida.' }, 400)
+      }
+
+      const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId)
+      if (targetError) throw targetError
+      if (!target.user) return json({ error: 'Produtor não encontrado.' }, 404)
+      const targetEmail = target.user.email?.toLowerCase() ?? ''
+      if (admins.includes(targetEmail) || target.user.id === user.id) {
+        return json({ error: 'A conta administrativa não pode ser excluída por este painel.' }, 403)
+      }
+
+      // A exclusão de fazendas possui dependências históricas com RESTRICT/NO ACTION.
+      // Até existir uma rotina transacional específica para todo o histórico, não apagamos
+      // produtores que tenham fazendas. Isso evita perda parcial ou remoção inconsistente.
+      const { data: farms, error: farmsError } = await admin
+        .from('fazendas').select('id').eq('proprietario_id', userId).limit(1)
+      if (farmsError) throw farmsError
+      if ((farms ?? []).length > 0) {
+        return json({
+          error: 'Este produtor possui fazenda ou histórico associado. Para preservar os dados, desative a conta. A exclusão definitiva de contas com fazenda ainda requer uma rotina segura de remoção do histórico.',
+        }, 409)
+      }
+
+      const { error: deleteError } = await admin.auth.admin.deleteUser(userId)
+      if (deleteError) throw deleteError
+      return json({ success: true })
     }
 
     if (payload.action === 'create_producer') {
