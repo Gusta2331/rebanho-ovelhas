@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/contextual_help.dart';
@@ -135,7 +136,7 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
     final valorTotal = _valorTotal;
 
     if (valorTotal == null || valorTotal <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         const SnackBar(
           content: Text('Informe um valor de venda maior que zero.'),
         ),
@@ -166,7 +167,7 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(
             vendaOffline
@@ -193,7 +194,7 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
             : texto;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(content: Text(mensagem), duration: const Duration(seconds: 4)),
       );
     } finally {
