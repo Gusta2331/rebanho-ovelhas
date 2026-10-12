@@ -134,10 +134,6 @@ Deno.serve(async (request) => {
       qr_code: qrCode,
       qr_code_base64: qrCodeBase64,
       ticket_url: ticketUrl,
-      expira_em: null,
-      ambiente: mercadoPagoToken.startsWith('TEST-') || mercadoPagoToken.includes('TEST')
-        ? 'teste'
-        : 'verifique_no_painel',
     })
   } catch (error) {
     console.error('create-plan-pix:', error)
