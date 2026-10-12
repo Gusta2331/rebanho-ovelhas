@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
 
@@ -212,8 +213,7 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
 
   void _message(String value) {
     if (mounted)
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(value)));
+      showAppSnackBar(context, SnackBar(content: Text(value)));
   }
 
   String _planName(dynamic plan) {
@@ -553,7 +553,7 @@ class _CreateProducerDialogState extends State<_CreateProducerDialog> {
     } catch (error) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
+        showAppSnackBar(context, 
           SnackBar(
             content: Text(error.toString().replaceFirst('Exception: ', '')),
           ),
