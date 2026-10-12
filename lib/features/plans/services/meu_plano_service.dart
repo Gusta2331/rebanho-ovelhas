@@ -62,7 +62,7 @@ class MeuPlanoService {
     final pagamentos = await _client
         .from('pagamentos_planos')
         .select(
-          'id,plano_id,valor,status,qr_code,qr_code_base64,ticket_url,'
+          'id,plano_id,valor,status,metodo,qr_code,qr_code_base64,ticket_url,'
           'expira_em,criado_em,planos_produtor(nome)',
         )
         .eq('usuario_id', usuario.id)
@@ -89,6 +89,21 @@ class MeuPlanoService {
           ? data['error']?.toString()
           : 'Não foi possível gerar a cobrança Pix.';
       throw Exception(message ?? 'Não foi possível gerar a cobrança Pix.');
+    }
+    return Map<String, dynamic>.from(data);
+  }
+
+  Future<Map<String, dynamic>> gerarCheckoutCartao(String planoId) async {
+    final response = await _client.functions.invoke(
+      'create-plan-card-checkout',
+      body: {'plano_id': planoId},
+    );
+    final data = response.data;
+    if (response.status >= 400 || data is! Map) {
+      final message = data is Map
+          ? data['error']?.toString()
+          : 'Não foi possível abrir o checkout de cartão.';
+      throw Exception(message ?? 'Não foi possível abrir o checkout de cartão.');
     }
     return Map<String, dynamic>.from(data);
   }
