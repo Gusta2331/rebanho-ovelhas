@@ -10,6 +10,7 @@ A tela **Meu plano** consulta a atribuição real da fazenda, os dias restantes,
    - `20261013100000_pagamentos_planos_mercado_pago.sql`
    - `20261014100000_meu_plano_pix_seguro.sql`
    - `20261015100000_meio_pagamento_cartao_credito.sql`
+   - `20261016100000_duracao_pagamentos_planos.sql`
 2. No painel do Supabase, configure os secrets das Edge Functions. Comece com as credenciais de teste do Mercado Pago:
    - `MERCADOPAGO_ACCESS_TOKEN`: Access Token da aplicação no ambiente correspondente.
    - `MERCADOPAGO_WEBHOOK_SECRET`: assinatura secreta gerada em **Mercado Pago Developers → sua aplicação → Webhooks → Configurar notificações**. Não é o Access Token.
@@ -41,6 +42,6 @@ As variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` 
 
 O catálogo comercial atual é definido pela migration `20261011100000_atualiza_planos_produtor.sql`: gratuito até 10 animais; faixas pagas até 100, 200, 300 e assim sucessivamente até 1.000 animais, com preços cadastrados no Supabase; acima disso existe o plano personalizado, cujo preço pode ficar sob consulta. A tela lê os preços ativos diretamente do banco, então alterações feitas no painel não exigem novo build do aplicativo.
 
-O painel administrativo permite definir uma duração personalizada em dias. As contratações via Pix e cartão de crédito ativam o plano por 30 dias após a confirmação segura do pagamento. O plano gratuito não vence. Quando um plano pago vence, a validação de novos animais passa a respeitar temporariamente o limite de 10 animais, sem apagar os animais existentes.
+O painel administrativo permite definir uma duração personalizada em dias. As contratações via Pix e cartão de crédito registram a duração da cobrança em `pagamentos_planos.duracao_dias`, com padrão de 30 dias. A função de ativação usa essa duração ao iniciar ou estender a validade e continua ignorando notificações repetidas de um pagamento já aprovado. O painel administrativo pode definir uma validade personalizada diretamente na atribuição do plano; essa alteração não muda a duração padrão das próximas cobranças. O plano gratuito não vence. Quando um plano pago vence, a validação de novos animais passa a respeitar temporariamente o limite de 10 animais, sem apagar os animais existentes.
 
 Para cobrança recorrente automática no Android, será necessário definir os produtos/preços e integrar o fluxo de pagamentos adequado à distribuição na Play Store.
