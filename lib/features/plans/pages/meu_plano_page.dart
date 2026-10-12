@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -85,6 +86,49 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
       }
     } finally {
       if (mounted) setState(() => _gerandoPlanoId = null);
+    }
+  }
+
+  Future<void> _gerarCheckoutCartao(Map<String, dynamic> plano) async {
+    final id = plano['id']?.toString();
+    if (id == null || id.isEmpty) return;
+
+    setState(() => _gerandoPlanoId = id);
+    try {
+      final resultado = await _service.gerarCheckoutCartao(id);
+      final checkoutUrl = resultado['checkout_url']?.toString() ?? '';
+      final uri = Uri.tryParse(checkoutUrl);
+      if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
+        throw Exception('O Mercado Pago não retornou um link seguro de pagamento.');
+      }
+
+      await _carregar();
+      if (!mounted) return;
+
+      final abriu = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!abriu) {
+        _mensagem('Não foi possível abrir o checkout. Tente novamente.');
+        return;
+      }
+      _mensagem('Finalize o pagamento no Mercado Pago e depois volte ao OviGestão para verificar.');
+    } catch (error) {
+      if (mounted) {
+        _mensagem(error.toString().replaceFirst('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) setState(() => _gerandoPlanoId = null);
+    }
+  }
+
+  Future<void> _abrirCheckoutExistente(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
+      _mensagem('O link de pagamento não é válido.');
+      return;
+    }
+    final abriu = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!abriu && mounted) {
+      _mensagem('Não foi possível abrir o checkout do Mercado Pago.');
     }
   }
 
@@ -405,7 +449,22 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.qr_code_2),
-                      label: Text(gerando ? 'Gerando Pix...' : atual ? 'Renovar este plano' : 'Contratar com Pix'),
+                      label: Text(gerando ? 'Gerando Pix...' : atual ? 'Renovar com Pix' : 'Contratar com Pix'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _gerandoPlanoId != null ? null : () => _gerarCheckoutCartao(plano),
+                      icon: gerando
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.credit_card_outlined),
+                      label: Text(gerando ? 'Preparando checkout...' : 'Contratar com cartão de crédito'),
                     ),
                   ),
                 ],
@@ -446,6 +505,8 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
 
   Widget _buildPagamento(Map<String, dynamic> pagamento) {
     final status = pagamento['status']?.toString() ?? 'pendente';
+    final metodo = pagamento['metodo']?.toString() ?? 'pix';
+    final checkoutUrl = pagamento['ticket_url']?.toString() ?? '';
     final nomePlano = _asMap(pagamento['planos_produtor'])?['nome']?.toString() ??
         'Plano';
     final criado = _data(pagamento['criado_em']);
@@ -483,7 +544,7 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
                     children: [
                       Text(nomePlano, style: const TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 3),
-                      Text('${_dinheiro(pagamento['valor'])} • ${_statusPagamento(status)}'),
+                      Text('${_dinheiro(pagamento['valor'])} • ${metodo == 'cartao_credito' ? 'Cartão de crédito' : 'Pix'} • ${_statusPagamento(status)}'),
                       if (criado != null)
                         Text(
                           'Criado em ${_dataFormatada(criado)}',
@@ -494,6 +555,17 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
                 ),
               ],
             ),
+            if (pendente && metodo == 'cartao_credito' && checkoutUrl.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _abrirCheckoutExistente(checkoutUrl),
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Continuar pagamento com cartão'),
+                ),
+              ),
+            ],
             if (pendente && qrBase64 != null && qrBase64.isNotEmpty) ...[
               const SizedBox(height: 14),
               Center(child: _imagemQr(qrBase64)),
@@ -539,11 +611,10 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
-            if (pagamento['ticket_url'] != null &&
-                pagamento['ticket_url'].toString().isNotEmpty) ...[
+            if (metodo != 'cartao_credito' && checkoutUrl.isNotEmpty) ...[
               const SizedBox(height: 8),
               const Text('Link da cobrança'),
-              SelectableText(pagamento['ticket_url'].toString()),
+              SelectableText(checkoutUrl),
             ],
           ],
         ),
