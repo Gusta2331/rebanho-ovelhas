@@ -38,7 +38,7 @@ class MeuPlanoService {
           .eq('fazenda_id', fazenda['id'])
           .eq('status', 'ativo')
           .count(CountOption.exact);
-      animaisAtivos = contagem.count ?? 0;
+      animaisAtivos = contagem.count;
     } else {
       final pendente = await _client
           .from('planos_pendentes_produtor')
