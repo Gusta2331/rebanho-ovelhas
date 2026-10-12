@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
 
@@ -162,9 +163,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
   }
 
   void _snack(String s, bool erro) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
+    showAppSnackBar(context, 
         SnackBar(content: Text(s), backgroundColor: erro ? Colors.red : null),
       );
   }
