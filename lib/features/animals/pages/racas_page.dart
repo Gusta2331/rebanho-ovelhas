@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
@@ -44,7 +45,7 @@ class _RacasPageState extends State<RacasPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _carregando = false);
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(content: Text('Não foi possível carregar as raças: $e')),
       );
     }
@@ -91,7 +92,7 @@ class _RacasPageState extends State<RacasPage> {
     );
 
     if (jaExiste) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         const SnackBar(content: Text('Essa raça já está cadastrada.')),
       );
 
@@ -103,13 +104,13 @@ class _RacasPageState extends State<RacasPage> {
       await _carregarRacas();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(content: Text('Raça "$nome" adicionada com sucesso.')),
     );
   }
@@ -118,7 +119,7 @@ class _RacasPageState extends State<RacasPage> {
     if (_racaEstaEmUso(raca)) {
       final quantidade = _quantidadeAnimaisUsandoRaca(raca);
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(
             'Não é possível editar "${raca.nome}". '
@@ -150,7 +151,7 @@ class _RacasPageState extends State<RacasPage> {
     );
 
     if (jaExiste) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         const SnackBar(content: Text('Essa raça já está cadastrada.')),
       );
 
@@ -162,13 +163,13 @@ class _RacasPageState extends State<RacasPage> {
       await _carregarRacas();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(content: Text('Raça "$novoNome" atualizada com sucesso.')),
     );
   }
@@ -177,7 +178,7 @@ class _RacasPageState extends State<RacasPage> {
     if (_racaEstaEmUso(raca)) {
       final quantidade = _quantidadeAnimaisUsandoRaca(raca);
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(
             'Não é possível excluir "${raca.nome}". '
@@ -225,7 +226,7 @@ class _RacasPageState extends State<RacasPage> {
     }
 
     if (_racaEstaEmUso(raca)) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         const SnackBar(
           content: Text(
             'Essa raça passou a ser utilizada e não pode ser excluída.',
@@ -241,13 +242,13 @@ class _RacasPageState extends State<RacasPage> {
       await _carregarRacas();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(content: Text('Raça "${raca.nome}" excluída com sucesso.')),
     );
   }
