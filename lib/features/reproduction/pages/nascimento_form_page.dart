@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
-
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../services/reproducao_service.dart';
 
