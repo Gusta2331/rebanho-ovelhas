@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
 
@@ -170,8 +171,7 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(mensagem)));
+    showAppSnackBar(context, SnackBar(content: Text(mensagem)));
   }
 
   void _mostrarErro(String mensagem, Object erro) {
@@ -179,7 +179,7 @@ class _AnimalTransferPageState extends State<AnimalTransferPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(
         content: Text('$mensagem\n$erro'),
         duration: const Duration(seconds: 5),
