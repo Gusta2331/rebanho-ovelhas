@@ -132,7 +132,7 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
 
   String _dataFormatada(DateTime data) =>
       '${data.day.toString().padLeft(2, "0")}/'
-      '${data.month.toString().padLeft(2, '0')}/${data.year}';
+      '${data.month.toString().padLeft(2, "0")}/${data.year}';
 
   String _dinheiro(dynamic valor) {
     final numero = valor is num
