@@ -86,15 +86,12 @@ Deno.serve(async (request) => {
           title: `Plano OviGestão: ${plan.nome}`,
           quantity: 1,
           unit_price: amount.toFixed(2),
-          total_amount: amount.toFixed(2),
-          unit_measure: 'unit',
         }],
         config: {
           online: {
             retries: { allowed: false },
           },
           payment_method: {
-            default_type: 'credit_card',
             max_installments: 12,
             not_allowed_types: [
               'debit_card',
@@ -104,7 +101,6 @@ Deno.serve(async (request) => {
               'atm',
               'digital_currency',
               'account_money',
-              'voucher_card',
             ],
           },
         },
