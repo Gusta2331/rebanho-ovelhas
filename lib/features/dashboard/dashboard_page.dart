@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/widgets/app_asset_icon.dart';
+import '../../core/widgets/app_snackbar.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/contextual_help.dart';
@@ -399,7 +400,7 @@ case TipoManejo.outro:
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(
         content: Text('Lote "${rebanhoCriado.nome}" criado com sucesso.'),
       ),
@@ -493,8 +494,7 @@ case TipoManejo.outro:
   }
 
   void _mostrarErro(Object error) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(_mensagemErro(error))));
+    showAppSnackBar(context, SnackBar(content: Text(_mensagemErro(error))));
   }
 
   String _mensagemErro(Object error) {
