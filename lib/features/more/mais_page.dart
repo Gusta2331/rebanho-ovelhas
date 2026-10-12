@@ -5,6 +5,7 @@ import '../../core/widgets/contextual_help.dart';
 import '../../core/widgets/app_asset_icon.dart';
 import '../admin/pages/admin_producers_page.dart';
 import '../farmacia/pages/farmacia_page.dart';
+import '../plans/pages/meu_plano_page.dart';
 import '../financeiro/pages/financeiro_page.dart';
 import 'configuracoes_page.dart';
 import '../manejo/pages/manejo_agenda_page.dart';
@@ -17,6 +18,12 @@ class MaisPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final itens = [
+      _Item(
+        titulo: 'Meu plano',
+        descricao: 'Consulte sua assinatura, validade e contrate planos',
+        icone: Icons.credit_card_outlined,
+        onTap: () => _abrir(context, const MeuPlanoPage()),
+      ),
       _Item(
         assetPath: 'assets/images/icon_agenda.png',
         titulo: 'Agenda de manejo',
@@ -111,10 +118,12 @@ class MaisPage extends StatelessWidget {
               leading: CircleAvatar(
                 backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.10),
                 foregroundColor: AppTheme.primaryColor,
-                child: AppAssetIcon(
-                  assetPath: item.assetPath,
-                  size: 30,
-                ),
+                child: item.icone != null
+                    ? Icon(item.icone, size: 30)
+                    : AppAssetIcon(
+                        assetPath: item.assetPath!,
+                        size: 30,
+                      ),
               ),
               title: Text(
                 item.titulo,
@@ -136,13 +145,15 @@ class MaisPage extends StatelessWidget {
 }
 
 class _Item {
-  final String assetPath;
+  final String? assetPath;
+  final IconData? icone;
   final String titulo;
   final String descricao;
   final VoidCallback onTap;
 
   const _Item({
-    required this.assetPath,
+    this.assetPath,
+    this.icone,
     required this.titulo,
     required this.descricao,
     required this.onTap,
