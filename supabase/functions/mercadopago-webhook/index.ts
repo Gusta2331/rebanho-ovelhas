@@ -45,7 +45,7 @@ Deno.serve(async (request) => {
     }
 
     // Manifesto oficial do Mercado Pago para notificações Webhooks.
-    const manifest = `id:${dataId.toLowerCase()};request-id:${xRequestId};ts:${timestamp};`
+    const manifest = `id:${dataId};request-id:${xRequestId};ts:${timestamp};`
     const key = await crypto.subtle.importKey(
       'raw',
       new TextEncoder().encode(webhookSecret),
