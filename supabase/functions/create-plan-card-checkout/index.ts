@@ -103,7 +103,7 @@ Deno.serve(async (request) => {
               'bank_transfer',
               'atm',
               'digital_currency',
-              'digital_wallet',
+              'account_money',
               'voucher_card',
             ],
           },
