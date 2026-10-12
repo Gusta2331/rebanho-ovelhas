@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 
 import '../../../core/theme/app_theme.dart';
@@ -285,9 +286,7 @@ class _ReproductionDetailsPageState extends State<ReproductionDetailsPage> {
   }
 
   void _snack(String texto, {bool erro = false}) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
+    showAppSnackBar(context, 
         SnackBar(
           content: Text(texto),
           backgroundColor: erro ? Colors.red : null,
