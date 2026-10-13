@@ -223,7 +223,13 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
         _mensagem('Não foi possível abrir o checkout. Tente novamente.');
         return;
       }
-      _mensagem('Finalize o pagamento no Mercado Pago e depois volte ao OviGestão para verificar.');
+      await _mostrarStatusCartao({
+        'id': resultado['pagamento_id']?.toString() ?? '',
+        'nome': resultado['plano_nome']?.toString() ?? 'Plano',
+        'valor': resultado['valor'],
+        'status': resultado['status']?.toString() ?? 'pendente',
+        'checkout_url': checkoutUrl,
+      });
     } catch (error) {
       if (mounted) {
         _mensagem(error.toString().replaceFirst('Exception: ', ''));
@@ -236,6 +242,135 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
         });
       }
     }
+  }
+
+  Future<void> _mostrarStatusCartao(Map<String, dynamic> pagamento) async {
+    final pagamentoId = pagamento['id']?.toString() ?? '';
+    final nomePlano = pagamento['nome']?.toString() ?? 'Plano';
+    final valor = _dinheiro(pagamento['valor']);
+    final checkoutUrl = pagamento['checkout_url']?.toString() ?? '';
+    var status = pagamento['status']?.toString() ?? 'pendente';
+    var mensagem = 'Finalize o pagamento no Mercado Pago. Depois, toque em verificar para confirmar a ativação do seu plano.';
+    var verificando = false;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: status == 'aprovado',
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (contextoDialogo, atualizarDialogo) {
+          final aprovado = status == 'aprovado';
+          final recusado = status == 'rejeitado' || status == 'cancelado';
+          return AlertDialog(
+            icon: Icon(
+              aprovado
+                  ? Icons.check_circle_outline
+                  : recusado
+                      ? Icons.error_outline
+                      : Icons.hourglass_top_rounded,
+              size: 42,
+              color: aprovado
+                  ? Colors.green
+                  : recusado
+                      ? Theme.of(context).colorScheme.error
+                      : Colors.orange,
+            ),
+            title: Text(
+              aprovado
+                  ? 'Pagamento aprovado!'
+                  : recusado
+                      ? 'Pagamento não aprovado'
+                      : 'Aguardando confirmação',
+              textAlign: TextAlign.center,
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    nomePlano,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    valor,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    aprovado
+                        ? 'O Mercado Pago confirmou o pagamento e seu plano foi ativado. Você já pode continuar usando o OviGestão.'
+                        : recusado
+                            ? mensagem
+                            : mensagem,
+                    textAlign: TextAlign.center,
+                  ),
+                  if (verificando) ...[
+                    const SizedBox(height: 14),
+                    const CircularProgressIndicator(),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              if (!aprovado && !recusado && checkoutUrl.isNotEmpty)
+                TextButton.icon(
+                  onPressed: verificando
+                      ? null
+                      : () async {
+                          await _abrirCheckoutExistente(checkoutUrl);
+                        },
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Continuar pagamento'),
+                ),
+              if (!aprovado && !recusado)
+                FilledButton.icon(
+                  onPressed: verificando || pagamentoId.isEmpty
+                      ? null
+                      : () async {
+                          atualizarDialogo(() {
+                            verificando = true;
+                            mensagem = 'Consultando o Mercado Pago...';
+                          });
+                          try {
+                            final resultado =
+                                await _service.verificarPagamento(pagamentoId);
+                            if (!mounted) return;
+                            final novoStatus =
+                                resultado['status']?.toString() ?? 'pendente';
+                            await _carregar();
+                            if (!mounted) return;
+                            atualizarDialogo(() {
+                              status = novoStatus;
+                              mensagem = resultado['mensagem']?.toString() ??
+                                  'O pagamento ainda não foi confirmado. Tente novamente em alguns instantes.';
+                              verificando = false;
+                            });
+                          } catch (error) {
+                            if (!mounted) return;
+                            atualizarDialogo(() {
+                              mensagem = error
+                                  .toString()
+                                  .replaceFirst('Exception: ', '');
+                              verificando = false;
+                            });
+                          }
+                        },
+                  icon: const Icon(Icons.verified_outlined),
+                  label: Text(
+                    verificando ? 'Verificando...' : 'Verificar pagamento',
+                  ),
+                ),
+              if (aprovado || recusado)
+                FilledButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Voltar ao Meu Plano'),
+                ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _abrirCheckoutExistente(String url) async {
