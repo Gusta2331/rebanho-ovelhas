@@ -7,6 +7,7 @@ import '../../../core/offline/connectivity_service.dart';
 import '../../../core/offline/offline_store.dart';
 import '../../../core/offline/offline_sync_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../utils/brinco_rules.dart';
 
 class AnimalService {
   SupabaseClient get _client => SupabaseService.client;
@@ -278,26 +279,7 @@ class AnimalService {
 
   Future<int> getMenorBrincoDisponivel() async {
     final animais = await getTodosAnimais();
-
-    final brincosUsados = <int>{};
-
-    for (final animal in animais) {
-      final brinco = animal['brinco'];
-
-      if (brinco is int) {
-        brincosUsados.add(brinco);
-      } else if (brinco is num) {
-        brincosUsados.add(brinco.toInt());
-      }
-    }
-
-    var numero = 1;
-
-    while (brincosUsados.contains(numero)) {
-      numero++;
-    }
-
-    return numero;
+    return menorBrincoDisponivel(animais);
   }
 
   Future<Map<String, dynamic>?> _buscarRacaPorNome(
