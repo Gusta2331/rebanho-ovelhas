@@ -23,6 +23,7 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
   String? _erro;
   String? _gerandoPlanoId;
   String? _planoSelecionadoId;
+  bool _mostrarSeletorMudanca = false;
   String? _metodoGeracao;
   String? _verificandoPagamentoId;
 
@@ -724,6 +725,46 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
                 ],
               ),
             ],
+            if (!gratuito) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _gerandoPlanoId != null
+                      ? null
+                      : () => _gerarPix(plano),
+                  icon: const Icon(Icons.qr_code_2),
+                  label: const Text('Renovar com Pix'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _gerandoPlanoId != null
+                      ? null
+                      : () => _gerarCheckoutCartao(plano),
+                  icon: const Icon(Icons.credit_card_outlined),
+                  label: const Text('Renovar com cartão'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => setState(
+                  () => _mostrarSeletorMudanca = !_mostrarSeletorMudanca,
+                ),
+                icon: Icon(
+                  _mostrarSeletorMudanca
+                      ? Icons.expand_less
+                      : Icons.expand_more,
+                ),
+                label: Text(
+                  _mostrarSeletorMudanca
+                      ? 'Fechar opções de mudança'
+                      : 'Deseja mudar de plano?',
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -1194,8 +1235,11 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
                     children: [
                       _buildPlanoAtual(),
-                      const SizedBox(height: 12),
-                      _buildCatalogo(),
+                      if (_ehGratuito(_planoAtual ?? const {}) ||
+                          _mostrarSeletorMudanca) ...[
+                        const SizedBox(height: 8),
+                        _buildCatalogo(),
+                      ],
                       _buildPagamentos(),
                       if (_erro != null) ...[
                         const SizedBox(height: 8),
