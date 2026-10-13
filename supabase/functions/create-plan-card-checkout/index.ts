@@ -56,7 +56,6 @@ Deno.serve(async (request) => {
       .select('id')
       .eq('proprietario_id', user.id)
       .eq('ativo', true)
-      .order('criado_em', { ascending: true })
       .limit(1)
       .maybeSingle()
 
@@ -99,7 +98,7 @@ Deno.serve(async (request) => {
       } else if (tabela > precoAtual) {
         tipoOperacao = 'upgrade'
         diasRestantes = Math.max(1, Math.ceil((validadeAtual!.getTime() - Date.now()) / 86400000))
-        amount = Math.round(((tabela - precoAtual) * Math.min(diasRestantes, 30) / 30) * 100) / 100
+        amount = Math.round(((tabela - precoAtual) * diasRestantes / 30) * 100) / 100
       }
     }
 
