@@ -66,9 +66,13 @@ begin
     where fazenda_id = v_fazenda_id;
 
     if v_pagamento.tipo_operacao = 'upgrade' then
-      -- O upgrade troca o limite somente após aprovação e preserva o vencimento.
-      if v_validade_atual is null or v_validade_atual <= now() then
-        raise exception 'A validade do plano mudou durante o pagamento. Entre em contato com o suporte antes de tentar novamente.';
+      -- Não aplicar um pagamento criado para uma assinatura que mudou enquanto
+      -- o cliente estava no checkout. Isso evita trocar o plano errado.
+      if v_plano_atual_id is distinct from v_pagamento.plano_anterior_id
+        or v_validade_atual is distinct from v_pagamento.validade_anterior
+        or v_validade_atual is null
+        or v_validade_atual <= now() then
+        raise exception 'A assinatura mudou durante o pagamento. O plano não foi alterado; entre em contato com o suporte para verificar a cobrança.';
       end if;
       v_validade_final := v_validade_atual;
     elsif v_pagamento.tipo_operacao = 'renovacao'
@@ -95,8 +99,11 @@ begin
     where usuario_id = v_pagamento.usuario_id;
 
     if v_pagamento.tipo_operacao = 'upgrade' then
-      if v_validade_atual is null or v_validade_atual <= now() then
-        raise exception 'A validade do plano mudou durante o pagamento. Entre em contato com o suporte antes de tentar novamente.';
+      if v_plano_atual_id is distinct from v_pagamento.plano_anterior_id
+        or v_validade_atual is distinct from v_pagamento.validade_anterior
+        or v_validade_atual is null
+        or v_validade_atual <= now() then
+        raise exception 'A assinatura mudou durante o pagamento. O plano não foi alterado; entre em contato com o suporte para verificar a cobrança.';
       end if;
       v_validade_final := v_validade_atual;
     elsif v_pagamento.tipo_operacao = 'renovacao'
