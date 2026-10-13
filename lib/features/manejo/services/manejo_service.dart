@@ -807,6 +807,7 @@ class ManejoService {
     required DateTime data,
     int? famachaEscore,
     double? escoreCorporal,
+    bool atualizarEscoreCorporal = false,
     String? denticao,
     DateTime? denticaoData,
     String? observacoes,
@@ -890,6 +891,10 @@ class ManejoService {
           ..remove('id')
           ..remove('fazenda_id');
 
+    if (!atualizarEscoreCorporal) {
+      dados.remove('escore_corporal');
+    }
+
     if (!_connectivity.isOnline) {
       await OfflineSyncService.instance.enfileirar(
         tipo: 'manejo.atualizar',
@@ -911,11 +916,13 @@ class ManejoService {
         'p_dados': {'id': id, 'fazenda_id': fazendaId, ...dados},
       },
     );
-    // A RPC mantém o controle de estoque. Esta coluna nova é atualizada à parte
-    // para continuar compatível com a função de estoque já implantada.
-    await _client.from('manejos').update({
-      'escore_corporal': tipo == TipoManejo.escoreCorporal ? escoreCorporal : null,
-    }).eq('id', id).eq('fazenda_id', fazendaId);
+    // A RPC mantém o controle de estoque. Atualizamos a nova coluna à parte
+    // somente quando a avaliação corporal entra ou sai do registro.
+    if (atualizarEscoreCorporal) {
+      await _client.from('manejos').update({
+        'escore_corporal': tipo == TipoManejo.escoreCorporal ? escoreCorporal : null,
+      }).eq('id', id).eq('fazenda_id', fazendaId);
+    }
   }
 
   Future<void> excluirManejo(String id) async {

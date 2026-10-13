@@ -1080,6 +1080,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         data: _data,
         famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
         escoreCorporal: _tipo == TipoManejo.escoreCorporal ? _escoreCorporal : null,
+        atualizarEscoreCorporal: widget.manejo!.tipo == TipoManejo.escoreCorporal || _tipo == TipoManejo.escoreCorporal,
         denticao: _tipo == TipoManejo.denticao ? _denticaoSelecionada : null,
         denticaoData: _tipo == TipoManejo.denticao ? _data : null,
         observacoes: _observacoes.text,
