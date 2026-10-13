@@ -126,6 +126,10 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
                 title: 'FAMACHA',
                 description: 'A cor mostrada junto ao escore ajuda a localizar a classificação registrada.',
               ),
+              HelpTopic(
+                title: 'Escore corporal',
+                description: 'Registra a condição corporal observada na escala de 1 a 5, com intervalos de 0,5.',
+              ),
             ],
           ),
         ],
@@ -166,7 +170,9 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
                     ? Icons.visibility_outlined
                     : manejo.tipo == TipoManejo.denticao
                         ? Icons.health_and_safety_outlined
-                        : Icons.assignment_outlined,
+                        : manejo.tipo == TipoManejo.escoreCorporal
+                            ? Icons.monitor_weight_outlined
+                            : Icons.assignment_outlined,
                 color: AppTheme.primaryColor,
                 size: 42,
               ),
