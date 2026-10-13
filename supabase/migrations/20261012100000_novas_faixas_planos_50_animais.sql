@@ -28,18 +28,24 @@ set nome = excluded.nome,
 
 -- Reassocia os planos atuais à nova faixa equivalente, preservando validade e status.
 update public.planos_fazenda pf
-set plano_id = 'faixa_' || substring(pp.id from '^ate_(\\d+)$'),
+set plano_id = 'faixa_' || replace(pp.id, 'ate_', ''),
     atualizado_em = now()
 from public.planos_produtor pp
 where pp.id = pf.plano_id
-  and pp.id ~ '^ate_(100|200|300|400|500|600|700|800|900|1000)$';
+  and pp.id in (
+    'ate_100', 'ate_200', 'ate_300', 'ate_400', 'ate_500',
+    'ate_600', 'ate_700', 'ate_800', 'ate_900', 'ate_1000'
+  );
 
 update public.planos_pendentes_produtor p
-set plano_id = 'faixa_' || substring(pp.id from '^ate_(\\d+)$'),
+set plano_id = 'faixa_' || replace(pp.id, 'ate_', ''),
     atualizado_em = now()
 from public.planos_produtor pp
 where pp.id = p.plano_id
-  and pp.id ~ '^ate_(100|200|300|400|500|600|700|800|900|1000)$';
+  and pp.id in (
+    'ate_100', 'ate_200', 'ate_300', 'ate_400', 'ate_500',
+    'ate_600', 'ate_700', 'ate_800', 'ate_900', 'ate_1000'
+  );
 
 -- IDs antigos continuam no banco para preservar referências em pagamentos/histórico,
 -- mas deixam de ser oferecidos para novas contratações.
