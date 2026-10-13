@@ -10,6 +10,7 @@ import '../../flock/services/rebanho_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_programado_service.dart';
 import '../services/manejo_service.dart';
+import 'manejo_form_page.dart';
 import '../widgets/manejo_animal_selector.dart';
 
 class ManejoAgendaPage extends StatefulWidget {
@@ -205,6 +206,34 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
   }
 
   Future<void> _concluir(Map<String, dynamic> item) async {
+    if (Manejo.tipoFromString(item['tipo']?.toString()) ==
+        TipoManejo.escoreCorporal) {
+      final vinculos = item['manejos_programados_animais'];
+      final animalIds = vinculos is List
+          ? vinculos
+              .whereType<Map>()
+              .map((vinculo) => vinculo['animal_id']?.toString())
+              .whereType<String>()
+              .toSet()
+              .toList()
+          : <String>[];
+      if (animalIds.isEmpty) {
+        _msg('Não foi possível localizar os animais deste manejo programado.');
+        return;
+      }
+      final resultado = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => ManejoFormPage(
+            tipoInicial: TipoManejo.escoreCorporal,
+            dataInicial: _data(item),
+            animalIdsIniciais: animalIds,
+            selecaoAnimaisBloqueada: true,
+          ),
+        ),
+      );
+      if (resultado != true || !mounted) return;
+    }
+
     try {
       await _service.concluir(item['id'].toString());
       if (!mounted) return;
@@ -442,7 +471,11 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
                       FilledButton.icon(
                         onPressed: () => _concluir(item),
                         icon: const Icon(Icons.check, size: 18),
-                        label: const Text('Realizar'),
+                        label: Text(
+                          tipo == TipoManejo.escoreCorporal
+                              ? 'Registrar escore'
+                              : 'Realizar',
+                        ),
                       ),
                     if (status != 'Realizado')
                       OutlinedButton.icon(
