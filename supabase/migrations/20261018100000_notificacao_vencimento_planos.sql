@@ -4,7 +4,7 @@
 -- fica gravada nesta migration.
 
 create extension if not exists pg_cron with schema pg_catalog;
-create extension if not exists pg_net with schema extensions;
+create extension if not exists pg_net with schema net;
 
 create table if not exists public.notificacoes_planos_enviadas (
   id uuid primary key default gen_random_uuid(),
