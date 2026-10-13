@@ -63,7 +63,7 @@ class MeuPlanoService {
         .from('pagamentos_planos')
         .select(
           'id,plano_id,valor,status,metodo,qr_code,qr_code_base64,ticket_url,'
-          'expira_em,criado_em,planos_produtor(nome)',
+          'expira_em,criado_em,planos_produtor!pagamentos_planos_plano_id_fkey(nome)',
         )
         .eq('usuario_id', usuario.id)
         .eq('visivel_usuario', true)
