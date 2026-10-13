@@ -78,6 +78,63 @@ class MeuPlanoService {
     };
   }
 
+  Future<Map<String, dynamic>?> carregarResumoVencimento() async {
+    final usuario = _client.auth.currentUser;
+    if (usuario == null) return null;
+
+    final fazenda = await _client
+        .from('fazendas')
+        .select('id')
+        .eq('proprietario_id', usuario.id)
+        .eq('ativo', true)
+        .maybeSingle();
+
+    Map<String, dynamic>? atribuicao;
+    if (fazenda != null) {
+      final resultado = await _client
+          .from('planos_fazenda')
+          .select('status,validade_em,planos_produtor(nome,preco_mensal)')
+          .eq('fazenda_id', fazenda['id'])
+          .maybeSingle();
+      if (resultado != null) {
+        atribuicao = Map<String, dynamic>.from(resultado);
+      }
+    } else {
+      final resultado = await _client
+          .from('planos_pendentes_produtor')
+          .select('validade_em,planos_produtor(nome,preco_mensal)')
+          .eq('usuario_id', usuario.id)
+          .maybeSingle();
+      if (resultado != null) {
+        atribuicao = Map<String, dynamic>.from(resultado);
+      }
+    }
+
+    if (atribuicao == null) return null;
+    final planoRaw = atribuicao['planos_produtor'];
+    final plano = planoRaw is Map
+        ? Map<String, dynamic>.from(planoRaw)
+        : <String, dynamic>{};
+    final nome = plano['nome']?.toString() ?? 'Plano atual';
+    final preco = num.tryParse(plano['preco_mensal']?.toString() ?? '');
+    final gratuito = (preco != null && preco <= 0) ||
+        nome.toLowerCase().contains('grátis') ||
+        nome.toLowerCase().contains('gratuito') ||
+        nome.toLowerCase().contains('free');
+    final validadeRaw = atribuicao['validade_em']?.toString();
+    final validade = validadeRaw == null ? null : DateTime.tryParse(validadeRaw)?.toLocal();
+    final diasRestantes = validade == null
+        ? null
+        : (validade.difference(DateTime.now()).inSeconds / 86400).ceil().clamp(0, 36500);
+
+    return {
+      'nome': nome,
+      'gratuito': gratuito,
+      'validade_em': validadeRaw,
+      'dias_restantes': diasRestantes,
+      'vencido': validade != null && !validade.isAfter(DateTime.now()),
+    };
+  }
   Future<Map<String, dynamic>> gerarPix(String planoId) async {
     final response = await _client.functions.invoke(
       'create-plan-pix',
