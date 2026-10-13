@@ -144,7 +144,10 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
       _historicoManejos.where((manejo) => tipos.contains(manejo.tipo)).toList();
 
   Manejo? get _ultimoEscoreCorporal {
-    final registros = _manejosDoTipo({TipoManejo.escoreCorporal})..sort((a, b) => b.data.compareTo(a.data));
+    final registros = _historicoManejos
+        .where((manejo) => manejo.tipo == TipoManejo.escoreCorporal && manejo.escoreCorporal != null)
+        .toList()
+      ..sort((a, b) => b.data.compareTo(a.data));
     return registros.isEmpty ? null : registros.first;
   }
 

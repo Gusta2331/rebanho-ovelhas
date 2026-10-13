@@ -642,7 +642,9 @@ class _ManejosPageState extends State<ManejosPage> {
                         : _tituloRegistro(registro);
                     final subtitulo = agrupado
                         ? tipos.join(' • ')
-                        : _animal(registro);
+                        : manejo.tipo == TipoManejo.escoreCorporal && manejo.escoreCorporal != null
+                            ? _animal(registro) + ' • Escore corporal ' + manejo.escoreCorporal!.toString().replaceAll('.0', '').replaceAll('.', ',') + '/5'
+                            : _animal(registro);
 
                     Future<void> abrirDetalhes() async {
                       if (!mounted) return;
@@ -744,10 +746,6 @@ class _ManejosPageState extends State<ManejosPage> {
                                   manejo.tipo == TipoManejo.famacha &&
                                   manejo.famachaEscore != null)
                                 FamachaScoreBadge(score: manejo.famachaEscore!),
-                              if (!agrupado &&
-                                  manejo.tipo == TipoManejo.escoreCorporal &&
-                                  manejo.escoreCorporal != null)
-                                Chip(label: Text('EC ' + manejo.escoreCorporal!.toString().replaceAll('.0', '').replaceAll('.', ','))),
                               if (agrupado)
                                 const Icon(Icons.chevron_right)
                               else
