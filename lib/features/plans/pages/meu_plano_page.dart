@@ -1235,7 +1235,8 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
                     children: [
                       _buildPlanoAtual(),
-                      if (_ehGratuito(_planoAtual ?? const {}) ||
+                      if (_planoAtual == null ||
+                          _ehGratuito(_planoAtual ?? const {}) ||
                           _mostrarSeletorMudanca) ...[
                         const SizedBox(height: 8),
                         _buildCatalogo(),
