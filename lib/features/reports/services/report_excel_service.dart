@@ -367,7 +367,7 @@ class ReportExcelService {
   }
 
   Map<String, List<Map<String, dynamic>>> _manejoGroups(List<Map<String, dynamic>> registros) {
-    const order = ['pesagem', 'vacinacao', 'vermifugacao', 'tratamento', 'famacha', 'denticao', 'tosquia', 'outro'];
+    const order = ['pesagem', 'vacinacao', 'vermifugacao', 'tratamento', 'famacha', 'denticao', 'escore_corporal', 'tosquia', 'outro'];
     final groups = <String, List<Map<String, dynamic>>>{};
     for (final tipo in order) {
       final items = registros.where((r) => r['tipo']?.toString() == tipo).toList();
@@ -446,6 +446,7 @@ class ReportExcelService {
       case 'pesagem': return 'Pesagem';
       case 'famacha': return 'FAMACHA';
       case 'denticao': return 'Dentição';
+      case 'escore_corporal': return 'Escore corporal';
       default: return 'Outro';
     }
   }
@@ -480,6 +481,7 @@ class ReportExcelService {
       case 'vermifugacao': return 'Vermífugo: ' + _manejoText(r['vermifugo_nome']);
       case 'tratamento': return 'Medicamento: ' + _manejoText(r['medicamento_nome']);
       case 'denticao': return 'Dentição: ' + _manejoText(r['denticao']);
+      case 'escore_corporal': return 'Escore corporal: ' + _manejoText(r['escore_corporal']) + ' / 5';
       case 'tosquia': return 'Tosquia: ' + _manejoText(r['outro_nome']);
       default: return _manejoText(r['outro_nome']);
     }
