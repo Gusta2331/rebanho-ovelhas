@@ -58,6 +58,7 @@ Deno.serve(async (request) => {
         usuario_id: user.id,
         plano_id: plan.id,
         valor: amount,
+        duracao_dias: 30,
         status: 'criado',
       })
       .select('id')
