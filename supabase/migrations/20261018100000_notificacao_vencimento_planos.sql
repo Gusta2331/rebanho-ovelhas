@@ -3,6 +3,9 @@
 -- A chave já usada pelos alertas da farmácia é reutilizada; nenhuma credencial
 -- fica gravada nesta migration.
 
+create extension if not exists pg_cron with schema pg_catalog;
+create extension if not exists pg_net with schema extensions;
+
 create table if not exists public.notificacoes_planos_enviadas (
   id uuid primary key default gen_random_uuid(),
   fazenda_id uuid not null references public.fazendas(id) on delete cascade,
@@ -73,14 +76,6 @@ revoke all on function public.disparar_notificacao_vencimento_planos()
 -- Evita criar agendamentos duplicados ao reaplicar a migration.
 do $$
 begin
-  if not exists (select 1 from pg_extension where extname = 'pg_cron') then
-    create extension pg_cron with schema pg_catalog;
-  end if;
-
-  if not exists (select 1 from pg_extension where extname = 'pg_net') then
-    create extension pg_net with schema extensions;
-  end if;
-
   if exists (select 1 from cron.job where jobname = 'ovigestao-alerta-vencimento-planos') then
     perform cron.unschedule('ovigestao-alerta-vencimento-planos');
   end if;
