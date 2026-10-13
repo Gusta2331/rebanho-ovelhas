@@ -1031,6 +1031,7 @@ class ManejoService {
   void _validarDados({
     required TipoManejo tipo,
     int? famachaEscore,
+    double? escoreCorporal,
     String? vacinaId,
     String? vacinaNome,
     String? vacinaFabricante,
