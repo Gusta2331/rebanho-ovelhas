@@ -22,6 +22,7 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
   bool _carregando = true;
   String? _erro;
   String? _gerandoPlanoId;
+  String? _planoSelecionadoId;
   String? _metodoGeracao;
   String? _verificandoPagamentoId;
 
@@ -733,102 +734,148 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
     final planosPagos = _catalogo.where((plano) {
       final preco = _numero(plano['preco_mensal']);
       return !_ehGratuito(plano) && preco != null && preco > 0;
-    }).toList();
+    }).toList()
+      ..sort((a, b) {
+        final limiteA = _numero(a['limite_animais']) ?? double.infinity;
+        final limiteB = _numero(b['limite_animais']) ?? double.infinity;
+        return limiteA.compareTo(limiteB);
+      });
 
     final personalizados = _catalogo.where((plano) {
       return plano['limite_animais'] == null &&
           _numero(plano['preco_mensal']) == null;
     }).toList();
 
+    final planoSelecionado = planosPagos.cast<Map<String, dynamic>?>().firstWhere(
+      (plano) => plano?['id']?.toString() == _planoSelecionadoId,
+      orElse: () => null,
+    );
+
+    final id = planoSelecionado?['id']?.toString();
+    final limite = planoSelecionado?['limite_animais'];
+    final gerando = id != null && _gerandoPlanoId == id;
+    final gerandoPix = gerando && _metodoGeracao == 'pix';
+    final gerandoCartao = gerando && _metodoGeracao == 'cartao_credito';
+    final atual = id != null && _planoAtual?['id']?.toString() == id;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(4, 8, 4, 10),
-          child: Text(
-            'Planos disponíveis',
+        ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+          title: const Text(
+            'Escolher plano',
             style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
           ),
-        ),
-        if (planosPagos.isEmpty)
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Não há planos pagos disponíveis para contratação no momento.'),
-            ),
-          ),
-        ...planosPagos.map((plano) {
-          final id = plano['id'].toString();
-          final limite = plano['limite_animais'];
-          final gerando = _gerandoPlanoId == id;
-          final gerandoPix = gerando && _metodoGeracao == 'pix';
-          final gerandoCartao = gerando && _metodoGeracao == 'cartao_credito';
-          final atual = _planoAtual?['id']?.toString() == id;
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.credit_card_outlined, color: AppTheme.primaryColor, size: 28),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+          subtitle: const Text('Selecione quantos animais você precisa cadastrar'),
+          children: [
+            if (planosPagos.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(12),
+                child: Text('Não há planos pagos disponíveis para contratação no momento.'),
+              )
+            else ...[
+              DropdownButtonFormField<String>(
+                value: planosPagos.any(
+                  (plano) => plano['id']?.toString() == _planoSelecionadoId,
+                )
+                    ? _planoSelecionadoId
+                    : null,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Quantidade de animais',
+                  border: OutlineInputBorder(),
+                ),
+                hint: const Text('Escolha o limite do plano'),
+                items: planosPagos.map((plano) {
+                  final planoId = plano['id'].toString();
+                  final limitePlano = plano['limite_animais'];
+                  final quantidade = limitePlano == null
+                      ? 'Limite personalizado'
+                      : 'Até $limitePlano animais';
+                  return DropdownMenuItem<String>(
+                    value: planoId,
+                    child: Text(
+                      '$quantidade • ${_dinheiro(plano['preco_mensal'])}/mês',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }).toList(),
+                onChanged: _gerandoPlanoId != null
+                    ? null
+                    : (novoId) => setState(() => _planoSelecionadoId = novoId),
+              ),
+              if (planoSelecionado != null) ...[
+                const SizedBox(height: 12),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Text(
-                              plano['nome']?.toString() ?? 'Plano',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            Icon(Icons.credit_card_outlined, color: AppTheme.primaryColor, size: 28),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    planoSelecionado['nome']?.toString() ?? 'Plano',
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(limite == null ? 'Limite personalizado' : 'Até $limite animais ativos'),
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(limite == null ? 'Limite personalizado' : 'Até $limite animais ativos'),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${_dinheiro(planoSelecionado['preco_mensal'])}/mês',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ],
                         ),
-                      ),
-                      Text(
-                        '${_dinheiro(plano['preco_mensal'])}/mês',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _gerandoPlanoId != null ? null : () => _gerarPix(plano),
-                      icon: gerandoPix
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.qr_code_2),
-                      label: Text(gerandoPix ? 'Gerando Pix...' : atual ? 'Renovar com Pix' : 'Contratar com Pix'),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: _gerandoPlanoId != null ? null : () => _gerarPix(planoSelecionado),
+                            icon: gerandoPix
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.qr_code_2),
+                            label: Text(gerandoPix ? 'Gerando Pix...' : atual ? 'Renovar com Pix' : 'Contratar com Pix'),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _gerandoPlanoId != null ? null : () => _gerarCheckoutCartao(planoSelecionado),
+                            icon: gerandoCartao
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.credit_card_outlined),
+                            label: Text(gerandoCartao ? 'Preparando checkout...' : 'Contratar com cartão de crédito'),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _gerandoPlanoId != null ? null : () => _gerarCheckoutCartao(plano),
-                      icon: gerandoCartao
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.credit_card_outlined),
-                      label: Text(gerandoCartao ? 'Preparando checkout...' : 'Contratar com cartão de crédito'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
+                ),
+              ],
+            ],
+          ],
+        ),
         ...personalizados.map(
           (plano) => Card(
             child: ListTile(
