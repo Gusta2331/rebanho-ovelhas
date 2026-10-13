@@ -47,9 +47,65 @@ Deno.serve(async (request) => {
     if (planError) throw planError
     if (!plan) return json({ error: 'O plano selecionado não existe ou está indisponível.' }, 400)
 
-    const amount = Number(plan.preco_mensal)
-    if (!Number.isFinite(amount) || amount <= 0) {
+    const tabela = Number(plan.preco_mensal)
+    if (!Number.isFinite(tabela) || tabela <= 0) {
       return json({ error: 'Este plano não possui preço válido para pagamento.' }, 400)
+    }
+
+    // Lê a assinatura atual no servidor. O cliente não pode informar preço nem vencimento.
+    const { data: farm } = await admin.from('fazendas')
+      .select('id')
+      .eq('proprietario_id', user.id)
+      .eq('ativo', true)
+      .order('criado_em', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    let atribuicao: { plano_id: string; validade_em: string | null; planos_produtor: unknown } | null = null
+    if (farm) {
+      const { data, error } = await admin.from('planos_fazenda')
+        .select('plano_id,validade_em,planos_produtor(preco_mensal,limite_animais)')
+        .eq('fazenda_id', farm.id)
+        .maybeSingle()
+      if (error) throw error
+      atribuicao = data as typeof atribuicao
+    } else {
+      const { data, error } = await admin.from('planos_pendentes_produtor')
+        .select('plano_id,validade_em,planos_produtor(preco_mensal,limite_animais)')
+        .eq('usuario_id', user.id)
+        .maybeSingle()
+      if (error) throw error
+      atribuicao = data as typeof atribuicao
+    }
+
+    const atualRaw = atribuicao?.planos_produtor
+    const atual = Array.isArray(atualRaw) ? atualRaw[0] : atualRaw
+    const precoAtual = atual && typeof atual === 'object'
+      ? Number((atual as { preco_mensal?: unknown }).preco_mensal)
+      : 0
+    const validadeAtual = atribuicao?.validade_em ? new Date(atribuicao.validade_em) : null
+    const assinaturaAtiva = validadeAtual !== null &&
+      Number.isFinite(validadeAtual.getTime()) && validadeAtual.getTime() > Date.now()
+    let tipoOperacao: 'contratacao' | 'renovacao' | 'upgrade' = 'contratacao'
+    let amount = Math.round(tabela * 100) / 100
+    let diasRestantes = 30
+
+    if (atribuicao && assinaturaAtiva && Number.isFinite(precoAtual) && precoAtual > 0) {
+      if (atribuicao.plano_id === plan.id) {
+        tipoOperacao = 'renovacao'
+      } else if (tabela < precoAtual) {
+        return json({
+          error: 'O downgrade será agendado para o vencimento do plano atual. Essa opção ainda está sendo preparada e nenhuma cobrança foi criada.',
+        }, 409)
+      } else if (tabela > precoAtual) {
+        tipoOperacao = 'upgrade'
+        diasRestantes = Math.max(1, Math.ceil((validadeAtual!.getTime() - Date.now()) / 86400000))
+        amount = Math.round(((tabela - precoAtual) * Math.min(diasRestantes, 30) / 30) * 100) / 100
+      }
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return json({ error: 'O valor calculado para esta alteração não é válido. Atualize seu plano e tente novamente.' }, 400)
     }
 
     const { data: payment, error: insertError } = await admin
@@ -58,7 +114,11 @@ Deno.serve(async (request) => {
         usuario_id: user.id,
         plano_id: plan.id,
         valor: amount,
-        duracao_dias: 30,
+        duracao_dias: tipoOperacao === 'upgrade' ? diasRestantes : 30,
+        tipo_operacao: tipoOperacao,
+        plano_anterior_id: atribuicao?.plano_id ?? null,
+        validade_anterior: assinaturaAtiva ? validadeAtual!.toISOString() : null,
+        valor_tabela: tabela,
         status: 'criado',
       })
       .select('id')
