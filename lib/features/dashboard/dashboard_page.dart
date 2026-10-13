@@ -327,7 +327,9 @@ class _DashboardPageState extends State<DashboardPage> {
         return 'FAMACHA';
       case TipoManejo.denticao:
         return 'Dentição';
-case TipoManejo.outro:
+      case TipoManejo.escoreCorporal:
+        return 'Escore corporal';
+      case TipoManejo.outro:
         return 'Outro';
     }
   }
