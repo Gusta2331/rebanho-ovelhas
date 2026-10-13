@@ -185,6 +185,44 @@ async function enviarParaDispositivos(
   let falhas = 0
 
   for (const device of devices) {
+    const dispositivoId = String(device.id)
+    const { data: tentativaAnterior, error: consultaError } = await supabase
+      .from('notificacoes_planos_dispositivos')
+      .select('status,tentativas')
+      .eq('notificacao_id', reservaId)
+      .eq('dispositivo_id', dispositivoId)
+      .maybeSingle()
+
+    if (consultaError) {
+      falhas++
+      console.error('Falha ao consultar histórico do dispositivo', device.id, consultaError)
+      continue
+    }
+
+    // Dispositivos que já receberam o aviso não recebem uma cópia caso outro
+    // aparelho falhe e precise de nova tentativa.
+    if (tentativaAnterior?.status === 'enviado') {
+      enviados++
+      continue
+    }
+
+    const { error: reservaDispositivoError } = await supabase
+      .from('notificacoes_planos_dispositivos')
+      .upsert({
+        notificacao_id: reservaId,
+        dispositivo_id: dispositivoId,
+        status: 'processando',
+        tentativas: Number(tentativaAnterior?.tentativas ?? 0) + 1,
+        erro: null,
+        atualizado_em: new Date().toISOString(),
+      }, { onConflict: 'notificacao_id,dispositivo_id' })
+
+    if (reservaDispositivoError) {
+      falhas++
+      console.error('Falha ao registrar tentativa do dispositivo', device.id, reservaDispositivoError)
+      continue
+    }
+
     try {
       await getMessaging().send({
         token: device.fcm_token,
@@ -199,9 +237,38 @@ async function enviarParaDispositivos(
         },
         android: { priority: 'high' },
       })
+
+      const { error: sucessoError } = await supabase
+        .from('notificacoes_planos_dispositivos')
+        .update({
+          status: 'enviado',
+          erro: null,
+          enviado_em: new Date().toISOString(),
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq('notificacao_id', reservaId)
+        .eq('dispositivo_id', dispositivoId)
+
+      if (sucessoError) {
+        falhas++
+        console.error('Aviso enviado, mas não foi possível registrar o sucesso', device.id, sucessoError)
+        continue
+      }
+
       enviados++
     } catch (error) {
       falhas++
+      const mensagemErro = String(error).slice(0, 1000)
+      await supabase
+        .from('notificacoes_planos_dispositivos')
+        .update({
+          status: 'erro',
+          erro: mensagemErro,
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq('notificacao_id', reservaId)
+        .eq('dispositivo_id', dispositivoId)
+
       console.error('Falha ao enviar para token', device.id, error)
     }
   }
@@ -209,10 +276,10 @@ async function enviarParaDispositivos(
   const { error: updateError } = await supabase
     .from('notificacoes_planos_enviadas')
     .update({
-      status: enviados > 0 ? 'enviado' : 'erro',
+      status: falhas > 0 ? 'erro' : 'enviado',
       enviados,
-      erro: falhas > 0 ? `${falhas} dispositivo(s) não receberam o aviso.` : null,
-      enviado_em: enviados > 0 ? new Date().toISOString() : null,
+      erro: falhas > 0 ? `${falhas} dispositivo(s) precisam de nova tentativa.` : null,
+      enviado_em: falhas === 0 && enviados > 0 ? new Date().toISOString() : null,
       atualizado_em: new Date().toISOString(),
     })
     .eq('id', reservaId)
