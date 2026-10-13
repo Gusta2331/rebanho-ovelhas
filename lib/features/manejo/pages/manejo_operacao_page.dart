@@ -815,6 +815,8 @@ class _ManejoOperacaoAnimaisPageState
         return 'FAMACHA';
       case TipoManejo.denticao:
         return 'Dentição';
+      case TipoManejo.escoreCorporal:
+        return 'Escore corporal';
       case TipoManejo.outro:
         return 'Outro';
     }
@@ -836,6 +838,8 @@ class _ManejoOperacaoAnimaisPageState
         return Icons.visibility_outlined;
       case TipoManejo.denticao:
         return Icons.health_and_safety_outlined;
+      case TipoManejo.escoreCorporal:
+        return Icons.monitor_weight_outlined;
       case TipoManejo.outro:
         return Icons.assignment_outlined;
     }

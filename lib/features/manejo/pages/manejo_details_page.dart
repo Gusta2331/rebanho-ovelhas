@@ -66,9 +66,19 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
         return 'FAMACHA';
       case TipoManejo.denticao:
         return 'Dentição';
+      case TipoManejo.escoreCorporal:
+        return 'Escore corporal';
       case TipoManejo.outro:
         return 'Outro';
     }
+  }
+
+  String _descricaoEscoreCorporal(double valor) {
+    if (valor <= 1.5) return 'Muito magra';
+    if (valor <= 2.5) return 'Magra';
+    if (valor <= 3.5) return 'Condição adequada';
+    if (valor <= 4.5) return 'Gorda';
+    return 'Muito gorda';
   }
 
   String _data(dynamic valor) {
@@ -194,6 +204,8 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
               ),
             ),
           ),
+        if (manejo.tipo == TipoManejo.escoreCorporal && manejo.escoreCorporal != null)
+          _item('Escore corporal', manejo.escoreCorporal!.toString().replaceAll('.0', '').replaceAll('.', ',') + ' / 5 • ' + _descricaoEscoreCorporal(manejo.escoreCorporal!), Icons.monitor_weight_outlined),
         if (manejo.tipo == TipoManejo.denticao && manejo.denticao != null)
           _item(
             'Condição da dentição',

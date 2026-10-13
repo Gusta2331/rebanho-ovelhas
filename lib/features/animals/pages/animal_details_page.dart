@@ -143,6 +143,11 @@ class _AnimalDetailsPageState extends State<AnimalDetailsPage> {
   List<Manejo> _manejosDoTipo(Set<TipoManejo> tipos) =>
       _historicoManejos.where((manejo) => tipos.contains(manejo.tipo)).toList();
 
+  Manejo? get _ultimoEscoreCorporal {
+    final registros = _manejosDoTipo({TipoManejo.escoreCorporal})..sort((a, b) => b.data.compareTo(a.data));
+    return registros.isEmpty ? null : registros.first;
+  }
+
   String _detalhesManejo(Manejo manejo) {
     final partes = <String>[];
     switch (manejo.tipo) {
@@ -180,6 +185,11 @@ case TipoManejo.outro:
         if (manejo.famachaEscore != null) {
           partes.add('FAMACHA ${manejo.famachaEscore}');
         }
+      case TipoManejo.escoreCorporal:
+        if (manejo.escoreCorporal != null) {
+          partes.add('Escore corporal ' + manejo.escoreCorporal!.toString().replaceAll('.0', '').replaceAll('.', ',') + ' / 5');
+          partes.add(_descricaoEscoreCorporal(manejo.escoreCorporal!));
+        }
     }
     if (manejo.dose != null) {
       partes.add(
@@ -188,6 +198,14 @@ case TipoManejo.outro:
     }
     if (manejo.observacoes != null) partes.add(manejo.observacoes!);
     return partes.join(' · ');
+  }
+
+  String _descricaoEscoreCorporal(double valor) {
+    if (valor <= 1.5) return 'Muito magra';
+    if (valor <= 2.5) return 'Magra';
+    if (valor <= 3.5) return 'Condição adequada';
+    if (valor <= 4.5) return 'Gorda';
+    return 'Muito gorda';
   }
 
   String _tituloManejo(Manejo manejo) {
@@ -206,6 +224,8 @@ case TipoManejo.outro:
         return 'Avaliação FAMACHA';
       case TipoManejo.denticao:
         return 'Avaliação de dentição';
+      case TipoManejo.escoreCorporal:
+        return 'Avaliação de escore corporal';
       case TipoManejo.outro:
         return manejo.outroNome ?? 'Outro manejo';
     }
@@ -924,6 +944,13 @@ case TipoManejo.outro:
                   value: _racaFichaTexto(),
                 ),
                 _buildInfoRow(
+                  icon: Icons.monitor_weight_outlined,
+                  label: 'Último escore corporal',
+                  value: _ultimoEscoreCorporal == null
+                      ? 'Não avaliado'
+                      : _ultimoEscoreCorporal!.escoreCorporal!.toString().replaceAll('.0', '').replaceAll('.', ',') + ' / 5 • ' + _descricaoEscoreCorporal(_ultimoEscoreCorporal!.escoreCorporal!) + ' (' + _dataTexto(_ultimoEscoreCorporal!.data) + ')',
+                ),
+                _buildInfoRow(
                   icon: Icons.health_and_safety_outlined,
                   label: 'Dentição',
                   value: _animal.denticao ?? 'Não informada',
@@ -1057,6 +1084,14 @@ case TipoManejo.outro:
               title: 'Pesagens',
               icon: Icons.monitor_weight_outlined,
               registros: _manejosDoTipo({TipoManejo.pesagem}),
+            ),
+
+            const SizedBox(height: 12),
+
+            _buildHistoricoSection(
+              title: 'Condição corporal',
+              icon: Icons.monitor_weight_outlined,
+              registros: _manejosDoTipo({TipoManejo.escoreCorporal}),
             ),
 
             const SizedBox(height: 12),
