@@ -7,3 +7,7 @@ verify_jwt = false
 # The function validates the Mercado Pago HMAC signature before processing events.
 [functions.mercadopago-webhook]
 verify_jwt = false
+
+# A rotina diária é chamada pelo pg_cron usando uma chave guardada no Vault.
+[functions.planos-alerta-vencimento]
+verify_jwt = false
