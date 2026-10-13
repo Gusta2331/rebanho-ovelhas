@@ -1327,47 +1327,195 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
 
   Widget _escoreCorporalField() {
     const valores = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.18))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Escore corporal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 6),
-        const Text('Avalie a condição corporal pela palpação da região lombar. Escala de 1 a 5, em intervalos de 0,5.', style: TextStyle(fontSize: 13, color: Colors.black54, height: 1.35)),
-        const SizedBox(height: 14),
-        Wrap(spacing: 8, runSpacing: 8, children: [for (final valor in valores) SizedBox(width: 54, child: OutlinedButton(onPressed: _salvando ? null : () => setState(() => _escoreCorporal = valor), style: OutlinedButton.styleFrom(backgroundColor: _escoreCorporal == valor ? AppTheme.primaryColor : Colors.white, foregroundColor: _escoreCorporal == valor ? Colors.white : AppTheme.textColor, padding: const EdgeInsets.symmetric(vertical: 10)), child: Text(_formatarEscoreCorporal(valor), style: const TextStyle(fontWeight: FontWeight.bold))))]),
-        if (_escoreCorporal != null) ...[const SizedBox(height: 10), Text('Classificação: ' + _descricaoEscoreCorporal(_escoreCorporal!), style: const TextStyle(fontWeight: FontWeight.w600))],
-      ]),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Escore corporal',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Avalie a condição corporal pela palpação da região lombar. '
+            'Escala de 1 a 5, em intervalos de 0,5.',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.black54,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final valor in valores)
+                SizedBox(
+                  width: 54,
+                  child: OutlinedButton(
+                    onPressed: _salvando
+                        ? null
+                        : () => setState(() => _escoreCorporal = valor),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: _escoreCorporal == valor
+                          ? AppTheme.primaryColor
+                          : Colors.white,
+                      foregroundColor: _escoreCorporal == valor
+                          ? Colors.white
+                          : AppTheme.textColor,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    child: Text(
+                      _formatarEscoreCorporal(valor),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (_escoreCorporal != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Classificação: ' +
+                  _descricaoEscoreCorporal(_escoreCorporal!),
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
   Widget _avaliacaoEscoreCorporalLote() {
     const valores = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
-    final selecionados = _animaisSelecionados.map(_animalPorId).whereType<Map<String, dynamic>>().toList();
-    if (selecionados.isEmpty) return const Text('Selecione os animais acima para registrar o escore corporal de cada um.', style: TextStyle(color: Colors.black54));
+    final selecionados = _animaisSelecionados
+        .map(_animalPorId)
+        .whereType<Map<String, dynamic>>()
+        .toList();
+
+    if (selecionados.isEmpty) {
+      return const Text(
+        'Selecione os animais acima para registrar o escore corporal de cada um.',
+        style: TextStyle(color: Colors.black54),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.18))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Escore corporal por animal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 6),
-        const Text('Selecione um valor para cada animal. 1 indica condição muito magra e 5 condição muito gorda.', style: TextStyle(fontSize: 12, color: Colors.black54, height: 1.35)),
-        const SizedBox(height: 14),
-        ...selecionados.map((animal) {
-          final id = animal['id'].toString();
-          final escore = _escoreCorporalPorAnimal[id];
-          return Container(margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: escore == null ? Colors.black12 : AppTheme.primaryColor.withValues(alpha: 0.30))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(_animalTexto(animal), style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Wrap(spacing: 5, runSpacing: 5, children: [for (final valor in valores) SizedBox(width: 48, child: OutlinedButton(onPressed: _salvando ? null : () => _definirEscoreCorporal(id, valor), style: OutlinedButton.styleFrom(backgroundColor: escore == valor ? AppTheme.primaryColor : Colors.white, foregroundColor: escore == valor ? Colors.white : AppTheme.textColor, padding: const EdgeInsets.symmetric(vertical: 9)), child: Text(_formatarEscoreCorporal(valor), style: const TextStyle(fontWeight: FontWeight.bold))))]),
-            if (escore != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(_descricaoEscoreCorporal(escore), style: const TextStyle(fontSize: 12, color: Colors.black54))),
-          ]));
-        }),
-      ]),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Escore corporal por animal',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Selecione um valor para cada animal. 1 indica condição muito '
+            'magra e 5 condição muito gorda.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.black54,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ...selecionados.map((animal) {
+            final id = animal['id'].toString();
+            final escore = _escoreCorporalPorAnimal[id];
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: escore == null
+                      ? Colors.black12
+                      : AppTheme.primaryColor.withValues(alpha: 0.30),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _animalTexto(animal),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 5,
+                    runSpacing: 5,
+                    children: [
+                      for (final valor in valores)
+                        SizedBox(
+                          width: 48,
+                          child: OutlinedButton(
+                            onPressed: _salvando
+                                ? null
+                                : () => _definirEscoreCorporal(id, valor),
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: escore == valor
+                                  ? AppTheme.primaryColor
+                                  : Colors.white,
+                              foregroundColor: escore == valor
+                                  ? Colors.white
+                                  : AppTheme.textColor,
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                            ),
+                            child: Text(
+                              _formatarEscoreCorporal(valor),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (escore != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        _descricaoEscoreCorporal(escore),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
-  String _formatarEscoreCorporal(double valor) => valor == valor.roundToDouble() ? valor.toStringAsFixed(0) : valor.toStringAsFixed(1).replaceAll('.', ',');
+  String _formatarEscoreCorporal(double valor) {
+    return valor == valor.roundToDouble()
+        ? valor.toStringAsFixed(0)
+        : valor.toStringAsFixed(1).replaceAll('.', ',');
+  }
 
   String _descricaoEscoreCorporal(double valor) {
     if (valor <= 1.5) return 'Muito magra';
