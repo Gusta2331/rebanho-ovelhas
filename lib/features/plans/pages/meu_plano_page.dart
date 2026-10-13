@@ -74,9 +74,64 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
     }
   }
 
+  Future<bool> _confirmarRenovacaoSeNecessario(
+    Map<String, dynamic> plano,
+  ) async {
+    final planoAtual = _planoAtual;
+    final atribuicao = _atribuicao;
+    final planoSelecionadoId = plano['id']?.toString();
+    final planoAtualId = planoAtual?['id']?.toString();
+
+    // A confirmação aparece somente ao renovar o mesmo plano pago ainda válido.
+    if (planoSelecionadoId == null ||
+        planoSelecionadoId != planoAtualId ||
+        planoAtual == null ||
+        atribuicao == null ||
+        _ehGratuito(planoAtual)) {
+      return true;
+    }
+
+    final validade = _data(atribuicao['validade_em']);
+    if (validade == null || !validade.isAfter(DateTime.now())) {
+      return true;
+    }
+
+    final diasRestantes = _diasRestantes() ?? 0;
+    if (diasRestantes <= 0) return true;
+
+    final continuar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.calendar_month_outlined),
+        title: const Text('Você ainda tem dias disponíveis'),
+        content: Text(
+          'Seu plano atual ainda tem $diasRestantes '
+          '${diasRestantes == 1 ? 'dia' : 'dias'} de validade. '
+          'Se você renovar e o pagamento for aprovado, esses dias serão '
+          'preservados e somados aos 30 dias da nova contratação. '
+          'Você ficará com aproximadamente ${diasRestantes + 30} dias no total.\n\n'
+          'Deseja continuar para o pagamento?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Agora não'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
+
+    return continuar == true;
+  }
   Future<void> _gerarPix(Map<String, dynamic> plano) async {
     final id = plano['id']?.toString();
     if (id == null || id.isEmpty) return;
+
+    if (!await _confirmarRenovacaoSeNecessario(plano)) return;
 
     setState(() {
       _gerandoPlanoId = id;
@@ -202,6 +257,8 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
   Future<void> _gerarCheckoutCartao(Map<String, dynamic> plano) async {
     final id = plano['id']?.toString();
     if (id == null || id.isEmpty) return;
+
+    if (!await _confirmarRenovacaoSeNecessario(plano)) return;
 
     setState(() {
       _gerandoPlanoId = id;
