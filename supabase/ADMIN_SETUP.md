@@ -40,8 +40,10 @@ As variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` 
 
 ## Planos e validade
 
-O catálogo comercial atual é definido pela migration `20261011100000_atualiza_planos_produtor.sql`: gratuito até 10 animais; faixas pagas até 100, 200, 300 e assim sucessivamente até 1.000 animais, com preços cadastrados no Supabase; acima disso existe o plano personalizado, cujo preço pode ficar sob consulta. A tela lê os preços ativos diretamente do banco, então alterações feitas no painel não exigem novo build do aplicativo.
+O catálogo comercial inicial continua registrado na migration `20261011100000_atualiza_planos_produtor.sql`. A migration `20261012100000_novas_faixas_planos_50_animais.sql` atualiza o catálogo para: grátis até 10 animais; R$ 9,99 até 50; R$ 14,99 até 100; R$ 19,99 até 150; e acréscimo de R$ 5,00 por faixa adicional de 50 animais até 1.000. Acima de 1.000 animais, o plano personalizado fica sob consulta. Não há promoções ou cupons previstos. Os planos antigos permanecem no banco para preservar referências históricas; as atribuições atuais são migradas para a faixa equivalente, sem alterar a validade.
 
 O painel administrativo permite definir uma duração personalizada em dias. As contratações via Pix e cartão de crédito registram a duração da cobrança em `pagamentos_planos.duracao_dias`, com padrão de 30 dias. A função de ativação usa essa duração ao iniciar ou estender a validade e continua ignorando notificações repetidas de um pagamento já aprovado. O painel administrativo pode definir uma validade personalizada diretamente na atribuição do plano; essa alteração não muda a duração padrão das próximas cobranças. O plano gratuito não vence. Quando um plano pago vence, a validação de novos animais passa a respeitar temporariamente o limite de 10 animais, sem apagar os animais existentes.
+
+**Importante:** o upgrade com cobrança proporcional e preservação dos dias restantes ainda precisa ser implementado antes de oferecer a troca de plano aos clientes. Até lá, não habilite mudanças de plano pagas no fluxo do cliente sem uma regra explícita de migração de validade.
 
 Para cobrança recorrente automática no Android, será necessário definir os produtos/preços e integrar o fluxo de pagamentos adequado à distribuição na Play Store.
