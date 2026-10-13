@@ -488,6 +488,7 @@ class ManejoService {
     required TipoManejo tipo,
     required DateTime data,
     int? famachaEscore,
+    double? escoreCorporal,
     String? denticao,
     DateTime? denticaoData,
     String? observacoes,
@@ -518,6 +519,7 @@ class ManejoService {
     _validarDados(
       tipo: tipo,
       famachaEscore: famachaEscore,
+      escoreCorporal: escoreCorporal,
       vacinaId: vacinaId,
       vacinaNome: vacinaNome,
       vacinaFabricante: vacinaFabricante,
@@ -548,6 +550,7 @@ class ManejoService {
       tipo: tipo,
       data: data,
       famachaEscore: famachaEscore,
+      escoreCorporal: tipo == TipoManejo.escoreCorporal ? escoreCorporal : null,
       denticao: tipo == TipoManejo.denticao ? _text(denticao) : null,
       denticaoData: tipo == TipoManejo.denticao ? denticaoData : null,
       observacoes: observacoes,
@@ -606,6 +609,7 @@ class ManejoService {
     required TipoManejo tipo,
     String? operacaoId,
     Map<String, int> famachaPorAnimal = const {},
+    Map<String, double> escoreCorporalPorAnimal = const {},
     Map<String, String> denticaoPorAnimal = const {},
     Map<String, double> pesoPorAnimal = const {},
     Map<String, double> dosePorAnimal = const {},
@@ -641,6 +645,15 @@ class ManejoService {
           throw Exception(
             'Informe o FAMACHA de todos os animais selecionados.',
           );
+        }
+      }
+    }
+
+    if (tipo == TipoManejo.escoreCorporal) {
+      for (final id in animalIds) {
+        final e = escoreCorporalPorAnimal[id];
+        if (e == null || e < 1 || e > 5 || (e * 2 - (e * 2).round()).abs() > 0.001) {
+          throw Exception('Informe o escore corporal de 1 a 5 para todos os animais, em intervalos de 0,5.');
         }
       }
     }
@@ -707,6 +720,7 @@ class ManejoService {
             famachaEscore: tipo == TipoManejo.famacha
                 ? famachaPorAnimal[animalId]
                 : null,
+            escoreCorporal: tipo == TipoManejo.escoreCorporal ? escoreCorporalPorAnimal[animalId] : null,
             denticao: tipo == TipoManejo.denticao
                 ? denticaoPorAnimal[animalId]
                 : null,
@@ -1046,6 +1060,14 @@ class ManejoService {
         pesoReferenciaKg <= 0) {
       throw Exception('O peso de referência da dose deve ser maior que zero.');
     }
+    if (tipo == TipoManejo.escoreCorporal &&
+        (escoreCorporal == null || escoreCorporal < 1 || escoreCorporal > 5 ||
+            (escoreCorporal * 2 - (escoreCorporal * 2).round()).abs() > 0.001)) {
+      throw Exception('Informe um escore corporal de 1 a 5, em intervalos de 0,5.');
+    }
+    if (tipo != TipoManejo.escoreCorporal && escoreCorporal != null) {
+      throw Exception('O escore corporal só pode ser usado em uma avaliação corporal.');
+    }
     if (validarFamacha &&
         tipo == TipoManejo.famacha &&
         (famachaEscore == null || famachaEscore < 1 || famachaEscore > 5)) {
@@ -1122,6 +1144,7 @@ class ManejoService {
       'data': data.toIso8601String(),
       'operacao_id': operacaoId,
       'famacha_escore': tipo == TipoManejo.famacha ? famachaEscore : null,
+      'escore_corporal': tipo == TipoManejo.escoreCorporal ? escoreCorporal : null,
       'denticao': tipo == TipoManejo.denticao ? _text(denticao) : null,
       'denticao_data': tipo == TipoManejo.denticao ? denticaoData?.toIso8601String() : null,
       'observacoes': _text(observacoes),

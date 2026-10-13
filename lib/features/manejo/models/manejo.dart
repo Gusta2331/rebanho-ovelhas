@@ -1,6 +1,6 @@
 import 'package:uuid/uuid.dart';
 
-enum TipoManejo { vacinacao, vermifugacao, tratamento, tosquia, pesagem, famacha, denticao, outro }
+enum TipoManejo { vacinacao, vermifugacao, tratamento, tosquia, pesagem, famacha, denticao, escoreCorporal, outro }
 
 class Manejo {
   final String id;
@@ -8,6 +8,7 @@ class Manejo {
   final TipoManejo tipo;
   final DateTime data;
   final int? famachaEscore;
+  final double? escoreCorporal;
   final String? denticao;
   final DateTime? denticaoData;
   final String? observacoes;
@@ -40,6 +41,7 @@ class Manejo {
     required this.tipo,
     required this.data,
     this.famachaEscore,
+    this.escoreCorporal,
     this.denticao,
     this.denticaoData,
     this.observacoes,
@@ -76,6 +78,7 @@ class Manejo {
       famachaEscore: map['famacha_escore'] is num
           ? (map['famacha_escore'] as num).toInt()
           : int.tryParse(map['famacha_escore']?.toString() ?? ''),
+      escoreCorporal: _doubleOrNull(map['escore_corporal']),
       denticao: _stringOrNull(map['denticao']),
       denticaoData: _dateOrNull(map['denticao_data']),
       observacoes: _stringOrNull(map['observacoes']),
@@ -113,6 +116,7 @@ class Manejo {
       case 'pesagem': return TipoManejo.pesagem;
       case 'famacha': return TipoManejo.famacha;
       case 'denticao': return TipoManejo.denticao;
+      case 'escore_corporal': return TipoManejo.escoreCorporal;
       default: return TipoManejo.outro;
     }
   }
@@ -126,6 +130,7 @@ class Manejo {
       case TipoManejo.pesagem: return 'pesagem';
       case TipoManejo.famacha: return 'famacha';
       case TipoManejo.denticao: return 'denticao';
+      case TipoManejo.escoreCorporal: return 'escore_corporal';
       case TipoManejo.outro: return 'outro';
     }
   }
