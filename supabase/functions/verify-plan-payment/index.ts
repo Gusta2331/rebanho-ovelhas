@@ -38,7 +38,7 @@ Deno.serve(async (request) => {
     })
     const { data: payment, error: paymentError } = await admin
       .from('pagamentos_planos')
-      .select('id,usuario_id,plano_id,valor,status,provedor_order_id')
+      .select('id,usuario_id,plano_id,valor,status,provedor_order_id,tipo_operacao')
       .eq('id', paymentId)
       .eq('usuario_id', user.id)
       .maybeSingle()
@@ -96,7 +96,11 @@ Deno.serve(async (request) => {
         status: 'aprovado',
         ativado: true,
         validade_em: validadeEm,
-        mensagem: 'Pagamento confirmado. Seu plano foi atualizado por 30 dias.',
+        mensagem: payment.tipo_operacao === 'upgrade'
+          ? 'Pagamento confirmado. Seu plano foi atualizado e o vencimento original foi preservado.'
+          : payment.tipo_operacao === 'renovacao'
+            ? 'Pagamento confirmado. A renovação foi adicionada à validade que você já tinha.'
+            : 'Pagamento confirmado. Seu plano foi ativado por 30 dias.',
       })
     }
 
