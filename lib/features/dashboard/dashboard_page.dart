@@ -585,7 +585,7 @@ case TipoManejo.outro:
       );
     }
 
-    final dias = resumo['dias_restantes'] as int?;
+    final dias = (resumo['dias_restantes'] as num?)?.toInt();
     final vencido = resumo['vencido'] == true;
     final cor = vencido
         ? Colors.red.shade700
