@@ -127,11 +127,12 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
 
     return continuar == true;
   }
+
   Future<void> _gerarPix(Map<String, dynamic> plano) async {
     final id = plano['id']?.toString();
     if (id == null || id.isEmpty) return;
 
-    if (!await _confirmarRenovacaoSeNecessario(plano)) return;
+    if (!mounted || !await _confirmarRenovacaoSeNecessario(plano)) return;
 
     setState(() {
       _gerandoPlanoId = id;
