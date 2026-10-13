@@ -910,6 +910,11 @@ class ManejoService {
         'p_dados': {'id': id, 'fazenda_id': fazendaId, ...dados},
       },
     );
+    // A RPC mantém o controle de estoque. Esta coluna nova é atualizada à parte
+    // para continuar compatível com a função de estoque já implantada.
+    await _client.from('manejos').update({
+      'escore_corporal': tipo == TipoManejo.escoreCorporal ? escoreCorporal : null,
+    }).eq('id', id).eq('fazenda_id', fazendaId);
   }
 
   Future<void> excluirManejo(String id) async {
