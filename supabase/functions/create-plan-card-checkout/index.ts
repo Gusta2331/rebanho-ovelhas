@@ -99,7 +99,12 @@ Deno.serve(async (request) => {
       } else if (tabela > precoAtual) {
         tipoOperacao = 'upgrade'
         diasRestantes = Math.max(1, Math.ceil((validadeAtual!.getTime() - Date.now()) / 86400000))
-        amount = Math.round(((tabela - precoAtual) * diasRestantes / 30) * 100) / 100
+        // O upgrade começa custando apenas a diferença mensal entre os planos.
+        // A cada dia usado do ciclo, o valor sobe linearmente até o preço integral
+        // do novo plano no 29º dia. A validade original continua preservada.
+        const diasUtilizados = Math.min(29, Math.max(0, 30 - diasRestantes))
+        const diferencaMensal = tabela - precoAtual
+        amount = Math.round((diferencaMensal + (tabela - diferencaMensal) * (diasUtilizados / 29)) * 100) / 100
       }
     }
 
