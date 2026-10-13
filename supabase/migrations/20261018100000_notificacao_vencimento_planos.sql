@@ -26,8 +26,31 @@ create table if not exists public.notificacoes_planos_enviadas (
 create index if not exists notificacoes_planos_status_idx
   on public.notificacoes_planos_enviadas(status, atualizado_em);
 
+-- Controle por dispositivo: se um celular receber e outro falhar, a próxima
+-- tentativa envia somente aos dispositivos que ainda não receberam.
+create table if not exists public.notificacoes_planos_dispositivos (
+  id uuid primary key default gen_random_uuid(),
+  notificacao_id uuid not null
+    references public.notificacoes_planos_enviadas(id) on delete cascade,
+  dispositivo_id text not null,
+  status text not null default 'processando'
+    check (status in ('processando', 'enviado', 'erro')),
+  tentativas integer not null default 1 check (tentativas > 0),
+  erro text,
+  criado_em timestamptz not null default now(),
+  atualizado_em timestamptz not null default now(),
+  enviado_em timestamptz,
+  constraint notificacoes_planos_dispositivo_unico
+    unique (notificacao_id, dispositivo_id)
+);
+
+create index if not exists notificacoes_planos_dispositivos_status_idx
+  on public.notificacoes_planos_dispositivos(notificacao_id, status);
+
 alter table public.notificacoes_planos_enviadas enable row level security;
+alter table public.notificacoes_planos_dispositivos enable row level security;
 revoke all on public.notificacoes_planos_enviadas from public, anon, authenticated;
+revoke all on public.notificacoes_planos_dispositivos from public, anon, authenticated;
 
 -- Dispara a Edge Function usando o segredo já cadastrado no Vault para os
 -- alertas da farmácia. A função nova valida o cabeçalho apikey.
