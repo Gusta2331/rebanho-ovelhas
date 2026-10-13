@@ -23,6 +23,8 @@ import '../manejo/pages/manejo_agenda_page.dart';
 import '../manejo/pages/manejos_page.dart';
 import '../manejo/services/manejo_programado_service.dart';
 import '../more/mais_page.dart';
+import '../plans/services/meu_plano_service.dart';
+import '../plans/pages/meu_plano_page.dart';
 import '../reproduction/pages/reproductions_page.dart';
 import 'widgets/animal_card.dart';
 import 'widgets/management_item.dart';
@@ -44,6 +46,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final ManejoProgramadoService _manejoProgramadoService =
       ManejoProgramadoService();
   final FinanceiroService _financeiroService = FinanceiroService();
+  final MeuPlanoService _meuPlanoService = MeuPlanoService();
 
   final RebanhoSelectionService _rebanhoSelectionService =
       RebanhoSelectionService.instance;
@@ -65,12 +68,14 @@ class _DashboardPageState extends State<DashboardPage> {
   double _receitas = 0;
   double _despesas = 0;
   bool _financeiroIndisponivel = false;
+  Map<String, dynamic>? _resumoPlano;
 
   @override
   void initState() {
     super.initState();
 
     _iniciarDashboard();
+    _carregarResumoPlano();
   }
 
   Future<void> _iniciarDashboard() async {
@@ -80,6 +85,15 @@ class _DashboardPageState extends State<DashboardPage> {
     await _loadRebanhos();
   }
 
+  Future<void> _carregarResumoPlano() async {
+    try {
+      final resumo = await _meuPlanoService.carregarResumoVencimento();
+      if (!mounted) return;
+      setState(() => _resumoPlano = resumo);
+    } catch (_) {
+      // A indisponibilidade temporária do resumo não deve bloquear a Dashboard.
+    }
+  }
   Future<void> _loadFarm() async {
     try {
       final farm = await _farmService.getMinhaFazenda();
@@ -523,6 +537,10 @@ case TipoManejo.outro:
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
             children: [
               _buildHeader(),
+              if (_resumoPlano != null) ...[
+                const SizedBox(height: 16),
+                _buildPlanoVencimento(),
+              ],
               const SizedBox(height: 20),
               RebanhoSelector(
                 loading: _loadingRebanhos,
@@ -554,6 +572,77 @@ case TipoManejo.outro:
     );
   }
 
+  Widget _buildPlanoVencimento() {
+    final resumo = _resumoPlano;
+    if (resumo == null || resumo['gratuito'] == true) {
+      if (resumo == null) return const SizedBox.shrink();
+      return Card(
+        child: ListTile(
+          leading: const Icon(Icons.workspace_premium_outlined, color: AppTheme.primaryColor),
+          title: const Text('Plano grátis'),
+          subtitle: const Text('Seu plano gratuito está ativo.'),
+        ),
+      );
+    }
+
+    final dias = resumo['dias_restantes'] as int?;
+    final vencido = resumo['vencido'] == true;
+    final cor = vencido
+        ? Colors.red.shade700
+        : dias != null && dias <= 2
+            ? Colors.orange.shade800
+            : AppTheme.primaryColor;
+    final titulo = vencido
+        ? 'Seu plano venceu'
+        : dias == null
+            ? 'Confira a validade do seu plano'
+            : 'Seu plano vence em $dias ${dias == 1 ? 'dia' : 'dias'}';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: cor.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                vencido ? Icons.warning_amber_rounded : Icons.calendar_month_outlined,
+                color: cor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(titulo, style: TextStyle(fontWeight: FontWeight.bold, color: cor)),
+                  const SizedBox(height: 3),
+                  Text(resumo['nome']?.toString() ?? 'Plano atual'),
+                  if (dias != null && !vencido)
+                    const Text('Acompanhe a validade em Meu plano.', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              tooltip: 'Abrir Meu plano',
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const MeuPlanoPage()),
+                );
+                _carregarResumoPlano();
+              },
+              icon: const Icon(Icons.chevron_right),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   Widget _buildHeader() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
