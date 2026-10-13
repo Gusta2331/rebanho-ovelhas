@@ -66,8 +66,9 @@ class MeuPlanoService {
           'expira_em,criado_em,planos_produtor(nome)',
         )
         .eq('usuario_id', usuario.id)
+        .eq('visivel_usuario', true)
         .order('criado_em', ascending: false)
-        .limit(10);
+        .limit(50);
 
     return {
       'fazenda': fazenda == null ? null : Map<String, dynamic>.from(fazenda),
@@ -165,6 +166,15 @@ class MeuPlanoService {
     return Map<String, dynamic>.from(data);
   }
 
+  Future<int> limparHistorico({required bool somentePendentes}) async {
+    final response = await _client.rpc(
+      'ocultar_historico_pagamentos_plano',
+      params: {'p_tipo': somentePendentes ? 'pendentes' : 'todos'},
+    );
+    if (response is num) return response.toInt();
+    if (response is String) return int.tryParse(response) ?? 0;
+    return 0;
+  }
   Future<Map<String, dynamic>> verificarPagamento(String pagamentoId) async {
     final response = await _client.functions.invoke(
       'verify-plan-payment',
