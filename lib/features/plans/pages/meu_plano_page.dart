@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -194,11 +195,24 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
       _metodoGeracao = 'pix';
     });
     try {
-      final resultado = await _service.gerarPix(id);
+      final resultado = await _service.gerarPix(id).timeout(
+        const Duration(seconds: 35),
+        onTimeout: () => throw Exception(
+          'A geração do Pix demorou mais que o esperado. Verifique sua conexão e atualize os pagamentos antes de tentar novamente.',
+        ),
+      );
       if (!mounted) return;
-      await _carregar();
-      if (!mounted) return;
+
+      // A cobrança já foi criada. Mostra o QR Code imediatamente, sem deixar
+      // a tela de pagamento depender da atualização completa dos dados do plano.
+      setState(() {
+        _gerandoPlanoId = null;
+        _metodoGeracao = null;
+      });
       await _mostrarPixGerado(resultado);
+
+      // Atualiza o histórico depois que o usuário fechar o QR Code.
+      if (mounted) unawaited(_carregar());
     } catch (error) {
       if (mounted) {
         _mensagem(error.toString().replaceFirst('Exception: ', ''));
