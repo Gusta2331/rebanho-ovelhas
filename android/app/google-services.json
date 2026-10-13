@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:237608748518:android:55fe97587c681518b04227",
+        "android_client_info": {
+          "package_name": "br.com.ovigestao.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADIsDPJBIaTxVj-RdtXhqJWQGxpQw1qZM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:237608748518:android:e4bd8ad47777981cb04227",
         "android_client_info": {
           "package_name": "com.example.rebanho_app"
