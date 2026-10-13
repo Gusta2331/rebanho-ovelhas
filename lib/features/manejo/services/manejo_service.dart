@@ -682,6 +682,7 @@ class ManejoService {
       medicamentoNome: medicamentoNome,
       validarFamacha: false,
       validarPeso: false,
+      validarEscoreCorporal: false,
     );
 
     final quantidadeFarmacia = farmaciaQuantidade ?? dose;
@@ -834,6 +835,7 @@ class ManejoService {
     _validarDados(
       tipo: tipo,
       famachaEscore: famachaEscore,
+      escoreCorporal: escoreCorporal,
       vacinaId: vacinaId,
       vacinaNome: vacinaNome,
       vacinaFabricante: vacinaFabricante,
@@ -858,6 +860,7 @@ class ManejoService {
             tipo: tipo,
             data: data,
             famachaEscore: famachaEscore,
+            escoreCorporal: tipo == TipoManejo.escoreCorporal ? escoreCorporal : null,
             denticao: tipo == TipoManejo.denticao ? denticao : null,
             denticaoData: tipo == TipoManejo.denticao ? denticaoData : null,
             observacoes: observacoes,
@@ -1046,6 +1049,7 @@ class ManejoService {
     String? medicamentoNome,
     bool validarFamacha = true,
     bool validarPeso = true,
+    bool validarEscoreCorporal = true,
   }) {
     if (validarPeso &&
         tipo == TipoManejo.pesagem &&
@@ -1061,7 +1065,7 @@ class ManejoService {
         pesoReferenciaKg <= 0) {
       throw Exception('O peso de referência da dose deve ser maior que zero.');
     }
-    if (tipo == TipoManejo.escoreCorporal &&
+    if (validarEscoreCorporal && tipo == TipoManejo.escoreCorporal &&
         (escoreCorporal == null || escoreCorporal < 1 || escoreCorporal > 5 ||
             (escoreCorporal * 2 - (escoreCorporal * 2).round()).abs() > 0.001)) {
       throw Exception('Informe um escore corporal de 1 a 5, em intervalos de 0,5.');
