@@ -126,8 +126,17 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
         !_ehGratuito(planoAtual) &&
         assinaturaAtiva &&
         precoNovo > precoAtual;
+    // Mantém a estimativa da confirmação igual à regra aplicada no servidor:
+    // começa pela diferença mensal e aumenta diariamente até o preço integral
+    // do novo plano no 29º dia de uso.
+    final diasUtilizados = (30 - diasRestantes).clamp(0, 29);
+    final diferencaMensal = precoNovo - precoAtual;
     final valorCobrado = upgrade
-        ? ((precoNovo - precoAtual) * diasRestantes / 30)
+        ? ((diferencaMensal +
+                    (precoNovo - diferencaMensal) * (diasUtilizados / 29)) *
+                100)
+            .roundToDouble() /
+            100
         : precoNovo;
 
     final titulo = renovacao
