@@ -742,6 +742,8 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
         return 'FAMACHA';
       case TipoManejo.denticao:
         return 'Dentição';
+      case TipoManejo.escoreCorporal:
+        return 'Escore corporal';
       case TipoManejo.outro:
         return 'Outro';
     }
