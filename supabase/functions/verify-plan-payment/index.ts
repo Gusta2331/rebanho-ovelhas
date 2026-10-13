@@ -38,7 +38,7 @@ Deno.serve(async (request) => {
     })
     const { data: payment, error: paymentError } = await admin
       .from('pagamentos_planos')
-      .select('id,usuario_id,plano_id,valor,status,provedor_order_id,tipo_operacao')
+      .select('id,usuario_id,plano_id,valor,status,provedor_order_id,tipo_operacao,duracao_dias')
       .eq('id', paymentId)
       .eq('usuario_id', user.id)
       .maybeSingle()
@@ -46,7 +46,13 @@ Deno.serve(async (request) => {
     if (paymentError) throw paymentError
     if (!payment) return json({ error: 'Pagamento não encontrado para esta conta.' }, 404)
     if (payment.status === 'aprovado') {
-      return json({ status: 'aprovado', ativado: true, mensagem: 'Este pagamento já foi confirmado.' })
+      const validadeEm = await getCurrentValidity(admin, user.id)
+      return json({
+        status: 'aprovado',
+        ativado: true,
+        validade_em: validadeEm,
+        mensagem: 'Este pagamento já foi confirmado.',
+      })
     }
     if (!payment.provedor_order_id) {
       return json({ error: 'A cobrança ainda não possui referência do Mercado Pago.' }, 409)
@@ -92,15 +98,20 @@ Deno.serve(async (request) => {
       })
       if (activationError) throw activationError
 
+      const validadeAtualizada = await getCurrentValidity(admin, user.id)
+      if (!validadeAtualizada) {
+        throw new Error('Pagamento aprovado, mas não foi possível consultar a validade do plano ativado.')
+      }
+
       return json({
         status: 'aprovado',
         ativado: true,
-        validade_em: validadeEm,
+        validade_em: validadeAtualizada,
         mensagem: payment.tipo_operacao === 'upgrade'
           ? 'Pagamento confirmado. Seu plano foi atualizado e o vencimento original foi preservado.'
           : payment.tipo_operacao === 'renovacao'
             ? 'Pagamento confirmado. A renovação foi adicionada à validade que você já tinha.'
-            : 'Pagamento confirmado. Seu plano foi ativado por 30 dias.',
+            : `Pagamento confirmado. Seu plano foi ativado por ${payment.duracao_dias} dias.`,
       })
     }
 
@@ -129,6 +140,42 @@ Deno.serve(async (request) => {
     return json({ error: message }, 500)
   }
 })
+
+async function getCurrentValidity(
+  admin: ReturnType<typeof createClient>,
+  userId: string,
+): Promise<string | null> {
+  const { data: farm, error: farmError } = await admin
+    .from('fazendas')
+    .select('id')
+    .eq('proprietario_id', userId)
+    .eq('ativo', true)
+    .order('criado_em', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (farmError) throw farmError
+
+  if (farm?.id) {
+    const { data: assignment, error: assignmentError } = await admin
+      .from('planos_fazenda')
+      .select('validade_em')
+      .eq('fazenda_id', farm.id)
+      .maybeSingle()
+
+    if (assignmentError) throw assignmentError
+    return assignment?.validade_em ?? null
+  }
+
+  const { data: pending, error: pendingError } = await admin
+    .from('planos_pendentes_produtor')
+    .select('validade_em')
+    .eq('usuario_id', userId)
+    .maybeSingle()
+
+  if (pendingError) throw pendingError
+  return pending?.validade_em ?? null
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
