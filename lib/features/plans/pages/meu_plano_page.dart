@@ -798,17 +798,99 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
     );
   }
 
+  Future<void> _limparHistoricoPagamentos() async {
+    final tipo = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.cleaning_services_outlined),
+        title: const Text('Limpar histórico de pagamentos'),
+        content: const Text(
+          'Você pode ocultar somente cobranças pendentes ou todo o histórico. '
+          'Os registros ficam guardados com segurança no sistema e isso não cancela cobranças nem altera planos já ativados.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          OutlinedButton(
+            onPressed: () => Navigator.of(dialogContext).pop('pendentes'),
+            child: const Text('Só pendentes'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop('todos'),
+            child: const Text('Todo o histórico'),
+          ),
+        ],
+      ),
+    );
+    if (tipo == null || !mounted) return;
+
+    if (tipo == 'todos') {
+      final confirmar = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Ocultar todo o histórico?'),
+          content: const Text(
+            'Todos os pagamentos deixarão de aparecer nesta tela, inclusive os aprovados. '
+            'Isso não apaga os registros financeiros do sistema nem cancela pagamentos.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Voltar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Confirmar'),
+            ),
+          ],
+        ),
+      );
+      if (confirmar != true || !mounted) return;
+    }
+
+    try {
+      final quantidade = await _service.limparHistorico(
+        somentePendentes: tipo == 'pendentes',
+      );
+      if (!mounted) return;
+      await _carregar();
+      if (!mounted) return;
+      _mensagem(
+        quantidade == 0
+            ? 'Não havia pagamentos para ocultar.'
+            : '$quantidade ${quantidade == 1 ? 'pagamento ocultado' : 'pagamentos ocultados'} do histórico.',
+      );
+    } catch (error) {
+      if (mounted) {
+        _mensagem(error.toString().replaceFirst('Exception: ', ''));
+      }
+    }
+  }
   Widget _buildPagamentos() {
     if (_pagamentos.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(4, 14, 4, 8),
-          child: Text(
-            'Pagamentos recentes',
-            style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 14, 4, 8),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Pagamentos recentes',
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                ),
+              ),
+              if (_pagamentos.isNotEmpty)
+                IconButton(
+                  tooltip: 'Limpar histórico de pagamentos',
+                  onPressed: _carregando ? null : _limparHistoricoPagamentos,
+                  icon: const Icon(Icons.cleaning_services_outlined),
+                ),
+            ],
           ),
         ),
         ..._pagamentos.map(_buildPagamento),
