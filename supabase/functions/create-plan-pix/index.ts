@@ -139,6 +139,8 @@ Deno.serve(async (request) => {
         'Accept': 'application/json',
         'X-Idempotency-Key': payment.id,
       },
+      // Evita que uma demora do provedor deixe a função presa indefinidamente.
+      signal: AbortSignal.timeout(20000),
       body: JSON.stringify({
         type: 'online',
         total_amount: amount.toFixed(2),
