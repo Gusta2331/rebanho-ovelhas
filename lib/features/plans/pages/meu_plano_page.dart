@@ -1197,34 +1197,34 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
       final conteudo = base64.contains(',')
           ? base64.substring(base64.indexOf(',') + 1)
           : base64;
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          final lado = (constraints.maxWidth - 20).clamp(80.0, 210.0);
-          return Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black12),
-            ),
-            child: Image.memory(
-              base64Decode(conteudo),
-              width: lado,
-              height: lado,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => SizedBox(
-                width: lado,
-                height: 80,
-                child: const Center(
-                  child: Text(
-                    'Não foi possível exibir o QR Code. Use o Pix copia e cola.',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+
+      // O LayoutBuilder não pode calcular dimensões intrínsecas dentro de um
+      // AlertDialog. Um tamanho fixo mantém o QR Code legível e evita que o
+      // diálogo falhe durante o cálculo de layout.
+      const lado = 190.0;
+      return Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black12),
+        ),
+        child: Image.memory(
+          base64Decode(conteudo),
+          width: lado,
+          height: lado,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => SizedBox(
+            width: lado,
+            height: 80,
+            child: const Center(
+              child: Text(
+                'Não foi possível exibir o QR Code. Use o Pix copia e cola.',
+                textAlign: TextAlign.center,
               ),
             ),
-          );
-        },
+          ),
+        ),
       );
     } catch (_) {
       return const Text('Não foi possível exibir o QR Code. Use o Pix copia e cola.');
