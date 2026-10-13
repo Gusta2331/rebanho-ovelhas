@@ -337,7 +337,7 @@ class ReportExcelService {
       ['Gerado em', _manejoDateTime(generatedAt)],
       [],
       ['TOTAL', registros.length, 'PESAGENS', count('pesagem'), 'VACINAÇÕES', count('vacinacao'), 'VERMIFUGAÇÕES', count('vermifugacao')],
-      ['TRATAMENTOS', count('tratamento'), 'FAMACHA', count('famacha'), 'DENTIÇÃO', count('denticao'), 'TOSQUIAS', count('tosquia')],
+      ['TRATAMENTOS', count('tratamento'), 'FAMACHA', count('famacha'), 'DENTIÇÃO', count('denticao'), 'ESCORE CORPORAL', count('escore_corporal'), 'TOSQUIAS', count('tosquia')],
       ['OUTROS', count('outro')],
       [],
       ['DETALHAMENTO DOS MANEJOS POR TIPO'],

@@ -303,6 +303,7 @@ class ReportPdfService {
               _card('Tratamentos', count('tratamento').toString(), green, lightGreen),
               _card('FAMACHA', count('famacha').toString(), green, lightGreen),
               _card('Dentição', count('denticao').toString(), green, lightGreen),
+              _card('Escore corporal', count('escore_corporal').toString(), green, lightGreen),
               _card('Tosquias', count('tosquia').toString(), green, lightGreen),
               _card('Outros', count('outro').toString(), green, lightGreen),
             ],
