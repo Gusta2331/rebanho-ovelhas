@@ -855,27 +855,47 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.credit_card_outlined, color: AppTheme.primaryColor, size: 28),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    planoSelecionado['nome']?.toString() ?? 'Plano',
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.credit_card_outlined,
+                                  color: AppTheme.primaryColor,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        planoSelecionado['nome']?.toString() ?? 'Plano',
+                                        softWrap: true,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        limite == null
+                                            ? 'Limite personalizado'
+                                            : 'Até $limite animais ativos',
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(limite == null ? 'Limite personalizado' : 'Até $limite animais ativos'),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${_dinheiro(planoSelecionado['preco_mensal'])}/mês',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                '${_dinheiro(planoSelecionado['preco_mensal'])}/mês',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ],
                         ),
@@ -1154,24 +1174,34 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
       final conteudo = base64.contains(',')
           ? base64.substring(base64.indexOf(',') + 1)
           : base64;
-      return Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black12),
-        ),
-        child: Image.memory(
-          base64Decode(conteudo),
-          width: 210,
-          height: 210,
-          fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => const SizedBox(
-            width: 210,
-            height: 80,
-            child: Center(child: Text('Não foi possível exibir o QR Code. Use o Pix copia e cola.')),
-          ),
-        ),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final lado = (constraints.maxWidth - 20).clamp(80.0, 210.0);
+          return Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.black12),
+            ),
+            child: Image.memory(
+              base64Decode(conteudo),
+              width: lado,
+              height: lado,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => SizedBox(
+                width: lado,
+                height: 80,
+                child: const Center(
+                  child: Text(
+                    'Não foi possível exibir o QR Code. Use o Pix copia e cola.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       );
     } catch (_) {
       return const Text('Não foi possível exibir o QR Code. Use o Pix copia e cola.');
