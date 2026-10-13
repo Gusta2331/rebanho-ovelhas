@@ -52,12 +52,13 @@ Deno.serve(async (request) => {
     }
 
     // Lê a assinatura atual no servidor. O cliente não pode informar preço nem vencimento.
-    const { data: farm } = await admin.from('fazendas')
+    const { data: farm, error: farmError } = await admin.from('fazendas')
       .select('id')
       .eq('proprietario_id', user.id)
       .eq('ativo', true)
       .limit(1)
       .maybeSingle()
+    if (farmError) throw farmError
 
     let atribuicao: { plano_id: string; validade_em: string | null; planos_produtor: unknown } | null = null
     if (farm) {
