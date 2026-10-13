@@ -79,47 +79,91 @@ class _MeuPlanoPageState extends State<MeuPlanoPage> {
   ) async {
     final planoAtual = _planoAtual;
     final atribuicao = _atribuicao;
-    final planoSelecionadoId = plano['id']?.toString();
-    final planoAtualId = planoAtual?['id']?.toString();
+    final selecionadoId = plano['id']?.toString();
+    final atualId = planoAtual?['id']?.toString();
+    final precoNovo = _numero(plano['preco_mensal']) ?? 0;
+    final precoAtual = _numero(planoAtual?['preco_mensal']) ?? 0;
+    final validade = _data(atribuicao?['validade_em']);
+    final assinaturaAtiva = validade != null && validade.isAfter(DateTime.now());
+    final diasRestantes = assinaturaAtiva ? (_diasRestantes() ?? 0) : 0;
 
-    // A confirmação aparece somente ao renovar o mesmo plano pago ainda válido.
-    if (planoSelecionadoId == null ||
-        planoSelecionadoId != planoAtualId ||
-        planoAtual == null ||
-        atribuicao == null ||
-        _ehGratuito(planoAtual)) {
-      return true;
+    if (selecionadoId == null || selecionadoId.isEmpty) return false;
+
+    if (planoAtual != null &&
+        atualId != selecionadoId &&
+        !_ehGratuito(planoAtual) &&
+        assinaturaAtiva &&
+        precoNovo < precoAtual) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          icon: const Icon(Icons.event_repeat_outlined),
+          title: const Text('Redução de plano'),
+          content: const Text(
+            'A redução de plano deve entrar em vigor somente no vencimento, '
+            'mantendo o limite atual até essa data. O agendamento dessa mudança '
+            'ainda não está disponível, então nenhum pagamento ou alteração será feito agora.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Entendi'),
+            ),
+          ],
+        ),
+      );
+      return false;
     }
 
-    final validade = _data(atribuicao['validade_em']);
-    if (validade == null || !validade.isAfter(DateTime.now())) {
-      return true;
-    }
+    final renovacao = selecionadoId == atualId &&
+        planoAtual != null &&
+        !_ehGratuito(planoAtual) &&
+        assinaturaAtiva;
+    final upgrade = planoAtual != null &&
+        atualId != selecionadoId &&
+        !_ehGratuito(planoAtual) &&
+        assinaturaAtiva &&
+        precoNovo > precoAtual;
+    final valorCobrado = upgrade
+        ? ((precoNovo - precoAtual) * diasRestantes / 30)
+        : precoNovo;
 
-    final diasRestantes = _diasRestantes() ?? 0;
-    if (diasRestantes <= 0) return true;
+    final titulo = renovacao
+        ? 'Confirmar renovação'
+        : upgrade
+            ? 'Confirmar upgrade'
+            : 'Confirmar contratação';
+    final detalhe = upgrade
+        ? 'Você está mudando de ${planoAtual['nome']} para ${plano['nome']}.\n\n'
+            'Plano atual: ${_dinheiro(precoAtual)}/mês\n'
+            'Novo plano: ${_dinheiro(precoNovo)}/mês\n'
+            'Dias restantes: $diasRestantes\n'
+            'Valor proporcional estimado: ${_dinheiro(valorCobrado)}\n\n'
+            'O limite maior só será liberado após a confirmação do pagamento. '
+            'A data de vencimento atual será preservada.'
+        : renovacao
+            ? 'Seu plano ainda tem $diasRestantes '
+                '${diasRestantes == 1 ? 'dia' : 'dias'} de validade. '
+                'O valor da renovação é ${_dinheiro(precoNovo)} e, após a aprovação, '
+                'os dias restantes serão preservados e somados a mais 30 dias.'
+            : 'Plano escolhido: ${plano['nome']}\n'
+                'Valor a pagar: ${_dinheiro(precoNovo)}\n'
+                'A assinatura será ativada por 30 dias após a confirmação do pagamento.';
 
     final continuar = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.calendar_month_outlined),
-        title: const Text('Você ainda tem dias disponíveis'),
-        content: Text(
-          'Seu plano atual ainda tem $diasRestantes '
-          '${diasRestantes == 1 ? 'dia' : 'dias'} de validade. '
-          'Se você renovar e o pagamento for aprovado, esses dias serão '
-          'preservados e somados aos 30 dias da nova contratação. '
-          'Você ficará com aproximadamente ${diasRestantes + 30} dias no total.\n\n'
-          'Deseja continuar para o pagamento?',
-        ),
+        icon: Icon(upgrade ? Icons.upgrade : Icons.verified_outlined),
+        title: Text(titulo),
+        content: Text(detalhe),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Agora não'),
+            child: const Text('Cancelar'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Continuar'),
+            child: const Text('Continuar para pagamento'),
           ),
         ],
       ),
