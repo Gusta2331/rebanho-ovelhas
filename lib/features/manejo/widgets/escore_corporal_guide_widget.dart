@@ -26,57 +26,32 @@ class EscoreCorporalGuideWidget extends StatelessWidget {
           'Guia visual: como avaliar',
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
         ),
-        subtitle: const Text('Ilustrações disponíveis sem internet'),
+        subtitle: const Text('Onde apalpar e como escolher a nota'),
         children: [
           const Text(
-            'É simples: use a mão, não apenas os olhos.',
+            'Faça com a mão: olhar a ovelha não é suficiente.',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
           ),
           const SizedBox(height: 6),
           const _RegiaoLombarIllustration(),
-          const SizedBox(height: 8),
-          const _PassoDoGuia(
-            numero: '1',
-            texto: 'Ache as costas, entre a última costela e o quadril.',
-          ),
-          const _PassoDoGuia(
-            numero: '2',
-            texto: 'Passe os dedos sobre a coluna e os ossinhos dos lados.',
-          ),
-          const _PassoDoGuia(
-            numero: '3',
-            texto: 'Escolha o desenho que mais parece com o que você sente.',
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 6),
           const Text(
-            'Qual nota escolher?',
+            'Com a ovelha em pé, coloque a mão na lombar, entre a última costela e o quadril. Passe os dedos sobre os ossos e sinta quanta carne os cobre.',
+            style: TextStyle(fontSize: 13, height: 1.35),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Escolha o que você sente:',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
           const SizedBox(height: 8),
           for (final item in _referencias) ...[
             _EscoreReferenceRow(item: item),
-            const SizedBox(height: 8),
+            const SizedBox(height: 7),
           ],
-          const Divider(),
           const Text(
-            'Ficou entre duas notas? Pode usar meia nota, como 2,5 ou 3,5. '
-            'Se estiver em dúvida, peça ajuda a um veterinário ou técnico.',
-            style: TextStyle(fontSize: 12, height: 1.4),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Fontes técnicas consultadas:',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, height: 1.35),
-          ),
-          const SizedBox(height: 4),
-          const SelectableText(
-            'Embrapa: embrapa.br/en/web/caprinos-e-ovinos/paratec-controle-integrado-verminoses/vermes/caprinos-ovinos/escore-condicao-corporal',
-            style: TextStyle(fontSize: 10, color: Colors.black54, height: 1.35),
-          ),
-          const SizedBox(height: 4),
-          const SelectableText(
-            'Oregon State University Extension (EC 1433): extension.oregonstate.edu/catalog/ec-1433-body-condition-scoring-sheep',
-            style: TextStyle(fontSize: 10, color: Colors.black54, height: 1.35),
+            'Dúvida entre duas notas? É possível usar meia nota. Se continuar em dúvida, peça ajuda a um técnico ou veterinário.',
+            style: TextStyle(fontSize: 12, height: 1.35),
           ),
         ],
       ),
@@ -134,27 +109,27 @@ const _referencias = <_EscoreReference>[
   _EscoreReference(
     1,
     'Muito magra',
-    'Os ossos ficam muito saltados e pontudos. Quase não há carne ou gordura.',
+    'Ossos muito saltados. Quase não sente carne.',
   ),
   _EscoreReference(
     2,
     'Magra',
-    'Você sente os ossos facilmente e há pouca cobertura sobre eles.',
+    'Sente os ossos com facilidade; pouca carne por cima.',
   ),
   _EscoreReference(
     3,
     'Boa condição',
-    'Os ossos têm cobertura de carne. Você os sente apertando de leve a moderado.',
+    'Sente os ossos ao apertar, mas há uma boa cobertura de carne.',
   ),
   _EscoreReference(
     4,
     'Gorda',
-    'É difícil sentir os ossos. É preciso apertar mais para encontrá-los.',
+    'Precisa apertar mais para sentir os ossos.',
   ),
   _EscoreReference(
     5,
     'Muito gorda',
-    'Quase não dá para sentir os ossos, por causa da camada grossa de gordura.',
+    'Quase não sente os ossos: há muita gordura cobrindo.',
   ),
 ];
 
