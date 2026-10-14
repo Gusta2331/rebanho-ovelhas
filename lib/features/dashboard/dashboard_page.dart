@@ -579,10 +579,40 @@ class _DashboardPageState extends State<DashboardPage> {
     if (resumo == null || resumo['gratuito'] == true) {
       if (resumo == null) return const SizedBox.shrink();
       return Card(
-        child: ListTile(
-          leading: const Icon(Icons.workspace_premium_outlined, color: AppTheme.primaryColor),
-          title: const Text('Plano grátis'),
-          subtitle: const Text('Seu plano gratuito está ativo.'),
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.workspace_premium_outlined,
+                color: AppTheme.primaryColor,
+                size: 21,
+              ),
+              const SizedBox(width: 9),
+              const Expanded(
+                child: Text(
+                  'Plano grátis • ativo',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+              ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                padding: EdgeInsets.zero,
+                tooltip: 'Abrir Meu plano',
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => const MeuPlanoPage()),
+                  );
+                  _carregarResumoPlano();
+                },
+                icon: const Icon(Icons.chevron_right, size: 20),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -600,37 +630,53 @@ class _DashboardPageState extends State<DashboardPage> {
             ? 'Confira a validade do seu plano'
             : 'Seu plano vence em $dias ${dias == 1 ? 'dia' : 'dias'}';
     return Card(
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 color: cor.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(9),
               ),
               child: Icon(
                 vencido ? Icons.warning_amber_rounded : Icons.calendar_month_outlined,
                 color: cor,
+                size: 19,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 9),
             Expanded(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(titulo, style: TextStyle(fontWeight: FontWeight.bold, color: cor)),
-                  const SizedBox(height: 3),
-                  Text(resumo['nome']?.toString() ?? 'Plano atual'),
-                  if (dias != null && !vencido)
-                    const Text('Acompanhe a validade em Meu plano.', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                  Text(
+                    titulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: cor,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    resumo['nome']?.toString() ?? 'Plano atual',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
             IconButton(
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              padding: EdgeInsets.zero,
               tooltip: 'Abrir Meu plano',
               onPressed: () async {
                 await Navigator.of(context).push(
@@ -638,7 +684,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 );
                 _carregarResumoPlano();
               },
-              icon: const Icon(Icons.chevron_right),
+              icon: const Icon(Icons.chevron_right, size: 20),
             ),
           ],
         ),
