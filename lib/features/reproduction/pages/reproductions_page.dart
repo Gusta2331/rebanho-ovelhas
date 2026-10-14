@@ -7,6 +7,7 @@ import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_selection_service.dart';
 import '../models/reproducao.dart';
 import '../services/reproducao_service.dart';
+import '../widgets/resumo_reprodutivo_chart.dart';
 import 'reproduction_details_page.dart';
 import 'reproduction_help_page.dart';
 import 'reproduction_form_page.dart';
@@ -274,6 +275,8 @@ class _ReproductionsPageState extends State<ReproductionsPage> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
         _buildResumo(),
+        const SizedBox(height: 12),
+        ResumoReprodutivoChart(reproducoes: _reproducoes),
         const SizedBox(height: 20),
         ..._reproducoes.map(_buildCardReproducao),
       ],
