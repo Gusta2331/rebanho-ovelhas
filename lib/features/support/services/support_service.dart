@@ -14,7 +14,7 @@ class SupportMessageResult {
 
 class SupportService {
   static const _bucket = 'support-attachments';
-  static const _uuid = Uuid();
+  static final _uuid = Uuid();
 
   SupabaseClient get _client => SupabaseService.client;
 
