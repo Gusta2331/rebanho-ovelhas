@@ -26,7 +26,7 @@ class AppUpdateService {
 
   static const String _latestReleaseUrl =
       'https://api.github.com/repos/Gusta2331/rebanho-ovelhas/releases/latest';
-  static const String _apkAssetName = 'app-release.apk';
+  static const String _apkAssetName = 'OviGestao.apk';
 
   final Dio _dio = Dio(
     BaseOptions(
