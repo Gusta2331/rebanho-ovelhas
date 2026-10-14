@@ -59,44 +59,6 @@ class EscoreCorporalGuideWidget extends StatelessWidget {
   }
 }
 
-class _PassoDoGuia extends StatelessWidget {
-  final String numero;
-  final String texto;
-
-  const _PassoDoGuia({required this.numero, required this.texto});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 7),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 11,
-            backgroundColor: AppTheme.primaryColor,
-            child: Text(
-              numero,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 1),
-              child: Text(texto, style: const TextStyle(height: 1.35)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _EscoreReference {
   final int score;
   final String title;
