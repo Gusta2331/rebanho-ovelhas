@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/composicao_rebanho_chart.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_asset_icon.dart';
@@ -556,6 +557,12 @@ class _DashboardPageState extends State<DashboardPage> {
               _buildTotalCard(),
               const SizedBox(height: 16),
               _buildAnimalCards(),
+              const SizedBox(height: 12),
+              ComposicaoRebanhoChart(
+                femeas: _totalFemeas,
+                machos: _totalMachos,
+                carregando: _loadingAnimals,
+              ),
               const SizedBox(height: 16),
               _buildFinanceiroResumo(),
               const SizedBox(height: 24),
