@@ -12,6 +12,7 @@ import 'configuracoes_page.dart';
 import '../manejo/pages/manejo_agenda_page.dart';
 import '../reproduction/pages/reproductions_page.dart';
 import '../reports/pages/reports_page.dart';
+import '../support/pages/fale_com_ovigestao_page.dart';
 
 class MaisPage extends StatelessWidget {
   const MaisPage({super.key});
@@ -60,6 +61,12 @@ class MaisPage extends StatelessWidget {
         titulo: 'Configurações',
         descricao: 'Dados da fazenda, conta e sincronização',
         onTap: () => _abrir(context, const ConfiguracoesPage()),
+      ),
+      _Item(
+        titulo: 'Fale com o OviGestão',
+        descricao: 'Envie dúvidas, sugestões, erros e imagens para o suporte',
+        icone: Icons.support_agent_outlined,
+        onTap: () => _abrir(context, const FaleComOviGestaoPage()),
       ),
       _Item(
         titulo: 'Excluir minha conta',
