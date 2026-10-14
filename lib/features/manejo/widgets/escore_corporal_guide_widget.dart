@@ -59,9 +59,18 @@ class EscoreCorporalGuideWidget extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Fontes técnicas: Embrapa, “Escore de Condição Corporal”; '
-            'Oregon State University Extension, “Body Condition Scoring of Sheep” (EC 1433).',
-            style: TextStyle(fontSize: 11, color: Colors.black54, height: 1.35),
+            'Fontes técnicas consultadas:',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, height: 1.35),
+          ),
+          const SizedBox(height: 4),
+          const SelectableText(
+            'Embrapa: embrapa.br/en/web/caprinos-e-ovinos/paratec-controle-integrado-verminoses/vermes/caprinos-ovinos/escore-condicao-corporal',
+            style: TextStyle(fontSize: 10, color: Colors.black54, height: 1.35),
+          ),
+          const SizedBox(height: 4),
+          const SelectableText(
+            'Oregon State University Extension (EC 1433): extension.oregonstate.edu/catalog/ec-1433-body-condition-scoring-sheep',
+            style: TextStyle(fontSize: 10, color: Colors.black54, height: 1.35),
           ),
         ],
       ),
