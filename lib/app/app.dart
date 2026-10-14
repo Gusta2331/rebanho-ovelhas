@@ -7,6 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/offline/offline_status_banner.dart';
 import '../core/theme/app_theme.dart';
+import '../core/update/app_update_dialog.dart';
+import '../core/update/app_update_service.dart';
 import '../features/auth/login_page.dart';
 import '../features/farm/pages/farm_check_page.dart';
 
@@ -37,6 +39,23 @@ class _FazendaBaixinhaAppState extends State<FazendaBaixinhaApp> {
     );
 
     _verificarLinkInicial();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _verificarAtualizacaoDisponivel();
+    });
+  }
+
+  Future<void> _verificarAtualizacaoDisponivel() async {
+    final update = await AppUpdateService.instance.verificarAtualizacao();
+    if (!mounted || update == null) return;
+
+    final context = _navigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AppUpdateDialog(update: update),
+    );
   }
 
   Future<void> _verificarLinkInicial() async {
