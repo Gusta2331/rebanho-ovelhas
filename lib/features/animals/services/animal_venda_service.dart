@@ -25,7 +25,7 @@ class AnimalVendaService {
     return AnimalVenda.fromMap(Map<String, dynamic>.from(resultado));
   }
 
-  Future<AnimalVenda> venderAnimal({
+  Future<void> venderAnimal({
     required String animalId,
     required String loteId,
     required DateTime dataVenda,
@@ -70,21 +70,10 @@ class AnimalVendaService {
         },
       );
 
-      return AnimalVenda(
-        id: vendaId,
-        animalId: animalId,
-        loteId: loteId,
-        dataVenda: dataVenda,
-        tipoVenda: tipoVenda,
-        pesoKg: pesoKg,
-        precoPorKg: precoPorKg,
-        valorTotal: valorTotal,
-        comprador: comprador?.trim(),
-        observacoes: observacoes?.trim(),
-      );
+      return;
     }
 
-    final resultado = await _client.rpc(
+    final dynamic resultado = await _client.rpc<dynamic>(
       'vender_animal',
       params: {
         'p_animal_id': animalId,
@@ -101,25 +90,10 @@ class AnimalVendaService {
       },
     );
 
-    final vendaId = resultado?.toString();
-
-    if (vendaId == null || vendaId.isEmpty) {
-      throw Exception(
-        'A venda foi processada, mas o registro não foi retornado.',
-      );
+    // A função do banco pode retornar booleano (true/false), não o ID da venda.
+    // O registro já é gravado no banco; não tente converter o resultado em String.
+    if (resultado == false) {
+      throw Exception('O banco de dados não confirmou o registro da venda.');
     }
-
-    return AnimalVenda(
-      id: vendaId,
-      animalId: animalId,
-      loteId: loteId,
-      dataVenda: dataVenda,
-      tipoVenda: tipoVenda,
-      pesoKg: pesoKg,
-      precoPorKg: precoPorKg,
-      valorTotal: valorTotal,
-      comprador: comprador?.trim(),
-      observacoes: observacoes?.trim(),
-    );
   }
 }
