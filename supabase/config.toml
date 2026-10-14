@@ -11,3 +11,6 @@ verify_jwt = false
 # A rotina diária é chamada pelo pg_cron usando uma chave guardada no Vault.
 [functions.planos-alerta-vencimento]
 verify_jwt = false
+
+[functions.notify-support-message]
+verify_jwt = true
