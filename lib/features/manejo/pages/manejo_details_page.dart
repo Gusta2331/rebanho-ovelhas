@@ -250,7 +250,12 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
             manejo.dose!.toStringAsFixed(2) + ' ' + (manejo.doseUnidade ?? ''),
             Icons.medication_outlined,
           ),
-        if (manejo.pesoReferenciaKg != null)
+        if ((manejo.tipo == TipoManejo.vacinacao ||
+                manejo.tipo == TipoManejo.vermifugacao ||
+                manejo.tipo == TipoManejo.tratamento) &&
+            manejo.dose != null &&
+            manejo.pesoReferenciaKg != null &&
+            manejo.pesoReferenciaKg! > 0)
           _item(
             'Regra da dose',
             'Dose por ' + manejo.pesoReferenciaKg!.toStringAsFixed(2) + ' kg',
