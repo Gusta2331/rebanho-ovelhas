@@ -10,6 +10,7 @@ import '../../flock/services/rebanho_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
 import '../utils/famacha_scale.dart';
+import '../widgets/escore_corporal_guide_widget.dart';
 import '../widgets/famacha_reference_widget.dart';
 import '../widgets/famacha_score_badge.dart';
 import '../widgets/manejo_animal_selector.dart';
@@ -1354,6 +1355,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
               height: 1.35,
             ),
           ),
+          const EscoreCorporalGuideWidget(),
           const SizedBox(height: 14),
           Wrap(
             spacing: 8,
@@ -1436,6 +1438,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
               height: 1.35,
             ),
           ),
+          const EscoreCorporalGuideWidget(),
           const SizedBox(height: 14),
           ...selecionados.map((animal) {
             final id = animal['id'].toString();
@@ -1718,6 +1721,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
               HelpTopic(
                 title: 'FAMACHA',
                 description: 'Selecione o escore observado; a cor ajuda a identificar a faixa da escala. Em caso de dúvida clínica, consulte um veterinário.',
+              ),
+              HelpTopic(
+                title: 'Escore corporal',
+                description: 'Abra “Guia visual: como avaliar” no formulário. Localize a região lombar, atrás da última costela e antes do quadril, e avalie por palpação a cobertura de músculo e gordura. As ilustrações funcionam sem internet.',
               ),
             ],
           ),
