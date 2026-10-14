@@ -699,6 +699,9 @@ class _ManejosPageState extends State<ManejosPage> {
                                   children: [
                                     Text(
                                       titulo,
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
@@ -707,6 +710,9 @@ class _ManejosPageState extends State<ManejosPage> {
                                     const SizedBox(height: 4),
                                     Text(
                                       subtitulo,
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         color: Colors.black54,
                                       ),
@@ -725,6 +731,8 @@ class _ManejosPageState extends State<ManejosPage> {
                                       const SizedBox(height: 4),
                                       Text(
                                         'Vacina: ' + manejo.vacinaNome!,
+                                        maxLines: 1,
+                                        softWrap: false,
                                         style: const TextStyle(
                                           color: Colors.black54,
                                         ),
