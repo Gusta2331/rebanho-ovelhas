@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/contextual_help.dart';
@@ -59,6 +60,17 @@ class MaisPage extends StatelessWidget {
         titulo: 'Configurações',
         descricao: 'Dados da fazenda, conta e sincronização',
         onTap: () => _abrir(context, const ConfiguracoesPage()),
+      ),
+      _Item(
+        titulo: 'Excluir minha conta',
+        descricao: 'Solicite a exclusão da conta e dos dados associados',
+        icone: Icons.person_remove_outlined,
+        onTap: () => _abrirLink(
+          context,
+          Uri.parse(
+            'https://gusta2331.github.io/rebanho-ovelhas/exclusao-de-conta.html',
+          ),
+        ),
       ),
       _Item(
         assetPath: 'assets/images/icon_administracao.png',
@@ -137,6 +149,19 @@ class MaisPage extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _abrirLink(BuildContext context, Uri uri) async {
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível abrir a página. Tente novamente ou acesse o site do OviGestão.',
+          ),
+        ),
+      );
+    }
   }
 
   void _abrir(BuildContext context, Widget page) {
