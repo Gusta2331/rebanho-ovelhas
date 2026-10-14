@@ -29,20 +29,27 @@ class EscoreCorporalGuideWidget extends StatelessWidget {
         subtitle: const Text('Ilustrações disponíveis sem internet'),
         children: [
           const Text(
-            '1. Localize a região lombar: atrás da última costela e antes dos ossos do quadril.',
-            style: TextStyle(fontWeight: FontWeight.w600, height: 1.35),
+            'É simples: use a mão, não apenas os olhos.',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
           ),
-          const SizedBox(height: 8),
-          const _RegiaoLombarIllustration(),
           const SizedBox(height: 6),
-          const Text(
-            '2. Apalpe a linha central da coluna e as pontas ósseas laterais. '
-            'Avalie quanto músculo e gordura cobrem os ossos. Não use apenas a aparência.',
-            style: TextStyle(height: 1.4),
+          const _RegiaoLombarIllustration(),
+          const SizedBox(height: 8),
+          const _PassoDoGuia(
+            numero: '1',
+            texto: 'Ache as costas, entre a última costela e o quadril.',
+          ),
+          const _PassoDoGuia(
+            numero: '2',
+            texto: 'Passe os dedos sobre a coluna e os ossinhos dos lados.',
+          ),
+          const _PassoDoGuia(
+            numero: '3',
+            texto: 'Escolha o desenho que mais parece com o que você sente.',
           ),
           const SizedBox(height: 14),
           const Text(
-            'Referência dos escores',
+            'Qual nota escolher?',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
           const SizedBox(height: 8),
@@ -52,9 +59,8 @@ class EscoreCorporalGuideWidget extends StatelessWidget {
           ],
           const Divider(),
           const Text(
-            'As notas 1,5; 2,5; 3,5 e 4,5 são intermediárias. Use-as quando '
-            'a condição estiver entre duas descrições. O escore é uma avaliação '
-            'por palpação e deve ser interpretado junto da fase produtiva e do histórico.',
+            'Ficou entre duas notas? Pode usar meia nota, como 2,5 ou 3,5. '
+            'Se estiver em dúvida, peça ajuda a um veterinário ou técnico.',
             style: TextStyle(fontSize: 12, height: 1.4),
           ),
           const SizedBox(height: 8),
@@ -78,6 +84,44 @@ class EscoreCorporalGuideWidget extends StatelessWidget {
   }
 }
 
+class _PassoDoGuia extends StatelessWidget {
+  final String numero;
+  final String texto;
+
+  const _PassoDoGuia({required this.numero, required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 7),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 11,
+            backgroundColor: AppTheme.primaryColor,
+            child: Text(
+              numero,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Text(texto, style: const TextStyle(height: 1.35)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _EscoreReference {
   final int score;
   final String title;
@@ -90,27 +134,27 @@ const _referencias = <_EscoreReference>[
   _EscoreReference(
     1,
     'Muito magra',
-    'Coluna e pontas laterais muito salientes e afiadas; quase não há cobertura de músculo ou gordura.',
+    'Os ossos ficam muito saltados e pontudos. Quase não há carne ou gordura.',
   ),
   _EscoreReference(
     2,
     'Magra',
-    'A coluna é fácil de sentir; há pouca gordura e as pontas laterais ainda são perceptíveis.',
+    'Você sente os ossos facilmente e há pouca cobertura sobre eles.',
   ),
   _EscoreReference(
     3,
-    'Condição intermediária',
-    'A coluna fica arredondada; os ossos individuais são sentidos com pressão e há cobertura muscular.',
+    'Boa condição',
+    'Os ossos têm cobertura de carne. Você os sente apertando de leve a moderado.',
   ),
   _EscoreReference(
     4,
     'Gorda',
-    'A coluna é sentida como uma linha dura apenas com pressão; as pontas laterais ficam difíceis de sentir.',
+    'É difícil sentir os ossos. É preciso apertar mais para encontrá-los.',
   ),
   _EscoreReference(
     5,
     'Muito gorda',
-    'Os ossos ficam difíceis de identificar ao toque, com cobertura muito espessa de gordura.',
+    'Quase não dá para sentir os ossos, por causa da camada grossa de gordura.',
   ),
 ];
 
