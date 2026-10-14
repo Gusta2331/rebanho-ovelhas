@@ -280,7 +280,7 @@ class _EscoreLombarPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         bodyRect.deflate(3),
-        Radius.circular(9 + score),
+        Radius.circular(9.0 + score),
       ),
       muscle,
     );
