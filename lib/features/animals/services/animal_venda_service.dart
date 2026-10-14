@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../core/offline/connectivity_service.dart';
 import '../../../core/offline/offline_sync_service.dart';
@@ -54,7 +53,6 @@ class AnimalVendaService {
         );
       }
 
-      final vendaId = const Uuid().v4();
       await OfflineSyncService.instance.enfileirar(
         tipo: 'animal.venda',
         dados: {
