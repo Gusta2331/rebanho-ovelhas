@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/evolucao_financeira_chart.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
@@ -312,6 +313,8 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                       );
                     },
                   ),
+                  const SizedBox(height: 20),
+                  EvolucaoFinanceiraChart(registros: _registros),
                   const SizedBox(height: 20),
                   if (_registros.isEmpty)
                     const Text(
