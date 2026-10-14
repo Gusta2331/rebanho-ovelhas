@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'widgets/evolucao_financeira_chart.dart';
+import '../widgets/evolucao_financeira_chart.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_asset_icon.dart';
