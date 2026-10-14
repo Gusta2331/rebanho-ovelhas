@@ -60,9 +60,17 @@ class AppUpdateService {
 
       Map<String, dynamic>? apk;
       for (final item in assets) {
-        if (item is Map<String, dynamic> &&
-            item['name'] == _apkAssetName &&
-            item['browser_download_url'] is String) {
+        if (item is! Map<String, dynamic> ||
+            item['browser_download_url'] is! String) {
+          continue;
+        }
+
+        final assetName = (item['name'] as String? ?? '').trim();
+        final isOviGestaoApk = assetName == _apkAssetName ||
+            (assetName.startsWith('OviGestao-') &&
+                assetName.toLowerCase().endsWith('.apk'));
+
+        if (isOviGestaoApk) {
           apk = item;
           break;
         }
