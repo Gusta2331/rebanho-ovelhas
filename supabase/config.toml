@@ -12,5 +12,3 @@ verify_jwt = false
 [functions.planos-alerta-vencimento]
 verify_jwt = false
 
-[functions.notify-support-message]
-verify_jwt = true
