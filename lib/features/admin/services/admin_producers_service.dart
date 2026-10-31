@@ -21,11 +21,34 @@ class AdminProducersService {
   Future<void> alterarPlano({
     required String usuarioId,
     required String planoId,
+    int? duracaoDias,
   }) async {
     await _invoke({
       'action': 'set_plan',
       'user_id': usuarioId,
       'plano_id': planoId,
+      'duracao_dias': ?duracaoDias,
+    });
+  }
+
+  Future<void> definirAcesso({
+    required String usuarioId,
+    required bool ativo,
+  }) async {
+    await _invoke({
+      'action': 'set_producer_active',
+      'user_id': usuarioId,
+      'ativo': ativo,
+    });
+  }
+
+  Future<void> excluirProdutor({
+    required String usuarioId,
+  }) async {
+    await _invoke({
+      'action': 'delete_producer',
+      'user_id': usuarioId,
+      'confirmacao': 'EXCLUIR DEFINITIVAMENTE',
     });
   }
 

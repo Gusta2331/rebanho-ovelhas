@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/app_asset_icon.dart';
-
-import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
-import '../../flock/services/rebanho_service.dart';
 import '../../flock/services/rebanho_selection_service.dart';
+import '../../flock/services/rebanho_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_programado_service.dart';
 import '../services/manejo_service.dart';
+import 'manejo_form_page.dart';
 import '../widgets/manejo_animal_selector.dart';
 
 class ManejoAgendaPage extends StatefulWidget {
@@ -102,6 +103,8 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
         return 'FAMACHA';
       case TipoManejo.denticao:
         return 'Dentição';
+      case TipoManejo.escoreCorporal:
+        return 'Escore corporal';
       case TipoManejo.outro:
         return 'Outro';
     }
@@ -123,6 +126,8 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
         return Icons.visibility_outlined;
       case TipoManejo.denticao:
         return Icons.health_and_safety_outlined;
+      case TipoManejo.escoreCorporal:
+        return Icons.monitor_weight_outlined;
       case TipoManejo.outro:
         return Icons.assignment_outlined;
     }
@@ -187,8 +192,7 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
 
   void _msg(String texto) {
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(texto)));
+      showAppSnackBar(context, SnackBar(content: Text(texto)));
     }
   }
 
@@ -202,6 +206,34 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
   }
 
   Future<void> _concluir(Map<String, dynamic> item) async {
+    if (Manejo.tipoFromString(item['tipo']?.toString()) ==
+        TipoManejo.escoreCorporal) {
+      final vinculos = item['manejos_programados_animais'];
+      final animalIds = vinculos is List
+          ? vinculos
+              .whereType<Map>()
+              .map((vinculo) => vinculo['animal_id']?.toString())
+              .whereType<String>()
+              .toSet()
+              .toList()
+          : <String>[];
+      if (animalIds.isEmpty) {
+        _msg('Não foi possível localizar os animais deste manejo programado.');
+        return;
+      }
+      final resultado = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => ManejoFormPage(
+            tipoInicial: TipoManejo.escoreCorporal,
+            dataInicial: _data(item),
+            animalIdsIniciais: animalIds,
+            selecaoAnimaisBloqueada: true,
+          ),
+        ),
+      );
+      if (resultado != true || !mounted) return;
+    }
+
     try {
       await _service.concluir(item['id'].toString());
       if (!mounted) return;
@@ -439,7 +471,11 @@ class _ManejoAgendaPageState extends State<ManejoAgendaPage> {
                       FilledButton.icon(
                         onPressed: () => _concluir(item),
                         icon: const Icon(Icons.check, size: 18),
-                        label: const Text('Realizar'),
+                        label: Text(
+                          tipo == TipoManejo.escoreCorporal
+                              ? 'Registrar escore'
+                              : 'Realizar',
+                        ),
                       ),
                     if (status != 'Realizado')
                       OutlinedButton.icon(
@@ -739,6 +775,8 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
         return 'FAMACHA';
       case TipoManejo.denticao:
         return 'Dentição';
+      case TipoManejo.escoreCorporal:
+        return 'Escore corporal';
       case TipoManejo.outro:
         return 'Outro';
     }
@@ -754,8 +792,7 @@ class _ManejoAgendaFormPageState extends State<ManejoAgendaFormPage> {
 
   void _msg(String texto) {
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(texto)));
+      showAppSnackBar(context, SnackBar(content: Text(texto)));
     }
   }
 

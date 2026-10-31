@@ -488,6 +488,7 @@ class ManejoService {
     required TipoManejo tipo,
     required DateTime data,
     int? famachaEscore,
+    double? escoreCorporal,
     String? denticao,
     DateTime? denticaoData,
     String? observacoes,
@@ -518,6 +519,7 @@ class ManejoService {
     _validarDados(
       tipo: tipo,
       famachaEscore: famachaEscore,
+      escoreCorporal: escoreCorporal,
       vacinaId: vacinaId,
       vacinaNome: vacinaNome,
       vacinaFabricante: vacinaFabricante,
@@ -548,6 +550,7 @@ class ManejoService {
       tipo: tipo,
       data: data,
       famachaEscore: famachaEscore,
+      escoreCorporal: tipo == TipoManejo.escoreCorporal ? escoreCorporal : null,
       denticao: tipo == TipoManejo.denticao ? _text(denticao) : null,
       denticaoData: tipo == TipoManejo.denticao ? denticaoData : null,
       observacoes: observacoes,
@@ -606,6 +609,7 @@ class ManejoService {
     required TipoManejo tipo,
     String? operacaoId,
     Map<String, int> famachaPorAnimal = const {},
+    Map<String, double> escoreCorporalPorAnimal = const {},
     Map<String, String> denticaoPorAnimal = const {},
     Map<String, double> pesoPorAnimal = const {},
     Map<String, double> dosePorAnimal = const {},
@@ -645,6 +649,15 @@ class ManejoService {
       }
     }
 
+    if (tipo == TipoManejo.escoreCorporal) {
+      for (final id in animalIds) {
+        final e = escoreCorporalPorAnimal[id];
+        if (e == null || e < 1 || e > 5 || (e * 2 - (e * 2).round()).abs() > 0.001) {
+          throw Exception('Informe o escore corporal de 1 a 5 para todos os animais, em intervalos de 0,5.');
+        }
+      }
+    }
+
     if (tipo == TipoManejo.pesagem) {
       for (final id in animalIds) {
         final peso = pesoPorAnimal[id];
@@ -669,6 +682,7 @@ class ManejoService {
       medicamentoNome: medicamentoNome,
       validarFamacha: false,
       validarPeso: false,
+      validarEscoreCorporal: false,
     );
 
     final quantidadeFarmacia = farmaciaQuantidade ?? dose;
@@ -707,6 +721,7 @@ class ManejoService {
             famachaEscore: tipo == TipoManejo.famacha
                 ? famachaPorAnimal[animalId]
                 : null,
+            escoreCorporal: tipo == TipoManejo.escoreCorporal ? escoreCorporalPorAnimal[animalId] : null,
             denticao: tipo == TipoManejo.denticao
                 ? denticaoPorAnimal[animalId]
                 : null,
@@ -791,6 +806,8 @@ class ManejoService {
     required TipoManejo tipo,
     required DateTime data,
     int? famachaEscore,
+    double? escoreCorporal,
+    bool atualizarEscoreCorporal = false,
     String? denticao,
     DateTime? denticaoData,
     String? observacoes,
@@ -820,6 +837,7 @@ class ManejoService {
     _validarDados(
       tipo: tipo,
       famachaEscore: famachaEscore,
+      escoreCorporal: escoreCorporal,
       vacinaId: vacinaId,
       vacinaNome: vacinaNome,
       vacinaFabricante: vacinaFabricante,
@@ -844,6 +862,7 @@ class ManejoService {
             tipo: tipo,
             data: data,
             famachaEscore: famachaEscore,
+            escoreCorporal: tipo == TipoManejo.escoreCorporal ? escoreCorporal : null,
             denticao: tipo == TipoManejo.denticao ? denticao : null,
             denticaoData: tipo == TipoManejo.denticao ? denticaoData : null,
             observacoes: observacoes,
@@ -872,6 +891,10 @@ class ManejoService {
           ..remove('id')
           ..remove('fazenda_id');
 
+    if (!atualizarEscoreCorporal) {
+      dados.remove('escore_corporal');
+    }
+
     if (!_connectivity.isOnline) {
       await OfflineSyncService.instance.enfileirar(
         tipo: 'manejo.atualizar',
@@ -893,6 +916,13 @@ class ManejoService {
         'p_dados': {'id': id, 'fazenda_id': fazendaId, ...dados},
       },
     );
+    // A RPC mantém o controle de estoque. Atualizamos a nova coluna à parte
+    // somente quando a avaliação corporal entra ou sai do registro.
+    if (atualizarEscoreCorporal) {
+      await _client.from('manejos').update({
+        'escore_corporal': tipo == TipoManejo.escoreCorporal ? escoreCorporal : null,
+      }).eq('id', id).eq('fazenda_id', fazendaId);
+    }
   }
 
   Future<void> excluirManejo(String id) async {
@@ -1017,6 +1047,7 @@ class ManejoService {
   void _validarDados({
     required TipoManejo tipo,
     int? famachaEscore,
+    double? escoreCorporal,
     String? vacinaId,
     String? vacinaNome,
     String? vacinaFabricante,
@@ -1031,6 +1062,7 @@ class ManejoService {
     String? medicamentoNome,
     bool validarFamacha = true,
     bool validarPeso = true,
+    bool validarEscoreCorporal = true,
   }) {
     if (validarPeso &&
         tipo == TipoManejo.pesagem &&
@@ -1045,6 +1077,14 @@ class ManejoService {
         pesoReferenciaKg != null &&
         pesoReferenciaKg <= 0) {
       throw Exception('O peso de referência da dose deve ser maior que zero.');
+    }
+    if (validarEscoreCorporal && tipo == TipoManejo.escoreCorporal &&
+        (escoreCorporal == null || escoreCorporal < 1 || escoreCorporal > 5 ||
+            (escoreCorporal * 2 - (escoreCorporal * 2).round()).abs() > 0.001)) {
+      throw Exception('Informe um escore corporal de 1 a 5, em intervalos de 0,5.');
+    }
+    if (tipo != TipoManejo.escoreCorporal && escoreCorporal != null) {
+      throw Exception('O escore corporal só pode ser usado em uma avaliação corporal.');
     }
     if (validarFamacha &&
         tipo == TipoManejo.famacha &&
@@ -1089,6 +1129,7 @@ class ManejoService {
     required DateTime data,
     String? operacaoId,
     int? famachaEscore,
+    double? escoreCorporal,
     String? denticao,
     DateTime? denticaoData,
     String? observacoes,
@@ -1122,6 +1163,7 @@ class ManejoService {
       'data': data.toIso8601String(),
       'operacao_id': operacaoId,
       'famacha_escore': tipo == TipoManejo.famacha ? famachaEscore : null,
+      'escore_corporal': tipo == TipoManejo.escoreCorporal ? escoreCorporal : null,
       'denticao': tipo == TipoManejo.denticao ? _text(denticao) : null,
       'denticao_data': tipo == TipoManejo.denticao ? denticaoData?.toIso8601String() : null,
       'observacoes': _text(observacoes),

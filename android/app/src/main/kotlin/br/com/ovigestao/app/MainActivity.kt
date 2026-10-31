@@ -1,4 +1,5 @@
-package com.example.rebanho_app
+
+package br.com.ovigestao.app
 
 import io.flutter.embedding.android.FlutterActivity
 

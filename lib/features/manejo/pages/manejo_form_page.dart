@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/app_asset_icon.dart';
-
-import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
-import '../../flock/services/rebanho_service.dart';
 import '../../farmacia/services/farmacia_service.dart';
+import '../../flock/services/rebanho_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
-import '../widgets/famacha_reference_widget.dart';
-import '../widgets/manejo_animal_selector.dart';
 import '../utils/famacha_scale.dart';
+import '../widgets/escore_corporal_guide_widget.dart';
+import '../widgets/famacha_reference_widget.dart';
 import '../widgets/famacha_score_badge.dart';
+import '../widgets/manejo_animal_selector.dart';
 
 class ManejoFormPage extends StatefulWidget {
   final Manejo? manejo;
@@ -65,6 +66,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   String? _animalId;
   final Set<String> _animaisSelecionados = {};
   final Map<String, int> _famachaPorAnimal = {};
+  final Map<String, double> _escoreCorporalPorAnimal = {};
   final Map<String, String> _denticaoPorAnimal = {};
   final Map<String, double> _pesos = {};
   final Map<String, double> _dosesCalculadas = {};
@@ -82,6 +84,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
   DateTime _data = DateTime.now();
   DateTime? _validade;
   int? _famacha;
+  double? _escoreCorporal;
   String? _denticaoSelecionada;
 
   Map<String, dynamic>? _vacinaSelecionada;
@@ -120,6 +123,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       _tipo = manejo.tipo;
       _data = manejo.data;
       _famacha = manejo.famachaEscore;
+      _escoreCorporal = manejo.escoreCorporal;
+      if (manejo.escoreCorporal != null) _escoreCorporalPorAnimal[manejo.animalId] = manejo.escoreCorporal!;
       _denticaoSelecionada = manejo.denticao;
       _denticaoPorAnimal[manejo.animalId] = manejo.denticao ?? '';
       _observacoes.text = manejo.observacoes ?? '';
@@ -432,6 +437,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
             .toSet();
         _animaisSelecionados.removeWhere((id) => !ids.contains(id));
         _famachaPorAnimal.removeWhere((id, _) => !ids.contains(id));
+        _escoreCorporalPorAnimal.removeWhere((id, _) => !ids.contains(id));
 
         if (_animalId != null && !ids.contains(_animalId)) {
           _animalId = null;
@@ -797,6 +803,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     setState(() {
       _animaisSelecionados.clear();
       _famachaPorAnimal.clear();
+      _escoreCorporalPorAnimal.clear();
       _denticaoPorAnimal.clear();
       _pesos.clear();
       _dosesCalculadas.clear();
@@ -810,6 +817,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       if (_animaisSelecionados.contains(id)) {
         _animaisSelecionados.remove(id);
         _famachaPorAnimal.remove(id);
+        _escoreCorporalPorAnimal.remove(id);
         _denticaoPorAnimal.remove(id);
         _pesoTextoPorAnimal.remove(id);
         _doseTextoPorAnimal.remove(id);
@@ -836,6 +844,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
     setState(() => _famachaPorAnimal[animalId] = escore);
   }
 
+  void _definirEscoreCorporal(String animalId, double escore) {
+    setState(() => _escoreCorporalPorAnimal[animalId] = escore);
+  }
+
   Future<void> _salvar() async {
     if (_editando) {
       await _salvarEdicao();
@@ -853,6 +865,14 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       );
       if (faltando.isNotEmpty) {
         _mensagem('Informe o FAMACHA de todos os animais selecionados.');
+        return;
+      }
+    }
+
+    if (_tipo == TipoManejo.escoreCorporal) {
+      final faltando = _animaisSelecionados.where((id) => !_escoreCorporalPorAnimal.containsKey(id));
+      if (faltando.isNotEmpty) {
+        _mensagem('Informe o escore corporal de cada animal selecionado.');
         return;
       }
     }
@@ -944,6 +964,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         operacaoId: widget.operacaoId,
         tipo: _tipo,
         famachaPorAnimal: _famachaPorAnimal,
+        escoreCorporalPorAnimal: _escoreCorporalPorAnimal,
         denticaoPorAnimal: _tipo == TipoManejo.denticao
             ? {
                 for (final id in _animaisSelecionados)
@@ -1021,6 +1042,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
       return;
     }
 
+    if (_tipo == TipoManejo.escoreCorporal && _escoreCorporal == null) {
+      _mensagem('Selecione o escore corporal do animal.');
+      return;
+    }
+
     if (_tipo == TipoManejo.denticao &&
         (_denticaoSelecionada == null || _denticaoSelecionada!.trim().isEmpty)) {
       _mensagem('Informe a condição da dentição.');
@@ -1054,6 +1080,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         tipo: _tipo,
         data: _data,
         famachaEscore: _tipo == TipoManejo.famacha ? _famacha : null,
+        escoreCorporal: _tipo == TipoManejo.escoreCorporal ? _escoreCorporal : null,
+        atualizarEscoreCorporal: widget.manejo!.tipo == TipoManejo.escoreCorporal || _tipo == TipoManejo.escoreCorporal,
         denticao: _tipo == TipoManejo.denticao ? _denticaoSelecionada : null,
         denticaoData: _tipo == TipoManejo.denticao ? _data : null,
         observacoes: _observacoes.text,
@@ -1165,6 +1193,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         return 'FAMACHA';
       case TipoManejo.denticao:
         return 'Dentição';
+      case TipoManejo.escoreCorporal:
+        return 'Escore corporal';
       case TipoManejo.outro:
         return 'Outro';
     }
@@ -1176,7 +1206,7 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
 
   void _mensagem(String texto) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(content: Text(texto.replaceFirst('Exception: ', ''))),
     );
   }
@@ -1294,6 +1324,208 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
         ],
       ),
     );
+  }
+
+  Widget _escoreCorporalField() {
+    const valores = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Escore corporal',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Avalie a condição corporal pela palpação da região lombar. '
+            'Escala de 1 a 5, em intervalos de 0,5.',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.black54,
+              height: 1.35,
+            ),
+          ),
+          const EscoreCorporalGuideWidget(),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final valor in valores)
+                SizedBox(
+                  width: 54,
+                  child: OutlinedButton(
+                    onPressed: _salvando
+                        ? null
+                        : () => setState(() => _escoreCorporal = valor),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: _escoreCorporal == valor
+                          ? AppTheme.primaryColor
+                          : Colors.white,
+                      foregroundColor: _escoreCorporal == valor
+                          ? Colors.white
+                          : AppTheme.textColor,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    child: Text(
+                      _formatarEscoreCorporal(valor),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (_escoreCorporal != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Classificação: ' +
+                  _descricaoEscoreCorporal(_escoreCorporal!),
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _avaliacaoEscoreCorporalLote() {
+    const valores = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
+    final selecionados = _animaisSelecionados
+        .map(_animalPorId)
+        .whereType<Map<String, dynamic>>()
+        .toList();
+
+    if (selecionados.isEmpty) {
+      return const Text(
+        'Selecione os animais acima para registrar o escore corporal de cada um.',
+        style: TextStyle(color: Colors.black54),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Escore corporal por animal',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Selecione um valor para cada animal. 1 indica condição muito '
+            'magra e 5 condição muito gorda.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.black54,
+              height: 1.35,
+            ),
+          ),
+          const EscoreCorporalGuideWidget(),
+          const SizedBox(height: 14),
+          ...selecionados.map((animal) {
+            final id = animal['id'].toString();
+            final escore = _escoreCorporalPorAnimal[id];
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: escore == null
+                      ? Colors.black12
+                      : AppTheme.primaryColor.withValues(alpha: 0.30),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _animalTexto(animal),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 5,
+                    runSpacing: 5,
+                    children: [
+                      for (final valor in valores)
+                        SizedBox(
+                          width: 48,
+                          child: OutlinedButton(
+                            onPressed: _salvando
+                                ? null
+                                : () => _definirEscoreCorporal(id, valor),
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: escore == valor
+                                  ? AppTheme.primaryColor
+                                  : Colors.white,
+                              foregroundColor: escore == valor
+                                  ? Colors.white
+                                  : AppTheme.textColor,
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                            ),
+                            child: Text(
+                              _formatarEscoreCorporal(valor),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (escore != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        _descricaoEscoreCorporal(escore),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  String _formatarEscoreCorporal(double valor) {
+    return valor == valor.roundToDouble()
+        ? valor.toStringAsFixed(0)
+        : valor.toStringAsFixed(1).replaceAll('.', ',');
+  }
+
+  String _descricaoEscoreCorporal(double valor) {
+    if (valor <= 1.5) return 'Muito magra';
+    if (valor <= 2.5) return 'Magra';
+    if (valor <= 3.5) return 'Condição adequada';
+    if (valor <= 4.5) return 'Gorda';
+    return 'Muito gorda';
   }
 
   Widget _denticaoPorAnimalField() {
@@ -1490,6 +1722,10 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                 title: 'FAMACHA',
                 description: 'Selecione o escore observado; a cor ajuda a identificar a faixa da escala. Em caso de dúvida clínica, consulte um veterinário.',
               ),
+              HelpTopic(
+                title: 'Escore corporal',
+                description: 'Abra “Guia visual: como avaliar” no formulário. Localize a região lombar, atrás da última costela e antes do quadril, e avalie por palpação a cobertura de músculo e gordura. As ilustrações funcionam sem internet.',
+              ),
             ],
           ),
         ],
@@ -1546,6 +1782,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                         _animaisSelecionados.clear();
                                       }
                                       _famachaPorAnimal.clear();
+                                      _escoreCorporalPorAnimal.clear();
+                                      _escoreCorporal = null;
                                       _denticaoPorAnimal.clear();
                                       _pesos.clear();
                                       _pesoTextoPorAnimal.clear();
@@ -1611,6 +1849,8 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                                   _rebanhoId = id;
                                   _animaisSelecionados.clear();
                                   _famachaPorAnimal.clear();
+                                  _escoreCorporalPorAnimal.clear();
+                                  _escoreCorporal = null;
                                   _denticaoPorAnimal.clear();
                                   _pesos.clear();
                                   _pesoTextoPorAnimal.clear();
@@ -1729,10 +1969,11 @@ class _ManejoFormPageState extends State<ManejoFormPage> {
                           ],
                           if (_tipo == TipoManejo.famacha) ...[
                             const SizedBox(height: 16),
-                            if (_editando)
-                              _famachaField()
-                            else
-                              _avaliacaoLote(),
+                            if (_editando) _famachaField() else _avaliacaoLote(),
+                          ],
+                          if (_tipo == TipoManejo.escoreCorporal) ...[
+                            const SizedBox(height: 16),
+                            if (_editando) _escoreCorporalField() else _avaliacaoEscoreCorporalLote(),
                           ],
                           const SizedBox(height: 22),
                           _cabecalhoEtapa(

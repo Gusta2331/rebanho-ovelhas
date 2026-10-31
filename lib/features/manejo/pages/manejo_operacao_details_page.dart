@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
 import 'manejo_details_page.dart';
@@ -47,6 +48,8 @@ class _ManejoOperacaoDetailsPageState extends State<ManejoOperacaoDetailsPage> {
         return 'FAMACHA';
       case TipoManejo.denticao:
         return 'Dentição';
+      case TipoManejo.escoreCorporal:
+        return 'Escore corporal';
       case TipoManejo.outro:
         return 'Outro';
     }
@@ -95,6 +98,8 @@ class _ManejoOperacaoDetailsPageState extends State<ManejoOperacaoDetailsPage> {
         return Icons.visibility_outlined;
       case TipoManejo.denticao:
         return Icons.health_and_safety_outlined;
+      case TipoManejo.escoreCorporal:
+        return Icons.monitor_weight_outlined;
       case TipoManejo.outro:
         return Icons.assignment_outlined;
     }
@@ -119,6 +124,9 @@ class _ManejoOperacaoDetailsPageState extends State<ManejoOperacaoDetailsPage> {
     }
     if (manejo.famachaEscore != null) {
       partes.add('Escore FAMACHA: ${manejo.famachaEscore}');
+    }
+    if (manejo.escoreCorporal != null) {
+      partes.add('Escore corporal: ' + manejo.escoreCorporal!.toString().replaceAll('.0', '').replaceAll('.', ',') + ' / 5');
     }
     if (manejo.dose != null) {
       partes.add(
@@ -170,7 +178,7 @@ class _ManejoOperacaoDetailsPageState extends State<ManejoOperacaoDetailsPage> {
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
         ),

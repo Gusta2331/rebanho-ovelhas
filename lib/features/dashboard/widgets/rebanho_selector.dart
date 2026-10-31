@@ -156,25 +156,29 @@ class RebanhoSelector extends StatelessWidget {
                   Icons.keyboard_arrow_down_rounded,
                   color: AppTheme.primaryColor,
                 ),
+                itemHeight: 48,
                 items: rebanhos.map((rebanho) {
                   return DropdownMenuItem<Rebanho>(
                     value: rebanho,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Text(
-                          rebanho.nome,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textColor,
+                        Expanded(
+                          child: Text(
+                            rebanho.nome,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textColor,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
-                          '${rebanho.quantidadeAnimais} animais ativos',
+                          '${rebanho.quantidadeAnimais} ativos',
+                          maxLines: 1,
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: Colors.black54,
                           ),
                         ),

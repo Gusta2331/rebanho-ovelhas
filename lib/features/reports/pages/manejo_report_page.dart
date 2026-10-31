@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../manejo/models/manejo.dart';
 import '../../manejo/services/manejo_service.dart';
 import '../services/report_excel_service.dart';
@@ -216,6 +217,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
         Icons.health_and_safety_outlined,
       ),
       _Summary('Dentição', count(TipoManejo.denticao), Icons.pets_outlined),
+      _Summary('Escore corporal', count(TipoManejo.escoreCorporal), Icons.monitor_weight_outlined),
       _Summary(
         'Tosquias',
         count(TipoManejo.tosquia),
@@ -512,10 +514,10 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
         ));
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text((format == 'pdf' ? 'PDF' : 'Excel') + ' gerado com ' + _selectedItems.length.toString() + ' registro(s).')));
+      showAppSnackBar(context, SnackBar(content: Text((format == 'pdf' ? 'PDF' : 'Excel') + ' gerado com ' + _selectedItems.length.toString() + ' registro(s).')));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Não foi possível gerar o relatório: ' + error.toString().replaceFirst('Exception: ', ''))));
+      showAppSnackBar(context, SnackBar(content: Text('Não foi possível gerar o relatório: ' + error.toString().replaceFirst('Exception: ', ''))));
     } finally {
       if (mounted) setState(() => _generating = false);
     }
@@ -547,6 +549,9 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
     }
     if (type == TipoManejo.famacha) {
       add('FAMACHA', r['famacha_escore']);
+    }
+    if (type == TipoManejo.escoreCorporal) {
+      add('Escore corporal (1 a 5)', r['escore_corporal']);
     }
     if (type == TipoManejo.vacinacao) {
       add('Vacina', r['vacina_nome']);
@@ -640,6 +645,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
     switch (type) {
       case TipoManejo.pesagem: return 'Peso: ' + (_weight(r['peso_kg']) ?? 'não informado');
       case TipoManejo.famacha: return 'Escore FAMACHA: ' + (r['famacha_escore']?.toString() ?? 'não informado');
+      case TipoManejo.escoreCorporal: return 'Escore corporal: ' + (r['escore_corporal']?.toString() ?? 'não informado') + ' / 5';
       case TipoManejo.vacinacao: return 'Vacina: ' + (r['vacina_nome']?.toString() ?? 'não informada');
       case TipoManejo.vermifugacao: return 'Vermífugo: ' + (r['vermifugo_nome']?.toString() ?? 'não informado');
       case TipoManejo.tratamento: return 'Medicamento: ' + (r['medicamento_nome']?.toString() ?? 'não informado');
@@ -671,6 +677,7 @@ class _ManejoReportPageState extends State<ManejoReportPage> {
       case TipoManejo.pesagem: return 'Pesagem';
       case TipoManejo.famacha: return 'FAMACHA';
       case TipoManejo.denticao: return 'Dentição';
+      case TipoManejo.escoreCorporal: return 'Escore corporal';
       case TipoManejo.outro: return 'Outro';
     }
   }

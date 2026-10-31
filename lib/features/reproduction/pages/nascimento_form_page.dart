@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
-
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../services/reproducao_service.dart';
 
@@ -44,9 +44,7 @@ class _NascimentoFormPageState extends State<NascimentoFormPage> {
       if (mounted) Navigator.pop(context, n);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
+        showAppSnackBar(context, 
             SnackBar(content: Text(_msg(e)), backgroundColor: Colors.red),
           );
       }

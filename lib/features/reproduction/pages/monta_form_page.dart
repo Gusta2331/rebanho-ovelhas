@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
-
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../models/monta.dart';
@@ -77,9 +77,7 @@ class _MontaFormPageState extends State<MontaFormPage> {
   }
 
   void _snack(String s, bool err) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
+    showAppSnackBar(context, 
         SnackBar(content: Text(s), backgroundColor: err ? Colors.red : null),
       );
   }

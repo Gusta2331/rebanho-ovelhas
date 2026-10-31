@@ -472,6 +472,11 @@ class OfflineSyncService {
         'p_dados': {'id': id, 'fazenda_id': fazendaId, ...d},
       },
     );
+    if (d.containsKey('escore_corporal')) {
+      await _client.from('manejos').update({
+        'escore_corporal': d['escore_corporal'],
+      }).eq('id', id).eq('fazenda_id', fazendaId);
+    }
   }
 
   Future<void> _sincronizarManejoExcluir(OfflineOperation op) async {

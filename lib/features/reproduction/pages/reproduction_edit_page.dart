@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/widgets/app_asset_icon.dart';
-
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../models/reproducao.dart';
 import '../services/reproducao_service.dart';
-
 
 class ReproductionEditPage extends StatefulWidget {
   final Reproducao reproducao;
@@ -162,9 +161,7 @@ class _ReproductionEditPageState extends State<ReproductionEditPage> {
   }
 
   void _snack(String s, bool erro) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
+    showAppSnackBar(context, 
         SnackBar(content: Text(s), backgroundColor: erro ? Colors.red : null),
       );
   }

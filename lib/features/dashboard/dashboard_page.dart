@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../core/widgets/app_asset_icon.dart';
+import 'widgets/composicao_rebanho_chart.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_asset_icon.dart';
+import '../../core/widgets/app_snackbar.dart';
 import '../../core/widgets/contextual_help.dart';
 import '../animals/pages/animals_page.dart';
 import '../animals/services/animal_service.dart';
@@ -9,19 +11,21 @@ import '../auth/login_page.dart';
 import '../auth/services/auth_service.dart';
 import '../farm/models/farm.dart';
 import '../farm/services/farm_service.dart';
+import '../farmacia/pages/farmacia_page.dart';
+import '../financeiro/pages/financeiro_page.dart';
+import '../financeiro/services/financeiro_service.dart';
 import '../flock/models/rebanho.dart';
 import '../flock/pages/rebanho_form_page.dart';
 import '../flock/pages/rebanhos_page.dart';
 import '../flock/services/rebanho_selection_service.dart';
 import '../flock/services/rebanho_service.dart';
-import '../manejo/pages/manejos_page.dart';
-import '../manejo/pages/manejo_agenda_page.dart';
 import '../manejo/models/manejo.dart';
+import '../manejo/pages/manejo_agenda_page.dart';
+import '../manejo/pages/manejos_page.dart';
 import '../manejo/services/manejo_programado_service.dart';
-import '../farmacia/pages/farmacia_page.dart';
-import '../financeiro/pages/financeiro_page.dart';
-import '../financeiro/services/financeiro_service.dart';
 import '../more/mais_page.dart';
+import '../plans/services/meu_plano_service.dart';
+import '../plans/pages/meu_plano_page.dart';
 import '../reproduction/pages/reproductions_page.dart';
 import 'widgets/animal_card.dart';
 import 'widgets/management_item.dart';
@@ -43,6 +47,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final ManejoProgramadoService _manejoProgramadoService =
       ManejoProgramadoService();
   final FinanceiroService _financeiroService = FinanceiroService();
+  final MeuPlanoService _meuPlanoService = MeuPlanoService();
 
   final RebanhoSelectionService _rebanhoSelectionService =
       RebanhoSelectionService.instance;
@@ -64,12 +69,14 @@ class _DashboardPageState extends State<DashboardPage> {
   double _receitas = 0;
   double _despesas = 0;
   bool _financeiroIndisponivel = false;
+  Map<String, dynamic>? _resumoPlano;
 
   @override
   void initState() {
     super.initState();
 
     _iniciarDashboard();
+    _carregarResumoPlano();
   }
 
   Future<void> _iniciarDashboard() async {
@@ -79,6 +86,15 @@ class _DashboardPageState extends State<DashboardPage> {
     await _loadRebanhos();
   }
 
+  Future<void> _carregarResumoPlano() async {
+    try {
+      final resumo = await _meuPlanoService.carregarResumoVencimento();
+      if (!mounted) return;
+      setState(() => _resumoPlano = resumo);
+    } catch (_) {
+      // A indisponibilidade temporária do resumo não deve bloquear a Dashboard.
+    }
+  }
   Future<void> _loadFarm() async {
     try {
       final farm = await _farmService.getMinhaFazenda();
@@ -312,7 +328,9 @@ class _DashboardPageState extends State<DashboardPage> {
         return 'FAMACHA';
       case TipoManejo.denticao:
         return 'Dentição';
-case TipoManejo.outro:
+      case TipoManejo.escoreCorporal:
+        return 'Escore corporal';
+      case TipoManejo.outro:
         return 'Outro';
     }
   }
@@ -399,7 +417,7 @@ case TipoManejo.outro:
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    showAppSnackBar(context, 
       SnackBar(
         content: Text('Lote "${rebanhoCriado.nome}" criado com sucesso.'),
       ),
@@ -493,8 +511,7 @@ case TipoManejo.outro:
   }
 
   void _mostrarErro(Object error) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(_mensagemErro(error))));
+    showAppSnackBar(context, SnackBar(content: Text(_mensagemErro(error))));
   }
 
   String _mensagemErro(Object error) {
@@ -523,6 +540,10 @@ case TipoManejo.outro:
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
             children: [
               _buildHeader(),
+              if (_resumoPlano != null) ...[
+                const SizedBox(height: 16),
+                _buildPlanoVencimento(),
+              ],
               const SizedBox(height: 20),
               RebanhoSelector(
                 loading: _loadingRebanhos,
@@ -536,6 +557,12 @@ case TipoManejo.outro:
               _buildTotalCard(),
               const SizedBox(height: 16),
               _buildAnimalCards(),
+              const SizedBox(height: 12),
+              ComposicaoRebanhoChart(
+                femeas: _totalFemeas,
+                machos: _totalMachos,
+                carregando: _loadingAnimals,
+              ),
               const SizedBox(height: 16),
               _buildFinanceiroResumo(),
               const SizedBox(height: 24),
@@ -554,6 +581,123 @@ case TipoManejo.outro:
     );
   }
 
+  Widget _buildPlanoVencimento() {
+    final resumo = _resumoPlano;
+    if (resumo == null || resumo['gratuito'] == true) {
+      if (resumo == null) return const SizedBox.shrink();
+      return Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.workspace_premium_outlined,
+                color: AppTheme.primaryColor,
+                size: 21,
+              ),
+              const SizedBox(width: 9),
+              const Expanded(
+                child: Text(
+                  'Plano grátis • ativo',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+              ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                padding: EdgeInsets.zero,
+                tooltip: 'Abrir Meu plano',
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => const MeuPlanoPage()),
+                  );
+                  _carregarResumoPlano();
+                },
+                icon: const Icon(Icons.chevron_right, size: 20),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final dias = (resumo['dias_restantes'] as num?)?.toInt();
+    final vencido = resumo['vencido'] == true;
+    final cor = vencido
+        ? Colors.red.shade700
+        : dias != null && dias <= 2
+            ? Colors.orange.shade800
+            : AppTheme.primaryColor;
+    final titulo = vencido
+        ? 'Seu plano venceu'
+        : dias == null
+            ? 'Confira a validade do seu plano'
+            : 'Seu plano vence em $dias ${dias == 1 ? 'dia' : 'dias'}';
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: cor.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(
+                vencido ? Icons.warning_amber_rounded : Icons.calendar_month_outlined,
+                color: cor,
+                size: 19,
+              ),
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    titulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: cor,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    resumo['nome']?.toString() ?? 'Plano atual',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              padding: EdgeInsets.zero,
+              tooltip: 'Abrir Meu plano',
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const MeuPlanoPage()),
+                );
+                _carregarResumoPlano();
+              },
+              icon: const Icon(Icons.chevron_right, size: 20),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   Widget _buildHeader() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

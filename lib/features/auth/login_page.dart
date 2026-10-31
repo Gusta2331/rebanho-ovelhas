@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_snackbar.dart';
 import '../farm/pages/farm_check_page.dart';
 import 'password_recovery_dialog.dart';
 import 'services/auth_service.dart';
+import 'sign_up_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -92,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
         _loading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text(_getAuthErrorMessage(e)),
           duration: const Duration(seconds: 6),
@@ -107,7 +109,7 @@ class _LoginPageState extends State<LoginPage> {
         _loading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(context, 
         SnackBar(
           content: Text('ERRO NÃO TRATADO: $e'),
           duration: const Duration(seconds: 6),
@@ -332,7 +334,20 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 12),
+
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const SignUpPage(),
+                          ),
+                        );
+                      },
+                      child: const Text('Criar minha conta gratuitamente'),
+                    ),
+
+                    const SizedBox(height: 20),
 
                     const Text(
                       'OviGestão • Gestão do rebanho',

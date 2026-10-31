@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/app_asset_icon.dart';
-
-import '../../../core/widgets/contextual_help.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_asset_icon.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/contextual_help.dart';
 import '../../animals/services/animal_service.dart';
 import '../../flock/services/rebanho_selection_service.dart';
 import '../models/manejo.dart';
 import '../services/manejo_service.dart';
 import '../widgets/famacha_score_badge.dart';
-import 'manejo_form_page.dart';
-import 'manejo_operacao_page.dart';
 import 'manejo_details_page.dart';
+import 'manejo_form_page.dart';
 import 'manejo_operacao_details_page.dart';
+import 'manejo_operacao_page.dart';
 
 class ManejosPage extends StatefulWidget {
   const ManejosPage({super.key});
@@ -318,7 +318,7 @@ class _ManejosPageState extends State<ManejosPage> {
 
   void _mensagem(String texto) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texto)));
+    showAppSnackBar(context, SnackBar(content: Text(texto)));
   }
 
   Future<void> _novo() async {
@@ -388,6 +388,8 @@ class _ManejosPageState extends State<ManejosPage> {
         return 'FAMACHA';
       case TipoManejo.denticao:
         return 'Dentição';
+      case TipoManejo.escoreCorporal:
+        return 'Escore corporal';
       case TipoManejo.outro:
         return 'Outro';
     }
@@ -409,6 +411,8 @@ class _ManejosPageState extends State<ManejosPage> {
         return Icons.visibility_outlined;
       case TipoManejo.denticao:
         return Icons.health_and_safety_outlined;
+      case TipoManejo.escoreCorporal:
+        return Icons.monitor_weight_outlined;
       case TipoManejo.outro:
         return Icons.assignment_outlined;
     }
@@ -638,7 +642,9 @@ class _ManejosPageState extends State<ManejosPage> {
                         : _tituloRegistro(registro);
                     final subtitulo = agrupado
                         ? tipos.join(' • ')
-                        : _animal(registro);
+                        : manejo.tipo == TipoManejo.escoreCorporal && manejo.escoreCorporal != null
+                            ? _animal(registro) + ' • Escore corporal ' + manejo.escoreCorporal!.toString().replaceAll('.0', '').replaceAll('.', ',') + '/5'
+                            : _animal(registro);
 
                     Future<void> abrirDetalhes() async {
                       if (!mounted) return;
@@ -693,6 +699,9 @@ class _ManejosPageState extends State<ManejosPage> {
                                   children: [
                                     Text(
                                       titulo,
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
@@ -701,6 +710,9 @@ class _ManejosPageState extends State<ManejosPage> {
                                     const SizedBox(height: 4),
                                     Text(
                                       subtitulo,
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         color: Colors.black54,
                                       ),
@@ -719,6 +731,8 @@ class _ManejosPageState extends State<ManejosPage> {
                                       const SizedBox(height: 4),
                                       Text(
                                         'Vacina: ' + manejo.vacinaNome!,
+                                        maxLines: 1,
+                                        softWrap: false,
                                         style: const TextStyle(
                                           color: Colors.black54,
                                         ),

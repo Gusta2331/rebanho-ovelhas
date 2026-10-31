@@ -66,9 +66,19 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
         return 'FAMACHA';
       case TipoManejo.denticao:
         return 'Dentição';
+      case TipoManejo.escoreCorporal:
+        return 'Escore corporal';
       case TipoManejo.outro:
         return 'Outro';
     }
+  }
+
+  String _descricaoEscoreCorporal(double valor) {
+    if (valor <= 1.5) return 'Muito magra';
+    if (valor <= 2.5) return 'Magra';
+    if (valor <= 3.5) return 'Condição adequada';
+    if (valor <= 4.5) return 'Gorda';
+    return 'Muito gorda';
   }
 
   String _data(dynamic valor) {
@@ -116,6 +126,10 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
                 title: 'FAMACHA',
                 description: 'A cor mostrada junto ao escore ajuda a localizar a classificação registrada.',
               ),
+              HelpTopic(
+                title: 'Escore corporal',
+                description: 'Registra a condição corporal observada na escala de 1 a 5, com intervalos de 0,5.',
+              ),
             ],
           ),
         ],
@@ -156,7 +170,9 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
                     ? Icons.visibility_outlined
                     : manejo.tipo == TipoManejo.denticao
                         ? Icons.health_and_safety_outlined
-                        : Icons.assignment_outlined,
+                        : manejo.tipo == TipoManejo.escoreCorporal
+                            ? Icons.monitor_weight_outlined
+                            : Icons.assignment_outlined,
                 color: AppTheme.primaryColor,
                 size: 42,
               ),
@@ -194,6 +210,8 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
               ),
             ),
           ),
+        if (manejo.tipo == TipoManejo.escoreCorporal && manejo.escoreCorporal != null)
+          _item('Escore corporal', manejo.escoreCorporal!.toString().replaceAll('.0', '').replaceAll('.', ',') + ' / 5 • ' + _descricaoEscoreCorporal(manejo.escoreCorporal!), Icons.monitor_weight_outlined),
         if (manejo.tipo == TipoManejo.denticao && manejo.denticao != null)
           _item(
             'Condição da dentição',
@@ -232,7 +250,12 @@ class _ManejoDetailsPageState extends State<ManejoDetailsPage> {
             manejo.dose!.toStringAsFixed(2) + ' ' + (manejo.doseUnidade ?? ''),
             Icons.medication_outlined,
           ),
-        if (manejo.pesoReferenciaKg != null)
+        if ((manejo.tipo == TipoManejo.vacinacao ||
+                manejo.tipo == TipoManejo.vermifugacao ||
+                manejo.tipo == TipoManejo.tratamento) &&
+            manejo.dose != null &&
+            manejo.pesoReferenciaKg != null &&
+            manejo.pesoReferenciaKg! > 0)
           _item(
             'Regra da dose',
             'Dose por ' + manejo.pesoReferenciaKg!.toStringAsFixed(2) + ' kg',
