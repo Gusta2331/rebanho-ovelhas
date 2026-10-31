@@ -7,8 +7,10 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/contextual_help.dart';
 import '../../manejo/services/manejo_service.dart';
-import '../models/animal_venda.dart';
+import '../../farm_transfer/pages/farm_transfer_request_page.dart';
+import '../../farm_transfer/services/farm_transfer_service.dart';
 import '../models/animal.dart';
+import '../models/animal_venda.dart';
 import '../services/animal_venda_service.dart';
 
 class AnimalSalePage extends StatefulWidget {
@@ -203,6 +205,50 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
           _salvando = false;
         });
       }
+    }
+  }
+
+  Future<void> _venderParaOutraFazenda() async {
+    if (_salvando || !_formKey.currentState!.validate()) return;
+    if (!ConnectivityService.instance.isOnline) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'A venda para outra fazenda exige internet e não será salva offline.',
+          ),
+        ),
+      );
+      return;
+    }
+    final valorTotal = _valorTotal;
+    if (valorTotal == null || valorTotal <= 0) return;
+
+    final enviada = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => FarmTransferRequestPage(
+          animal: widget.animal,
+          sale: FarmTransferSaleData(
+            saleDate: _dataVenda,
+            saleType: _tipoVenda == TipoVendaAnimal.porKg
+                ? 'por_kg'
+                : 'valor_fechado',
+            weightKg: _tipoVenda == TipoVendaAnimal.porKg ? _peso : null,
+            pricePerKg: _tipoVenda == TipoVendaAnimal.porKg ? _precoKg : null,
+            totalValue: valorTotal,
+          ),
+        ),
+      ),
+    );
+
+    if (enviada == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Venda enviada para aceite. A receita será criada quando o comprador aceitar.',
+          ),
+        ),
+      );
+      Navigator.of(context).pop(true);
     }
   }
 
@@ -505,6 +551,16 @@ class _AnimalSalePageState extends State<AnimalSalePage> {
                   fontSize: 12,
                   color: Colors.black54,
                   height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 52,
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _salvando ? null : _venderParaOutraFazenda,
+                  icon: const Icon(Icons.handshake_outlined),
+                  label: const Text('Vender para outra fazenda'),
                 ),
               ),
               const SizedBox(height: 24),

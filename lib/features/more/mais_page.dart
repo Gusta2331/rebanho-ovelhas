@@ -7,6 +7,7 @@ import '../../core/widgets/app_asset_icon.dart';
 import '../admin/pages/admin_producers_page.dart';
 import '../farmacia/pages/farmacia_page.dart';
 import '../plans/pages/meu_plano_page.dart';
+import '../farm_transfer/pages/farm_transfers_page.dart';
 import '../financeiro/pages/financeiro_page.dart';
 import 'configuracoes_page.dart';
 import '../manejo/pages/manejo_agenda_page.dart';
@@ -48,6 +49,12 @@ class MaisPage extends StatelessWidget {
         titulo: 'Despesas e lucro',
         descricao: 'Receitas, despesas e saldo da fazenda ou por lote',
         onTap: () => _abrir(context, const FinanceiroPage()),
+      ),
+      _Item(
+        assetPath: 'assets/images/icon_animais.png',
+        titulo: 'Transferências entre fazendas',
+        descricao: 'Solicitações enviadas, recebidas e histórico',
+        onTap: () => _abrir(context, const FarmTransfersPage()),
       ),
       _Item(
         assetPath: 'assets/images/icon_relatorios.png',

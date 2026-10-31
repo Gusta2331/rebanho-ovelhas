@@ -12,6 +12,11 @@ import '../../manejo/models/manejo.dart';
 import '../../manejo/services/manejo_service.dart';
 import '../../manejo/widgets/famacha_score_badge.dart';
 import '../../reproduction/pages/reproduction_form_page.dart';
+import '../../flock/pages/animal_transfer_page.dart';
+import '../../flock/pages/animal_transfer_history_page.dart';
+import '../../flock/services/rebanho_selection_service.dart';
+import '../../flock/services/rebanho_service.dart';
+import '../../farm_transfer/pages/farm_transfer_request_page.dart';
 import '../models/animal_venda.dart';
 import '../models/animal.dart';
 import '../models/composicao_racial.dart';
@@ -516,6 +521,27 @@ case TipoManejo.outro:
           ? 'Transferência salva neste aparelho e será sincronizada quando a internet voltar.'
           : 'Animal transferido com sucesso.',
     );
+  }
+
+  Future<void> _solicitarTransferenciaEntreFazendas() async {
+    if (_animal.status != StatusAnimal.ativo) {
+      _mostrarMensagem(
+        'Somente animais ativos podem ser transferidos para outra fazenda.',
+      );
+      return;
+    }
+
+    final enviada = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => FarmTransferRequestPage(animal: _animal),
+      ),
+    );
+
+    if (enviada == true && mounted) {
+      _mostrarMensagem(
+        'Solicitação enviada. O animal continuará nesta fazenda até a aceitação.',
+      );
+    }
   }
 
   Future<void> _abrirHistoricoTransferencias() async {
@@ -1255,6 +1281,25 @@ case TipoManejo.outro:
               onPressed: temRebanho ? _transferirAnimal : null,
               icon: const Icon(Icons.swap_horiz_rounded),
               label: const Text('Transferir para outro rebanho'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primaryColor,
+                side: const BorderSide(color: AppTheme.primaryColor),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _animal.status == StatusAnimal.ativo
+                  ? _solicitarTransferenciaEntreFazendas
+                  : null,
+              icon: const Icon(Icons.send_outlined),
+              label: const Text('Solicitar transferência para outra fazenda'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.primaryColor,
                 side: const BorderSide(color: AppTheme.primaryColor),
