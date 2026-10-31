@@ -104,6 +104,14 @@ begin
     delete from public.animal_transferencias
     where fazenda_id = any(v_fazendas);
 
+    -- Manejos e movimentações possuem referências RESTRICT/NO ACTION
+    -- para animais e lotes, portanto saem antes dos registros principais.
+    delete from public.manejos
+    where fazenda_id = any(v_fazendas);
+
+    delete from public.movimentacoes_rebanho
+    where fazenda_id = any(v_fazendas);
+
     delete from public.vendas_animais
     where fazenda_id = any(v_fazendas);
 
