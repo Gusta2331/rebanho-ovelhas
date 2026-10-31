@@ -106,20 +106,22 @@ Deno.serve(async (request) => {
         return json({ error: 'A conta administrativa não pode ser excluída por este painel.' }, 403)
       }
 
-      // A exclusão de fazendas possui dependências históricas com RESTRICT/NO ACTION.
-      // Até existir uma rotina transacional específica para todo o histórico, não apagamos
-      // produtores que tenham fazendas. Isso evita perda parcial ou remoção inconsistente.
-      const { data: farms, error: farmsError } = await admin
-        .from('fazendas').select('id').eq('proprietario_id', userId).limit(1)
-      if (farmsError) throw farmsError
-      if ((farms ?? []).length > 0) {
-        return json({
-          error: 'Este produtor possui fazenda ou histórico associado. Para preservar os dados, desative a conta. A exclusão definitiva de contas com fazenda ainda requer uma rotina segura de remoção do histórico.',
-        }, 409)
+      // A rotina SQL executa a limpeza das fazendas em uma única transação.
+      // Históricos de transferências com outros produtores permanecem preservados.
+      const { error: cleanupError } = await admin.rpc('admin_excluir_produtor', {
+        p_usuario_id: userId,
+      })
+      if (cleanupError) {
+        console.error('admin_excluir_produtor:', cleanupError)
+        throw new Error(`Não foi possível excluir os dados da fazenda com segurança: ${cleanupError.message}`)
       }
 
+      // A exclusão do usuário Auth é uma chamada separada da transação SQL.
+      // Se falhar, a conta continua existindo e a operação pode ser tentada novamente.
       const { error: deleteError } = await admin.auth.admin.deleteUser(userId)
-      if (deleteError) throw deleteError
+      if (deleteError) {
+        throw new Error(`Os dados das fazendas foram removidos, mas não foi possível excluir a conta de autenticação: ${deleteError.message}`)
+      }
       return json({ success: true })
     }
 
