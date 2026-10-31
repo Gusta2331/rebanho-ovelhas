@@ -30,7 +30,7 @@ alter table public.transferencias_entre_fazendas
   );
 
 drop function if exists public.solicitar_transferencia_entre_fazendas(uuid, uuid, text);
-create function public.solicitar_transferencia_entre_fazendas(
+create or replace function public.solicitar_transferencia_entre_fazendas(
   p_animal_id uuid,
   p_codigo_destino uuid,
   p_observacao text default null,
