@@ -109,10 +109,11 @@ class _LoginPageState extends State<LoginPage> {
         _loading = false;
       });
 
-      showAppSnackBar(context, 
-        SnackBar(
-          content: Text('ERRO NÃO TRATADO: $e'),
-          duration: const Duration(seconds: 6),
+      showAppSnackBar(
+        context,
+        const SnackBar(
+          content: Text('Não foi possível entrar. Verifique sua conexão e tente novamente.'),
+          duration: Duration(seconds: 5),
         ),
       );
 
@@ -121,11 +122,37 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   String _getAuthErrorMessage(AuthException error) {
-    debugPrint('AUTH ERROR MESSAGE: ${error.message}');
+    final message = error.message.toLowerCase();
+    final statusCode = error.statusCode?.toLowerCase() ?? '';
 
+    debugPrint('AUTH ERROR MESSAGE: ${error.message}');
     debugPrint('AUTH ERROR STATUS CODE: ${error.statusCode}');
 
-    return 'ERRO SUPABASE: ${error.message}';
+    if (message.contains('invalid login credentials') ||
+        message.contains('invalid_credentials') ||
+        message.contains('email not found') ||
+        message.contains('user not found') ||
+        message.contains('invalid password') ||
+        statusCode == '400') {
+      return 'E-mail ou senha incorretos. Confira seus dados e tente novamente.';
+    }
+
+    if (message.contains('email not confirmed')) {
+      return 'Confirme seu e-mail antes de entrar.';
+    }
+
+    if (message.contains('too many requests') ||
+        message.contains('rate limit')) {
+      return 'Muitas tentativas de acesso. Aguarde alguns minutos e tente novamente.';
+    }
+
+    if (message.contains('network') ||
+        message.contains('socket') ||
+        message.contains('connection')) {
+      return 'Não foi possível conectar. Verifique sua internet e tente novamente.';
+    }
+
+    return 'Não foi possível entrar. Confira seus dados e tente novamente.';
   }
 
   Future<void> _forgotPassword() async {
