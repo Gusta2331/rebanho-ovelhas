@@ -126,62 +126,22 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
   }
 
   Future<void> _deleteProducer(Map<String, dynamic> producer) async {
-    final phraseController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Excluir produtor definitivamente?'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Esta ação é irreversível. Só será permitida se a conta não possuir fazenda associada. '
-                  'Contas com fazenda devem ser desativadas até que a remoção segura do histórico esteja disponível.',
-                ),
-                const SizedBox(height: 12),
-                Text('Conta: ${producer['email'] ?? ''}'),
-                const SizedBox(height: 12),
-                const Text('Digite EXCLUIR DEFINITIVAMENTE para confirmar:'),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: phraseController,
-                  autofocus: true,
-                  onChanged: (_) => setDialogState(() {}),
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: 'EXCLUIR DEFINITIVAMENTE',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: phraseController.text.trim() == 'EXCLUIR DEFINITIVAMENTE'
-                  ? () => Navigator.pop(dialogContext, true)
-                  : null,
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Excluir definitivamente'),
-            ),
-          ],
-        ),
+      builder: (_) => _DeleteProducerDialog(
+        email: producer['email']?.toString() ?? '',
       ),
     );
-    phraseController.dispose();
-    if (confirmed != true) return;
+    if (confirmed != true || !mounted) return;
     try {
       await _service.excluirProdutor(usuarioId: producer['id'].toString());
+      if (!mounted) return;
       await _load();
-      _message('Conta excluída definitivamente.');
+      if (mounted) _message('Conta e dados da fazenda excluídos definitivamente.');
     } catch (error) {
-      _message(error.toString().replaceFirst('Exception: ', ''));
+      if (mounted) {
+        _message(error.toString().replaceFirst('Exception: ', ''));
+      }
     }
   }
 
@@ -440,6 +400,76 @@ class _AdminProducersPageState extends State<AdminProducersPage> {
             ),
           ),
   );
+}
+
+class _DeleteProducerDialog extends StatefulWidget {
+  const _DeleteProducerDialog({required this.email});
+
+  final String email;
+
+  @override
+  State<_DeleteProducerDialog> createState() => _DeleteProducerDialogState();
+}
+
+class _DeleteProducerDialogState extends State<_DeleteProducerDialog> {
+  late final TextEditingController _phraseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _phraseController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _phraseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('Excluir produtor definitivamente?'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Esta ação é irreversível. A conta de acesso e os dados vinculados '
+                'às fazendas deste produtor serão excluídos. Históricos de '
+                'transferências com outros produtores serão preservados.',
+              ),
+              const SizedBox(height: 12),
+              Text('Conta: ${widget.email}'),
+              const SizedBox(height: 12),
+              const Text('Digite EXCLUIR DEFINITIVAMENTE para confirmar:'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _phraseController,
+                autofocus: true,
+                onChanged: (_) => setState(() {}),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'EXCLUIR DEFINITIVAMENTE',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: _phraseController.text.trim() == 'EXCLUIR DEFINITIVAMENTE'
+                ? () => Navigator.pop(context, true)
+                : null,
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Excluir definitivamente'),
+          ),
+        ],
+      );
 }
 
 class _CreateProducerDialog extends StatefulWidget {
